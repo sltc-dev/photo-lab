@@ -1,0 +1,49 @@
+.form {
+  width: 100%;
+}
+
+.stack {
+  gap: 15px;
+}
+
+.input :global(.mantine-Input-input) {
+  background: #fbfcfe;
+  border-color: var(--pl-line-strong);
+  color: var(--pl-text);
+  min-height: 44px;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    background-color 140ms ease;
+}
+
+.input :global(.mantine-Input-input:focus),
+.input :global(.mantine-Input-input:focus-within) {
+  background: #ffffff;
+  border-color: var(--pl-accent);
+  box-shadow: 0 0 0 3px rgb(47 104 196 / 13%);
+}
+
+.input :global(.mantine-Input-section) {
+  color: var(--pl-faint);
+}
+
+.input :global(.mantine-InputWrapper-label) {
+  color: var(--pl-text);
+  font-size: 13px;
+  font-weight: 650;
+  margin-bottom: 7px;
+}
+
+.submit {
+  background: #172033;
+  border: 1px solid #25314a;
+  box-shadow: 0 8px 20px rgb(23 32 51 / 18%);
+  color: #ffffff;
+  height: 44px;
+  margin-top: 4px;
+}
+
+.submit:hover {
+  background: #202b40;
+}

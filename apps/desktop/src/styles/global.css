@@ -1,0 +1,40 @@
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+:root {
+  --pl-bg: #f4f6f8;
+  --pl-bg-raised: #ffffff;
+  --pl-bg-subtle: #f8fafc;
+  --pl-text: #172033;
+  --pl-muted: #697386;
+  --pl-faint: #8a94a6;
+  --pl-line: #dfe5ec;
+  --pl-line-strong: #cdd5df;
+  --pl-accent: #2f68c4;
+  --pl-accent-strong: #1f4f96;
+  --pl-accent-soft: #eaf2ff;
+  --pl-success: #167a5b;
+  --pl-danger: #b42318;
+  --pl-shadow: 0 18px 45px rgb(23 32 51 / 10%);
+}
+
+body {
+  background: var(--pl-bg);
+  color: var(--pl-text);
+  margin: 0;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+::selection {
+  background: #cfe0ff;
+}

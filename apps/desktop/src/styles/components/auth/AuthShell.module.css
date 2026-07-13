@@ -1,0 +1,186 @@
+.page {
+  align-items: center;
+  background: linear-gradient(
+    135deg,
+    rgb(255 255 255 / 72%) 0%,
+    rgb(244 247 250 / 92%) 42%,
+    #eef3f7 100%
+  );
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px 24px;
+}
+
+.shell {
+  background: var(--pl-bg-raised);
+  border: 1px solid var(--pl-line);
+  border-radius: 8px;
+  box-shadow: var(--pl-shadow);
+  display: grid;
+  grid-template-columns: minmax(320px, 0.86fr) minmax(380px, 1fr);
+  max-width: 920px;
+  min-height: 560px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.contextPane {
+  background: #111827;
+  border-right: 1px solid #263044;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 560px;
+  overflow: hidden;
+  padding: 30px;
+  position: relative;
+}
+
+.contextPane::before {
+  background:
+    linear-gradient(90deg, rgb(255 255 255 / 5%) 1px, transparent 1px),
+    linear-gradient(180deg, rgb(255 255 255 / 4%) 1px, transparent 1px);
+  background-size: 30px 30px;
+  content: '';
+  inset: 0;
+  opacity: 0.7;
+  pointer-events: none;
+  position: absolute;
+}
+
+.contextPane::after {
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 8px;
+  content: '';
+  inset: 16px;
+  opacity: 0.8;
+  pointer-events: none;
+  position: absolute;
+}
+
+.brandRow,
+.contextCopy,
+.contextFoot {
+  position: relative;
+  z-index: 1;
+}
+
+.brandRow {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.brandMark {
+  align-items: center;
+  background: rgb(255 255 255 / 9%);
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 8px;
+  color: #ffffff;
+  display: flex;
+  height: 44px;
+  justify-content: center;
+  width: 44px;
+}
+
+.brandName {
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.brandMeta {
+  color: rgb(226 232 240 / 66%);
+  font-size: 12px;
+  line-height: 1.35;
+  margin-top: 2px;
+}
+
+.contextCopy {
+  max-width: 300px;
+}
+
+.kicker,
+.formEyebrow {
+  color: var(--pl-accent);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.4;
+}
+
+.contextPane .kicker {
+  color: rgb(219 234 254 / 72%);
+}
+
+.contextTitle {
+  color: #ffffff;
+  font-size: 30px;
+  letter-spacing: 0;
+  line-height: 1.16;
+  margin-top: 12px;
+}
+
+.contextText {
+  color: rgb(226 232 240 / 68%);
+  font-size: 14px;
+  line-height: 1.7;
+  margin-top: 16px;
+}
+
+.contextFoot {
+  color: rgb(226 232 240 / 46%);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.formPane {
+  align-self: center;
+  padding: 42px 46px;
+}
+
+.title {
+  color: var(--pl-text);
+  font-size: 32px;
+  letter-spacing: 0;
+  line-height: 1.12;
+  margin-top: 6px;
+}
+
+@media (max-width: 760px) {
+  .page {
+    align-items: stretch;
+    padding: 16px;
+  }
+
+  .shell {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .contextPane {
+    border-bottom: 1px solid var(--pl-line);
+    border-right: 0;
+    min-height: 320px;
+    padding: 24px;
+  }
+
+  .contextTitle {
+    font-size: 25px;
+  }
+
+  .contextFoot {
+    margin-top: 28px;
+  }
+
+  .formPane {
+    padding: 28px 24px;
+  }
+
+  .title {
+    font-size: 28px;
+  }
+}
