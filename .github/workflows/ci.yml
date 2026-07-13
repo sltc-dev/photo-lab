@@ -27,6 +27,11 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
+      - name: Generate Prisma client
+        run: pnpm db:generate
+        env:
+          DATABASE_URL: postgresql://photo_lab:photo_lab@localhost:5432/photo_lab?schema=public
+
       - name: Format
         run: pnpm format:check
 
