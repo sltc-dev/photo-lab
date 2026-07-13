@@ -1,0 +1,7 @@
+node_modules/
+dist/
+out/
+coverage/
+apps/desktop/src/generated/
+packages/api-contract/openapi.json
+pnpm-lock.yaml

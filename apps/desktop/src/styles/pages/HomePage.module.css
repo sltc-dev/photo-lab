@@ -1,0 +1,140 @@
+.header {
+  align-items: center;
+  background: rgb(255 255 255 / 92%);
+  border-bottom: 1px solid var(--pl-line);
+  display: flex;
+  height: 64px;
+  padding: 0 22px;
+}
+
+.headerInner {
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
+
+.headerGroup {
+  align-items: center;
+}
+
+.logoMark {
+  align-items: center;
+  background: #172033;
+  border-radius: 8px;
+  color: #ffffff;
+  display: flex;
+  height: 34px;
+  justify-content: center;
+  width: 34px;
+}
+
+.appTitle {
+  color: var(--pl-text);
+  font-size: 18px;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.avatar {
+  background: var(--pl-accent-soft);
+  color: var(--pl-accent-strong);
+  font-weight: 700;
+}
+
+.logoutButton {
+  color: var(--pl-text);
+}
+
+.main {
+  background: var(--pl-bg);
+  min-height: 100%;
+}
+
+:global(.mantine-AppShell-navbar) {
+  background: #fbfcfe;
+  border-right: 1px solid var(--pl-line);
+}
+
+.navLink {
+  border-radius: 8px;
+  color: var(--pl-muted);
+  min-height: 40px;
+}
+
+.navLink:hover {
+  background: var(--pl-accent-soft);
+  color: var(--pl-accent-strong);
+}
+
+.navLink[data-active] {
+  background: #172033;
+  color: #ffffff;
+}
+
+.workspaceHeader,
+.emptyPanel {
+  background: var(--pl-bg-raised);
+  border: 1px solid var(--pl-line);
+  border-radius: 8px;
+}
+
+.workspaceHeader {
+  padding: 22px 24px;
+}
+
+.eyebrow {
+  color: var(--pl-accent);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin-bottom: 6px;
+}
+
+.pageTitle {
+  color: var(--pl-text);
+  font-size: 26px;
+  letter-spacing: 0;
+  line-height: 1.18;
+}
+
+.pageDescription {
+  color: var(--pl-muted);
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.statusBadge {
+  background: var(--pl-accent-soft);
+  color: var(--pl-accent-strong);
+}
+
+.emptyPanel {
+  align-items: center;
+  color: var(--pl-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  justify-content: center;
+  min-height: 220px;
+  padding: 34px 24px;
+  text-align: center;
+}
+
+.emptyPanel h3 {
+  color: var(--pl-text);
+  font-size: 18px;
+  letter-spacing: 0;
+}
+
+.emptyIcon {
+  align-items: center;
+  background: var(--pl-bg-subtle);
+  border: 1px solid var(--pl-line);
+  border-radius: 8px;
+  color: var(--pl-accent);
+  display: flex;
+  height: 48px;
+  justify-content: center;
+  margin-bottom: 4px;
+  width: 48px;
+}

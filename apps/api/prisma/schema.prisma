@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  // cuid 由 Prisma 在创建用户时生成，不依赖数据库自增序列。
+  id            String         @id @default(cuid())
+  // email 是登录标识，唯一约束由数据库做最终并发裁决。
+  email         String         @unique
+  username      String
+  // 这里只保存 Argon2id Hash，绝不保存可以直接登录的明文密码。
+  passwordHash  String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  // 关系字段不是真实数组列，它表示“一位用户可以拥有多条 RefreshToken 记录”。
+  refreshTokens RefreshToken[]
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  // 数据库只保存原始 Refresh Token 的 Hash；原始值仅在签发时返回给客户端。
+  tokenHash String    @unique
+  expiresAt DateTime
+  // null 表示仍可使用；有时间值表示它已被刷新或退出操作撤销。
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  // 删除用户时同时删除其 Refresh Token，避免留下无法归属的记录。
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
