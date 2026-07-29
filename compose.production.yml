@@ -39,7 +39,7 @@ services:
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET is required}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET is required}
       NODE_ENV: production
-      PHOTO_STORAGE_ROOT: /data/photo-lab
+      PHOTO_STORAGE_ROOT: /public/photo-lab
       PORT: 3000
       REFRESH_TOKEN_TTL: ${REFRESH_TOKEN_TTL:-30d}
       THROTTLE_LIMIT: ${THROTTLE_LIMIT:-120}
@@ -67,7 +67,7 @@ services:
     networks:
       - photo_lab
     volumes:
-      - ./data/photo-lab:/data/photo-lab
+      - ./public/photo-lab:/public/photo-lab
 
 networks:
   photo_lab:

@@ -62,7 +62,7 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-photo_lab_minio}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-photo_lab_minio_secret}
       NODE_ENV: development
-      PHOTO_STORAGE_ROOT: /data/photo-lab
+      PHOTO_STORAGE_ROOT: /public/photo-lab
       PHOTO_UPLOAD_MAX_BYTES: ${PHOTO_UPLOAD_MAX_BYTES:-26214400}
       PORT: ${PORT:-3000}
       REDIS_URL: redis://redis:6379
@@ -79,7 +79,7 @@ services:
     networks:
       - photo_lab
     volumes:
-      - ./data/photo-lab:/data/photo-lab
+      - ./public/photo-lab:/public/photo-lab
 
 networks:
   photo_lab:

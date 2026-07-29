@@ -9,4 +9,4 @@ coverage/
 *.tsbuildinfo
 apps/api/generated/
 apps/desktop/.vite/
-/data/
+/public/

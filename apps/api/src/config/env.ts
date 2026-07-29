@@ -27,7 +27,7 @@ const envSchema = z
     MINIO_ENDPOINT: z.string().optional(),
     MINIO_SECRET_KEY: z.string().optional(),
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-    PHOTO_STORAGE_ROOT: z.string().trim().min(1).default('../../data/photo-lab'),
+    PHOTO_STORAGE_ROOT: z.string().trim().min(1).default('../../public/photo-lab'),
     PHOTO_UPLOAD_MAX_BYTES: z.coerce
       .number()
       .int()
