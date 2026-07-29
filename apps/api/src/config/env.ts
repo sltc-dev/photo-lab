@@ -27,6 +27,13 @@ const envSchema = z
     MINIO_ENDPOINT: z.string().optional(),
     MINIO_SECRET_KEY: z.string().optional(),
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+    PHOTO_STORAGE_ROOT: z.string().trim().min(1).default('../../data/photo-lab'),
+    PHOTO_UPLOAD_MAX_BYTES: z.coerce
+      .number()
+      .int()
+      .positive()
+      .max(100 * 1024 * 1024)
+      .default(25 * 1024 * 1024),
     PORT: z.coerce.number().int().positive().default(3000),
     REDIS_URL: z.string().optional(),
     REFRESH_TOKEN_TTL: durationSchema(366 * 24 * 60 * 60 * 1000).default('30d'),

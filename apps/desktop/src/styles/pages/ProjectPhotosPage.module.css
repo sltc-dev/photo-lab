@@ -1,0 +1,77 @@
+.page {
+  margin: 0 auto;
+  max-width: 1400px;
+  min-width: 0;
+  width: 100%;
+}
+
+.pageHeader,
+.gallerySection {
+  background: var(--pl-bg-raised);
+  border: 1px solid var(--pl-line);
+  border-radius: 10px;
+}
+
+.pageHeader {
+  padding: 22px 24px 24px;
+}
+
+.backButton {
+  color: var(--pl-muted);
+  margin-left: -8px;
+}
+
+.titleBlock {
+  min-width: 0;
+}
+
+.title {
+  color: var(--pl-text);
+  font-size: 26px;
+}
+
+.photoCount {
+  color: var(--pl-accent-strong);
+  font-weight: 650;
+}
+
+.uploadButton {
+  background: #172033;
+  border: 1px solid #25314a;
+  min-height: 42px;
+}
+
+.uploadButton:hover {
+  background: #202b40;
+}
+
+.gallerySection {
+  min-height: 460px;
+  padding: 24px;
+}
+
+.galleryHeader {
+  margin-bottom: 20px;
+}
+
+.galleryHeader h3 {
+  color: var(--pl-text);
+  font-size: 18px;
+}
+
+@media (max-width: 48em) {
+  .pageHeader,
+  .gallerySection {
+    padding: 20px;
+  }
+
+  .uploadButton {
+    width: 100%;
+  }
+
+  .galleryHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+}

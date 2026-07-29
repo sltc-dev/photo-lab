@@ -19,6 +19,7 @@ model User {
   updatedAt     DateTime       @updatedAt
   // 关系字段不是真实数组列，它表示“一位用户可以拥有多条 RefreshToken 记录”。
   refreshTokens RefreshToken[]
+  projects      Project[]
 }
 
 model RefreshToken {
@@ -35,4 +36,51 @@ model RefreshToken {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+enum PhotoStatus {
+  UPLOADED
+  PROCESSING
+  READY
+  FAILED
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  photos      Photo[]
+
+  @@index([userId, createdAt])
+}
+
+model Photo {
+  id                  String      @id @default(cuid())
+  projectId           String
+  fileName            String
+  relativePath        String
+  mimeType            String
+  sizeBytes           Int
+  width               Int?
+  height              Int?
+  checksumSha256      String?
+  originalObjectKey   String      @unique
+  previewObjectKey    String?
+  thumbnailObjectKey  String?
+  status              PhotoStatus @default(UPLOADED)
+  processingAttempts  Int         @default(0)
+  processingError     String?
+  processingStartedAt DateTime?
+  nextAttemptAt       DateTime    @default(now())
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  project             Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
+  @@index([status, nextAttemptAt])
+  @@index([status, processingStartedAt])
 }

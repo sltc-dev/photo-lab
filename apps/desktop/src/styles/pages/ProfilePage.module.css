@@ -1,0 +1,122 @@
+.page {
+  margin: 0 auto;
+  max-width: 1100px;
+  min-width: 0;
+  width: 100%;
+}
+
+.pageHeading {
+  padding: 4px 2px;
+}
+
+.eyebrow {
+  color: var(--pl-accent-strong);
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pageTitle {
+  color: var(--pl-text);
+  font-size: 28px;
+  margin-top: 3px;
+}
+
+.profileCard,
+.fieldCard {
+  background: var(--pl-bg-raised);
+  border: 1px solid var(--pl-line);
+  border-radius: 10px;
+}
+
+.profileCard {
+  background:
+    radial-gradient(circle at 92% 0%, rgb(47 104 196 / 10%), transparent 34%), var(--pl-bg-raised);
+}
+
+.profileAvatar {
+  background: #172033;
+  color: #ffffff;
+  font-size: 25px;
+  font-weight: 750;
+}
+
+.identity {
+  min-width: 0;
+}
+
+.username {
+  color: var(--pl-text);
+  font-size: 22px;
+  overflow-wrap: anywhere;
+}
+
+.status {
+  color: var(--pl-success);
+}
+
+.sectionTitle {
+  color: var(--pl-text);
+  font-size: 18px;
+}
+
+.fieldCard {
+  min-height: 108px;
+}
+
+.fieldIcon {
+  align-items: center;
+  background: var(--pl-accent-soft);
+  border-radius: 8px;
+  color: var(--pl-accent-strong);
+  display: flex;
+  flex: 0 0 auto;
+  height: 38px;
+  justify-content: center;
+  width: 38px;
+}
+
+.fieldContent {
+  min-width: 0;
+}
+
+.fieldLabel {
+  color: var(--pl-muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.fieldValue {
+  color: var(--pl-text);
+  font-size: 15px;
+  font-weight: 650;
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+}
+
+.securityNote {
+  align-items: flex-start;
+  background: #f0f7f4;
+  border: 1px solid #d4e9df;
+  border-radius: 10px;
+  color: var(--pl-success);
+  display: flex;
+  gap: 12px;
+  padding: 18px 20px;
+}
+
+.securityNote > svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+@media (max-width: 48em) {
+  .pageTitle {
+    font-size: 24px;
+  }
+
+  .profileCard {
+    padding: 20px;
+  }
+}
