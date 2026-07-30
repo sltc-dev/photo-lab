@@ -1,4 +1,10 @@
-import { listPhotos, uploadPhoto, type PhotoDto, type PhotoPageDto } from '../generated/api';
+import {
+  getThumbnailPhoto,
+  listPhotos,
+  uploadPhoto,
+  type PhotoDto,
+  type PhotoPageDto,
+} from '../generated/api';
 import { resolveApiUrl } from './http';
 
 export const PROJECT_PHOTOS_PAGE_SIZE = 12;
@@ -13,6 +19,8 @@ export type ProjectPhotoPage = Omit<PhotoPageDto, 'items'> & {
 };
 
 export const photosQueryKey = (projectId: string) => ['projects', projectId, 'photos'] as const;
+export const photoThumbnailQueryKey = (projectId: string, photoId: string) =>
+  ['projects', projectId, 'photos', photoId, 'thumbnail'] as const;
 
 export type UploadProjectPhotoInput = {
   file: File;
@@ -55,6 +63,19 @@ export async function getProjectPhotosPage(
     ...response.data,
     items: response.data.items.map(resolvePhotoUrls),
   };
+}
+
+export async function getPhotoThumbnail(projectId: string, photoId: string): Promise<Blob> {
+  const response = await getThumbnailPhoto({
+    parseAs: 'blob',
+    path: {
+      photoId,
+      projectId,
+    },
+    throwOnError: true,
+  });
+
+  return response.data;
 }
 
 function resolvePhotoUrls(photo: PhotoDto): ProjectPhoto {

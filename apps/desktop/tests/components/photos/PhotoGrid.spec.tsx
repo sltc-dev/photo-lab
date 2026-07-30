@@ -6,6 +6,7 @@ import type { ProjectPhoto } from '../../../src/api/photos';
 import { PhotoGrid } from '../../../src/components/photos/PhotoGrid';
 
 const apiMocks = vi.hoisted(() => ({
+  getPhotoThumbnail: vi.fn(),
   getProjectPhotosPage: vi.fn(),
 }));
 
@@ -16,6 +17,7 @@ vi.mock('../../../src/api/photos', async (importOriginal) => {
 
   return {
     ...original,
+    getPhotoThumbnail: apiMocks.getPhotoThumbnail,
     getProjectPhotosPage: apiMocks.getProjectPhotosPage,
   };
 });
@@ -56,8 +58,17 @@ function renderGrid() {
 
 describe('PhotoGrid', () => {
   beforeEach(() => {
+    apiMocks.getPhotoThumbnail.mockReset();
+    apiMocks.getPhotoThumbnail.mockResolvedValue(new Blob(['thumbnail'], { type: 'image/webp' }));
     apiMocks.getProjectPhotosPage.mockReset();
     intersectionCallback = undefined;
+    vi.stubGlobal(
+      'URL',
+      class extends URL {
+        static createObjectURL = vi.fn(() => 'blob:thumbnail');
+        static revokeObjectURL = vi.fn();
+      },
+    );
     vi.stubGlobal(
       'IntersectionObserver',
       class {
@@ -84,7 +95,7 @@ describe('PhotoGrid', () => {
     expect(apiMocks.getProjectPhotosPage).toHaveBeenCalledWith('project-1', null);
   });
 
-  it('renders the thumbnail URL returned by the API', async () => {
+  it('loads an authenticated thumbnail blob and renders its object URL', async () => {
     apiMocks.getProjectPhotosPage.mockResolvedValue({
       items: [photo],
       nextCursor: null,
@@ -93,7 +104,8 @@ describe('PhotoGrid', () => {
     renderGrid();
 
     const image = await screen.findByAltText('holiday.jpg');
-    expect(image).toHaveAttribute('src', photo.thumbnailUrl);
+    expect(apiMocks.getPhotoThumbnail).toHaveBeenCalledWith('project-1', 'photo-1');
+    expect(image).toHaveAttribute('src', 'blob:thumbnail');
     expect(screen.getByText('2 KB')).toBeInTheDocument();
   });
 

@@ -12,7 +12,7 @@ import {
   Stack,
   Text,
 } from '@mantine/core';
-import { type InfiniteData, useInfiniteQuery } from '@tanstack/react-query';
+import { type InfiniteData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import {
   AlertCircle,
   Check,
@@ -26,7 +26,9 @@ import {
 } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import {
+  getPhotoThumbnail,
   getProjectPhotosPage,
+  photoThumbnailQueryKey,
   photosQueryKey,
   type ProjectPhoto,
   type ProjectPhotoPage,
@@ -52,23 +54,19 @@ export function PhotoGrid({ projectId }: PhotoGridProps) {
     queryFn: ({ pageParam }) => getProjectPhotosPage(projectId, pageParam),
     queryKey: photosQueryKey(projectId),
   });
+  const { fetchNextPage, hasNextPage, isFetchingNextPage, isFetchNextPageError } = photosQuery;
 
   useEffect(() => {
     const sentinel = loadMoreSentinelRef.current;
 
-    if (
-      !sentinel ||
-      !photosQuery.hasNextPage ||
-      photosQuery.isFetchingNextPage ||
-      photosQuery.isFetchNextPageError
-    ) {
+    if (!sentinel || !hasNextPage || isFetchingNextPage || isFetchNextPageError) {
       return;
     }
 
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) {
-          void photosQuery.fetchNextPage();
+          void fetchNextPage();
         }
       },
       {
@@ -81,12 +79,7 @@ export function PhotoGrid({ projectId }: PhotoGridProps) {
     return () => {
       observer.disconnect();
     };
-  }, [
-    photosQuery.fetchNextPage,
-    photosQuery.hasNextPage,
-    photosQuery.isFetchingNextPage,
-    photosQuery.isFetchNextPageError,
-  ]);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, isFetchNextPageError]);
 
   if (photosQuery.isLoading) {
     return <PhotoGridSkeleton />;
@@ -198,6 +191,13 @@ type PhotoGridItemProps = {
 
 function PhotoGridItem({ isSelected, onSelect, photo }: PhotoGridItemProps) {
   const [thumbnailFailed, setThumbnailFailed] = useState(false);
+  const thumbnailQuery = useQuery({
+    queryFn: () => getPhotoThumbnail(photo.projectId, photo.id),
+    queryKey: photoThumbnailQueryKey(photo.projectId, photo.id),
+    staleTime: 24 * 60 * 60 * 1000,
+  });
+  const thumbnailUrl = useObjectUrl(thumbnailQuery.data);
+
   return (
     <Card
       aria-label={`查看 ${photo.fileName} 详情`}
@@ -208,17 +208,19 @@ function PhotoGridItem({ isSelected, onSelect, photo }: PhotoGridItemProps) {
       type="button"
     >
       <AspectRatio ratio={4 / 3}>
-        {thumbnailFailed ? (
+        {thumbnailFailed || thumbnailQuery.isError ? (
           <Center className={styles.imageError}>
             <ImageOff aria-hidden size={26} />
           </Center>
+        ) : thumbnailQuery.isLoading || !thumbnailUrl ? (
+          <Skeleton height="100%" />
         ) : (
           <Image
             alt={photo.fileName}
             className={styles.photoImage}
             loading="lazy"
             onError={() => setThumbnailFailed(true)}
-            src={photo.thumbnailUrl}
+            src={thumbnailUrl}
           />
         )}
       </AspectRatio>
@@ -237,6 +239,26 @@ function PhotoGridItem({ isSelected, onSelect, photo }: PhotoGridItemProps) {
       ) : null}
     </Card>
   );
+}
+
+function useObjectUrl(blob: Blob | undefined): string | null {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!blob) {
+      setUrl(null);
+      return;
+    }
+
+    const nextUrl = URL.createObjectURL(blob);
+    setUrl(nextUrl);
+
+    return () => {
+      URL.revokeObjectURL(nextUrl);
+    };
+  }, [blob]);
+
+  return url;
 }
 
 function PhotoDetail({ photo }: { photo: ProjectPhoto }) {

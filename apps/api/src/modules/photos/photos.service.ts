@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
-import type { Readable } from 'node:stream';
+import { Readable } from 'node:stream';
+import { buffer as consumeBuffer } from 'node:stream/consumers';
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import { PhotoStatus, Prisma } from '@prisma/client';
 import { AppException } from '../../common/errors/app.exception';
@@ -13,6 +14,10 @@ import { PhotoThumbnailGenerator } from './photo-thumbnail.generator';
 import { PhotoUploadValidator, type UploadedPhotoFile } from './photo-upload.validator';
 
 const MAX_STORAGE_FILE_NAME_BYTES = 255;
+const THUMBNAIL_CACHE_CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
+const THUMBNAIL_CACHE_PREFIX = 'thumbnails';
+const THUMBNAIL_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const THUMBNAIL_CACHE_VERSION = 'v1';
 const THUMBNAIL_FILE_NAME_SUFFIX = '.thumbnail.webp';
 
 const photoSelect = {
@@ -25,7 +30,6 @@ const photoSelect = {
   height: true,
   originalObjectKey: true,
   status: true,
-  thumbnailObjectKey: true,
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.PhotoSelect;
@@ -38,6 +42,7 @@ const photoOriginalSelect = {
   id: true,
   fileName: true,
   mimeType: true,
+  originalObjectKey: true,
   sizeBytes: true,
 } satisfies Prisma.PhotoSelect;
 
@@ -58,6 +63,8 @@ export type PhotoThumbnail = {
 @Injectable()
 export class PhotosService {
   private readonly logger = new Logger(PhotosService.name);
+  private readonly thumbnailBuilds = new Map<string, Promise<Buffer>>();
+  private lastThumbnailCacheCleanupAt = 0;
 
   constructor(
     @Inject(PrismaService)
@@ -81,22 +88,16 @@ export class PhotosService {
 
     const validated = this.uploadValidator.validate(file);
     const metadata = await this.metadataReader.readMetadata(file!.buffer);
-    const thumbnailBuffer = await this.thumbnailGenerator.generate(file!.buffer);
     const photoId = randomUUID();
 
     const originalObjectKey = buildOriginalObjectKey(projectId, photoId, validated.fileName);
-    const thumbnailObjectKey = buildThumbnailObjectKey(projectId, photoId, validated.fileName);
-    const storedObjectKeys = [originalObjectKey, thumbnailObjectKey];
 
     const checksumSha256 = createHash('sha256').update(file!.buffer).digest('hex');
 
-    const storageResults = await Promise.allSettled([
-      this.storageService.putObject(originalObjectKey, file!.buffer),
-      this.storageService.putObject(thumbnailObjectKey, thumbnailBuffer),
-    ]);
-
-    if (storageResults.some((result) => result.status === 'rejected')) {
-      await this.removeStoredObjects(storedObjectKeys);
+    try {
+      await this.storageService.putObject(originalObjectKey, file!.buffer);
+    } catch {
+      await this.removeStoredObjects([originalObjectKey]);
 
       throw new AppException(
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -118,7 +119,6 @@ export class PhotosService {
           height: metadata.height,
           checksumSha256,
           originalObjectKey,
-          thumbnailObjectKey,
           status: PhotoStatus.UPLOADED,
         },
         select: photoSelect,
@@ -126,7 +126,7 @@ export class PhotosService {
 
       return this.toPhotoDto(photo);
     } catch (error) {
-      await this.removeStoredObjects(storedObjectKeys);
+      await this.removeStoredObjects([originalObjectKey]);
 
       throw error;
     }
@@ -179,11 +179,9 @@ export class PhotosService {
       throw new AppException(HttpStatus.NOT_FOUND, 'PHOTO_NOT_FOUND', '照片不存在');
     }
 
-    const originalObjectKey = buildOriginalObjectKey(projectId, photo.id, photo.fileName);
-
     try {
-      await this.storageService.statObject(originalObjectKey);
-      const stream = await this.storageService.getObject(originalObjectKey);
+      await this.storageService.statObject(photo.originalObjectKey);
+      const stream = await this.storageService.getObject(photo.originalObjectKey);
 
       return {
         fileName: photo.fileName,
@@ -220,23 +218,121 @@ export class PhotosService {
       throw new AppException(HttpStatus.NOT_FOUND, 'PHOTO_NOT_FOUND', '照片不存在');
     }
 
-    const thumbnailObjectKey = buildThumbnailObjectKey(projectId, photo.id, photo.fileName);
+    await this.cleanupThumbnailCacheIfDue();
 
-    try {
-      const objectStat = await this.storageService.statObject(thumbnailObjectKey);
-      const stream = await this.storageService.getObject(thumbnailObjectKey);
+    const thumbnailObjectKey = buildThumbnailCacheObjectKey(projectId, photo.id);
+    const cachedThumbnail = await this.getFreshCachedThumbnail(thumbnailObjectKey);
 
+    if (cachedThumbnail) {
       return {
         fileName: `${getFileNameBase(photo.fileName)}${THUMBNAIL_FILE_NAME_SUFFIX}`,
         mimeType: 'image/webp',
-        sizeBytes: objectStat.size,
-        stream,
+        sizeBytes: cachedThumbnail.sizeBytes,
+        stream: cachedThumbnail.stream,
       };
+    }
+
+    const thumbnailBuffer = await this.getOrCreateThumbnail(
+      thumbnailObjectKey,
+      photo.originalObjectKey,
+    );
+
+    return {
+      fileName: `${getFileNameBase(photo.fileName)}${THUMBNAIL_FILE_NAME_SUFFIX}`,
+      mimeType: 'image/webp',
+      sizeBytes: thumbnailBuffer.byteLength,
+      stream: Readable.from(thumbnailBuffer),
+    };
+  }
+
+  private async getFreshCachedThumbnail(
+    objectKey: string,
+  ): Promise<{ sizeBytes: number; stream: Readable } | null> {
+    try {
+      const objectStat = await this.storageService.statObject(objectKey);
+
+      if (Date.now() - objectStat.lastModified.getTime() >= THUMBNAIL_CACHE_TTL_MS) {
+        return null;
+      }
+
+      return {
+        sizeBytes: objectStat.size,
+        stream: await this.storageService.getObject(objectKey),
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private getOrCreateThumbnail(objectKey: string, originalObjectKey: string): Promise<Buffer> {
+    const existingBuild = this.thumbnailBuilds.get(objectKey);
+
+    if (existingBuild) {
+      return existingBuild;
+    }
+
+    const build = this.generateAndCacheThumbnail(objectKey, originalObjectKey).finally(() => {
+      this.thumbnailBuilds.delete(objectKey);
+    });
+    this.thumbnailBuilds.set(objectKey, build);
+
+    return build;
+  }
+
+  private async generateAndCacheThumbnail(
+    thumbnailObjectKey: string,
+    originalObjectKey: string,
+  ): Promise<Buffer> {
+    let originalBuffer: Buffer;
+
+    try {
+      const originalStream = await this.storageService.getObject(originalObjectKey);
+      originalBuffer = await consumeBuffer(originalStream);
     } catch {
       throw new AppException(
         HttpStatus.INTERNAL_SERVER_ERROR,
         'PHOTO_STORAGE_FAILED',
-        '照片缩略图读取失败',
+        '照片文件读取失败',
+      );
+    }
+
+    const thumbnailBuffer = await this.thumbnailGenerator.generate(originalBuffer);
+
+    try {
+      await this.storageService.putObject(thumbnailObjectKey, thumbnailBuffer);
+    } catch {
+      throw new AppException(
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        'PHOTO_STORAGE_FAILED',
+        '缩略图缓存写入失败',
+      );
+    }
+
+    return thumbnailBuffer;
+  }
+
+  private async cleanupThumbnailCacheIfDue(): Promise<void> {
+    const now = Date.now();
+
+    if (now - this.lastThumbnailCacheCleanupAt < THUMBNAIL_CACHE_CLEANUP_INTERVAL_MS) {
+      return;
+    }
+
+    this.lastThumbnailCacheCleanupAt = now;
+
+    try {
+      const removedCount = await this.storageService.removeObjectsOlderThan(
+        THUMBNAIL_CACHE_PREFIX,
+        new Date(now - THUMBNAIL_CACHE_TTL_MS),
+      );
+
+      if (removedCount > 0) {
+        this.logger.log(`Removed ${removedCount} expired thumbnail cache object(s).`);
+      }
+    } catch (error) {
+      this.logger.error(
+        'Failed to clean expired thumbnail cache objects.',
+        error instanceof Error ? error.stack : String(error),
       );
     }
   }
@@ -286,10 +382,7 @@ export class PhotosService {
       height: photo.height,
       originalUrl: buildPublicUrl(photo.originalObjectKey),
       status: photo.status,
-      thumbnailUrl: buildPublicUrl(
-        photo.thumbnailObjectKey ??
-          buildThumbnailObjectKey(photo.projectId, photo.id, photo.fileName),
-      ),
+      thumbnailUrl: buildThumbnailApiUrl(photo.projectId, photo.id),
       createdAt: photo.createdAt.toISOString(),
       updatedAt: photo.updatedAt.toISOString(),
     };
@@ -311,15 +404,12 @@ function buildOriginalObjectKey(projectId: string, photoId: string, fileName: st
   return `projects/${projectId}/photos/${uniquePrefix}${storageFileName}`;
 }
 
-function buildThumbnailObjectKey(projectId: string, photoId: string, fileName: string): string {
-  const uniquePrefix = `${photoId}--`;
-  const availableBaseNameBytes =
-    MAX_STORAGE_FILE_NAME_BYTES -
-    Buffer.byteLength(uniquePrefix, 'utf8') -
-    Buffer.byteLength(THUMBNAIL_FILE_NAME_SUFFIX, 'utf8');
-  const storageBaseName = truncateUtf8(getFileNameBase(fileName), availableBaseNameBytes);
+function buildThumbnailApiUrl(projectId: string, photoId: string): string {
+  return `/projects/${encodeURIComponent(projectId)}/photos/${encodeURIComponent(photoId)}/thumbnail`;
+}
 
-  return `projects/${projectId}/photos/${uniquePrefix}${storageBaseName}${THUMBNAIL_FILE_NAME_SUFFIX}`;
+function buildThumbnailCacheObjectKey(projectId: string, photoId: string): string {
+  return `${THUMBNAIL_CACHE_PREFIX}/${projectId}/${photoId}.${THUMBNAIL_CACHE_VERSION}.webp`;
 }
 
 function getFileNameBase(fileName: string): string {

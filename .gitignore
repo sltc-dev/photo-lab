@@ -10,3 +10,4 @@ coverage/
 apps/api/generated/
 apps/desktop/.vite/
 /public/
+.vscode/settings.json

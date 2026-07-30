@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, rm, utimes } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Readable } from 'node:stream';
 import { tmpdir } from 'node:os';
@@ -65,6 +65,28 @@ describe('StorageService', () => {
     await expect(readFile(join(storageRoot, objectKey))).rejects.toMatchObject({
       code: 'ENOENT',
     });
+  });
+
+  it('removes cached objects older than the supplied cutoff', async () => {
+    const expiredObjectKey = 'thumbnails/project-1/expired.v1.webp';
+    const freshObjectKey = 'thumbnails/project-1/fresh.v1.webp';
+    await service.putObject(expiredObjectKey, Buffer.from('expired'));
+    await service.putObject(freshObjectKey, Buffer.from('fresh'));
+    await utimes(
+      join(storageRoot, expiredObjectKey),
+      new Date('2026-07-01T00:00:00.000Z'),
+      new Date('2026-07-01T00:00:00.000Z'),
+    );
+
+    await expect(
+      service.removeObjectsOlderThan('thumbnails', new Date('2026-07-08T00:00:00.000Z')),
+    ).resolves.toBe(1);
+    await expect(readFile(join(storageRoot, expiredObjectKey))).rejects.toMatchObject({
+      code: 'ENOENT',
+    });
+    await expect(readFile(join(storageRoot, freshObjectKey))).resolves.toEqual(
+      Buffer.from('fresh'),
+    );
   });
 
   it('rejects object keys that escape the configured root', async () => {

@@ -106,7 +106,7 @@ export class PhotosController {
     const photo = await this.photosService.getThumbnailPhoto(user.id, projectId, photoId);
 
     response.set({
-      'Cache-Control': 'private, max-age=31536000, immutable',
+      'Cache-Control': 'private, max-age=86400',
       'Content-Disposition': `inline; filename*=UTF-8''${encodeURIComponent(photo.fileName)}`,
       'Content-Length': String(photo.sizeBytes),
       'Content-Type': photo.mimeType,

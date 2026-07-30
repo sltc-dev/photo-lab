@@ -91,7 +91,7 @@ export type PhotoDto = {
      */
     originalUrl: string;
     /**
-     * 缩略图的 API 相对 URL
+     * 需要认证的按需缩略图 API 相对 URL
      */
     thumbnailUrl: string;
     /**

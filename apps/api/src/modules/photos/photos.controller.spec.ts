@@ -29,7 +29,7 @@ const photoDto: PhotoDto = {
   projectId: 'project-1',
   sizeBytes: 4,
   status: PhotoStatus.UPLOADED,
-  thumbnailUrl: '/public/projects/project-1/photos/photo-1--holiday.thumbnail.webp',
+  thumbnailUrl: '/projects/project-1/photos/photo-1/thumbnail',
   updatedAt: '2026-07-27T09:00:00.000Z',
   width: null,
 };
@@ -111,7 +111,7 @@ describe('PhotosController', () => {
 
     expect(getThumbnailPhoto).toHaveBeenCalledWith('user-1', 'project-1', 'photo-1');
     expect(set).toHaveBeenCalledWith({
-      'Cache-Control': 'private, max-age=31536000, immutable',
+      'Cache-Control': 'private, max-age=86400',
       'Content-Disposition': "inline; filename*=UTF-8''holiday.thumbnail.webp",
       'Content-Length': '2',
       'Content-Type': 'image/webp',
