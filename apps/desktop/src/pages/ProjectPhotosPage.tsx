@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, ArrowLeft } from 'lucide-react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { getApiErrorMessage } from '../api/http';
-import { photosQueryKey, uploadProjectPhoto, type ProjectPhoto } from '../api/photos';
+import { photosQueryKey, uploadProjectPhoto } from '../api/photos';
 import { getProjectById, getProjects, projectQueryKey, projectsQueryKey } from '../api/projects';
 import { PhotoGrid } from '../components/photos/PhotoGrid';
 import { PhotoUploadButton } from '../components/photos/PhotoUploadButton';
@@ -18,9 +18,7 @@ export function ProjectPhotosPage() {
     return <Navigate replace to="/" />;
   }
 
-  return (
-    <ProjectPhotosContent projectId={projectId} queryClient={queryClient} />
-  );
+  return <ProjectPhotosContent projectId={projectId} queryClient={queryClient} />;
 }
 
 type ProjectPhotosContentProps = {
@@ -43,10 +41,9 @@ function ProjectPhotosContent({ projectId, queryClient }: ProjectPhotosContentPr
       });
     },
     onSuccess: (photo) => {
-      queryClient.setQueryData<ProjectPhoto[]>(
-        photosQueryKey(photo.projectId),
-        (currentPhotos = []) => [photo, ...currentPhotos],
-      );
+      void queryClient.invalidateQueries({
+        queryKey: photosQueryKey(photo.projectId),
+      });
       queryClient.setQueryData(
         projectQueryKey(photo.projectId),
         (project: Awaited<ReturnType<typeof getProjectById>> | undefined) =>

@@ -6,6 +6,7 @@ import {
   Inject,
   Param,
   Post,
+  Query,
   Res,
   StreamableFile,
   UploadedFile,
@@ -20,6 +21,7 @@ import {
   ApiOkResponse,
   ApiParam,
   ApiProduces,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -29,6 +31,8 @@ import { ApiErrorResponses } from '../../common/decorators/api-error-responses.d
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import type { RequestUser } from '../../common/types/authenticated-request';
 import { PhotoDto } from './dto/photo.dto';
+import { ListPhotosQueryDto } from './dto/list-photos-query.dto';
+import { PhotoPageDto } from './dto/photo-page.dto';
 import type { UploadedPhotoFile } from './photo-upload.validator';
 import { PhotosService } from './photos.service';
 
@@ -46,15 +50,32 @@ export class PhotosController {
 
   @Get()
   @ApiOkResponse({
-    isArray: true,
-    type: PhotoDto,
+    type: PhotoPageDto,
+  })
+  @ApiQuery({
+    description: '上一页返回的游标',
+    name: 'cursor',
+    required: false,
+    type: String,
+  })
+  @ApiQuery({
+    description: '每页照片数量',
+    name: 'limit',
+    required: false,
+    schema: {
+      default: 12,
+      maximum: 100,
+      minimum: 1,
+      type: 'integer',
+    },
   })
   @ApiErrorResponses(HttpStatus.UNAUTHORIZED, HttpStatus.NOT_FOUND)
   listPhotos(
     @CurrentUser() user: RequestUser,
     @Param('projectId') projectId: string,
-  ): Promise<PhotoDto[]> {
-    return this.photosService.listPhotos(user.id, projectId);
+    @Query() query: ListPhotosQueryDto,
+  ): Promise<PhotoPageDto> {
+    return this.photosService.listPhotos(user.id, projectId, query);
   }
 
   @Get(':photoId/thumbnail')

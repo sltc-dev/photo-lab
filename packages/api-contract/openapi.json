@@ -406,6 +406,27 @@
         "operationId": "listPhotos",
         "parameters": [
           {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "每页照片数量",
+            "schema": {
+              "default": 12,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "上一页返回的游标",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "projectId",
             "required": true,
             "in": "path",
@@ -421,10 +442,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/PhotoDto"
-                  }
+                  "$ref": "#/components/schemas/PhotoPageDto"
                 }
               }
             }
@@ -1064,6 +1082,16 @@
             "type": "string",
             "example": "image/jpeg"
           },
+          "originalUrl": {
+            "type": "string",
+            "description": "原始图片的 API 相对 URL",
+            "example": "/public/projects/project-id/photos/photo-id--holiday.jpg"
+          },
+          "thumbnailUrl": {
+            "type": "string",
+            "description": "缩略图的 API 相对 URL",
+            "example": "/public/projects/project-id/photos/photo-id--holiday.thumbnail.webp"
+          },
           "sizeBytes": {
             "type": "number",
             "description": "原始图片大小，单位为字节",
@@ -1098,12 +1126,34 @@
           "projectId",
           "fileName",
           "mimeType",
+          "originalUrl",
+          "thumbnailUrl",
           "sizeBytes",
           "width",
           "height",
           "status",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "PhotoPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PhotoDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "description": "下一页游标；没有更多数据时为 null",
+            "nullable": true
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
         ]
       }
     }

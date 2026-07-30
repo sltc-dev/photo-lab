@@ -21,6 +21,20 @@ export class PhotoDto {
   mimeType!: string;
 
   @ApiProperty({
+    description: '原始图片的 API 相对 URL',
+    example: '/public/projects/project-id/photos/photo-id--holiday.jpg',
+    type: String,
+  })
+  originalUrl!: string;
+
+  @ApiProperty({
+    description: '缩略图的 API 相对 URL',
+    example: '/public/projects/project-id/photos/photo-id--holiday.thumbnail.webp',
+    type: String,
+  })
+  thumbnailUrl!: string;
+
+  @ApiProperty({
     description: '原始图片大小，单位为字节',
     example: 4839201,
     type: Number,

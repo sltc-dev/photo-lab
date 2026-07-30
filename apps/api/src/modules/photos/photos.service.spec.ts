@@ -27,9 +27,11 @@ const photoRecord = {
   height: 800,
   id: 'photo-1',
   mimeType: 'image/jpeg',
+  originalObjectKey: 'projects/project-1/photos/photo-1--holiday.jpg',
   projectId: 'project-1',
   sizeBytes: JPEG_BUFFER.length,
   status: PhotoStatus.UPLOADED,
+  thumbnailObjectKey: 'projects/project-1/photos/photo-1--holiday.thumbnail.webp',
   updatedAt: new Date('2026-07-27T09:00:00.000Z'),
   width: 1200,
 };
@@ -115,9 +117,11 @@ describe('PhotosService.uploadPhoto', () => {
         height: 800,
         id: 'photo-1',
         mimeType: 'image/jpeg',
+        originalUrl: '/public/projects/project-1/photos/photo-1--holiday.jpg',
         projectId: 'project-1',
         sizeBytes: JPEG_BUFFER.length,
         status: PhotoStatus.UPLOADED,
+        thumbnailUrl: '/public/projects/project-1/photos/photo-1--holiday.thumbnail.webp',
         updatedAt: '2026-07-27T09:00:00.000Z',
         width: 1200,
       },
@@ -306,20 +310,25 @@ describe('PhotosService photo queries', () => {
       {} as PhotoThumbnailGenerator,
     );
 
-    await expect(service.listPhotos('user-1', 'project-1')).resolves.toEqual([
-      {
-        createdAt: '2026-07-27T08:00:00.000Z',
-        fileName: 'holiday.jpg',
-        height: 800,
-        id: 'photo-1',
-        mimeType: 'image/jpeg',
-        projectId: 'project-1',
-        sizeBytes: JPEG_BUFFER.length,
-        status: PhotoStatus.UPLOADED,
-        updatedAt: '2026-07-27T09:00:00.000Z',
-        width: 1200,
-      },
-    ]);
+    await expect(service.listPhotos('user-1', 'project-1', { limit: 12 })).resolves.toEqual({
+      items: [
+        {
+          createdAt: '2026-07-27T08:00:00.000Z',
+          fileName: 'holiday.jpg',
+          height: 800,
+          id: 'photo-1',
+          mimeType: 'image/jpeg',
+          originalUrl: '/public/projects/project-1/photos/photo-1--holiday.jpg',
+          projectId: 'project-1',
+          sizeBytes: JPEG_BUFFER.length,
+          status: PhotoStatus.UPLOADED,
+          thumbnailUrl: '/public/projects/project-1/photos/photo-1--holiday.thumbnail.webp',
+          updatedAt: '2026-07-27T09:00:00.000Z',
+          width: 1200,
+        },
+      ],
+      nextCursor: null,
+    });
     expect(projectFindFirst).toHaveBeenCalledWith({
       select: {
         id: true,
@@ -331,12 +340,51 @@ describe('PhotosService photo queries', () => {
     });
     expect(photoFindMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        orderBy: {
-          createdAt: 'desc',
-        },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        skip: 0,
+        take: 13,
         where: {
           projectId: 'project-1',
         },
+      }),
+    );
+  });
+
+  it('returns a next cursor and applies the supplied cursor', async () => {
+    const projectFindFirst = vi.fn().mockResolvedValue({ id: 'project-1' });
+    const photoFindMany = vi.fn().mockResolvedValue([
+      { ...photoRecord, id: 'photo-2' },
+      { ...photoRecord, id: 'photo-1' },
+    ]);
+    const prisma = {
+      photo: {
+        findMany: photoFindMany,
+      },
+      project: {
+        findFirst: projectFindFirst,
+      },
+    } as unknown as PrismaService;
+    const service = new PhotosService(
+      prisma,
+      {} as StorageService,
+      {} as PhotoUploadValidator,
+      {} as PhotoMetadataReader,
+      {} as PhotoThumbnailGenerator,
+    );
+
+    const result = await service.listPhotos('user-1', 'project-1', {
+      cursor: 'photo-previous',
+      limit: 1,
+    });
+
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]?.id).toBe('photo-2');
+    expect(result.nextCursor).toBe('photo-2');
+    expect(photoFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cursor: { id: 'photo-previous' },
+        skip: 1,
+        take: 2,
       }),
     );
   });

@@ -6,12 +6,13 @@ import {
   Center,
   Drawer,
   Image,
+  Loader,
   SimpleGrid,
   Skeleton,
   Stack,
   Text,
 } from '@mantine/core';
-import { useQuery } from '@tanstack/react-query';
+import { type InfiniteData, useInfiniteQuery } from '@tanstack/react-query';
 import {
   AlertCircle,
   Check,
@@ -23,15 +24,12 @@ import {
   Maximize2,
   RefreshCw,
 } from 'lucide-react';
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import {
-  getPhotoOriginal,
-  getPhotoThumbnail,
-  getProjectPhotos,
-  photoOriginalQueryKey,
-  photoThumbnailQueryKey,
+  getProjectPhotosPage,
   photosQueryKey,
   type ProjectPhoto,
+  type ProjectPhotoPage,
 } from '../../api/photos';
 import styles from '../../styles/components/photos/PhotoGrid.module.css';
 
@@ -41,16 +39,60 @@ type PhotoGridProps = {
 
 export function PhotoGrid({ projectId }: PhotoGridProps) {
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
-  const photosQuery = useQuery({
-    queryFn: () => getProjectPhotos(projectId),
+  const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
+  const photosQuery = useInfiniteQuery<
+    ProjectPhotoPage,
+    Error,
+    InfiniteData<ProjectPhotoPage, string | null>,
+    ReturnType<typeof photosQueryKey>,
+    string | null
+  >({
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam }) => getProjectPhotosPage(projectId, pageParam),
     queryKey: photosQueryKey(projectId),
   });
+
+  useEffect(() => {
+    const sentinel = loadMoreSentinelRef.current;
+
+    if (
+      !sentinel ||
+      !photosQuery.hasNextPage ||
+      photosQuery.isFetchingNextPage ||
+      photosQuery.isFetchNextPageError
+    ) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          void photosQuery.fetchNextPage();
+        }
+      },
+      {
+        rootMargin: '400px 0px',
+      },
+    );
+
+    observer.observe(sentinel);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [
+    photosQuery.fetchNextPage,
+    photosQuery.hasNextPage,
+    photosQuery.isFetchingNextPage,
+    photosQuery.isFetchNextPageError,
+  ]);
 
   if (photosQuery.isLoading) {
     return <PhotoGridSkeleton />;
   }
 
-  if (photosQuery.isError) {
+  if (photosQuery.isError && !photosQuery.data) {
     return (
       <Alert color="red" icon={<AlertCircle aria-hidden size={20} />} title="照片加载失败">
         <Stack align="flex-start" gap="sm">
@@ -69,7 +111,7 @@ export function PhotoGrid({ projectId }: PhotoGridProps) {
     );
   }
 
-  const photos = photosQuery.data ?? [];
+  const photos = photosQuery.data?.pages.flatMap((page) => page.items) ?? [];
   const selectedPhoto = photos.find((photo) => photo.id === selectedPhotoId) ?? null;
 
   if (photos.length === 0) {
@@ -100,6 +142,33 @@ export function PhotoGrid({ projectId }: PhotoGridProps) {
           />
         ))}
       </SimpleGrid>
+      {photosQuery.hasNextPage ? (
+        <div
+          aria-label="继续加载照片"
+          className={styles.loadMoreSentinel}
+          ref={loadMoreSentinelRef}
+        >
+          {photosQuery.isFetchNextPageError ? (
+            <Stack align="center" gap="xs">
+              <Text c="red" size="sm">
+                下一页加载失败
+              </Text>
+              <Button
+                color="red"
+                onClick={() => void photosQuery.fetchNextPage()}
+                size="xs"
+                variant="subtle"
+              >
+                重试
+              </Button>
+            </Stack>
+          ) : photosQuery.isFetchingNextPage ? (
+            <Center>
+              <Loader aria-label="正在加载更多照片" size="sm" />
+            </Center>
+          ) : null}
+        </div>
+      ) : null}
       <Drawer
         classNames={{
           body: styles.drawerBody,
@@ -115,7 +184,7 @@ export function PhotoGrid({ projectId }: PhotoGridProps) {
         size={400}
         title="照片详情"
       >
-        {selectedPhoto ? <PhotoDetail photo={selectedPhoto} /> : null}
+        {selectedPhoto ? <PhotoDetail key={selectedPhoto.id} photo={selectedPhoto} /> : null}
       </Drawer>
     </>
   );
@@ -128,14 +197,7 @@ type PhotoGridItemProps = {
 };
 
 function PhotoGridItem({ isSelected, onSelect, photo }: PhotoGridItemProps) {
-  const thumbnailQuery = useQuery({
-    gcTime: 5 * 60 * 1000,
-    queryFn: () => getPhotoThumbnail(photo.projectId, photo.id),
-    queryKey: photoThumbnailQueryKey(photo.projectId, photo.id),
-    staleTime: Number.POSITIVE_INFINITY,
-  });
-  const imageUrl = useObjectUrl(thumbnailQuery.data);
-
+  const [thumbnailFailed, setThumbnailFailed] = useState(false);
   return (
     <Card
       aria-label={`查看 ${photo.fileName} 详情`}
@@ -146,15 +208,19 @@ function PhotoGridItem({ isSelected, onSelect, photo }: PhotoGridItemProps) {
       type="button"
     >
       <AspectRatio ratio={4 / 3}>
-        {thumbnailQuery.isLoading ? <Skeleton height="100%" /> : null}
-        {thumbnailQuery.isError ? (
+        {thumbnailFailed ? (
           <Center className={styles.imageError}>
             <ImageOff aria-hidden size={26} />
           </Center>
-        ) : null}
-        {imageUrl ? (
-          <Image alt={photo.fileName} className={styles.photoImage} loading="lazy" src={imageUrl} />
-        ) : null}
+        ) : (
+          <Image
+            alt={photo.fileName}
+            className={styles.photoImage}
+            loading="lazy"
+            onError={() => setThumbnailFailed(true)}
+            src={photo.thumbnailUrl}
+          />
+        )}
       </AspectRatio>
       <Stack className={styles.photoInfo} gap={2}>
         <Text fw={600} lineClamp={1} size="sm" title={photo.fileName}>
@@ -174,29 +240,26 @@ function PhotoGridItem({ isSelected, onSelect, photo }: PhotoGridItemProps) {
 }
 
 function PhotoDetail({ photo }: { photo: ProjectPhoto }) {
-  const originalQuery = useQuery({
-    gcTime: 5 * 60 * 1000,
-    queryFn: () => getPhotoOriginal(photo.projectId, photo.id),
-    queryKey: photoOriginalQueryKey(photo.projectId, photo.id),
-    staleTime: Number.POSITIVE_INFINITY,
-  });
-  const imageUrl = useObjectUrl(originalQuery.data);
+  const [originalFailed, setOriginalFailed] = useState(false);
 
   return (
     <div>
       <AspectRatio className={styles.detailImageFrame} ratio={4 / 3}>
-        {originalQuery.isLoading ? <Skeleton height="100%" /> : null}
-        {originalQuery.isError ? (
+        {originalFailed ? (
           <Center className={styles.detailImageError}>
             <Stack align="center" gap={6}>
               <ImageOff aria-hidden size={28} />
               <Text size="xs">原图加载失败</Text>
             </Stack>
           </Center>
-        ) : null}
-        {imageUrl ? (
-          <Image alt={photo.fileName} className={styles.detailImage} src={imageUrl} />
-        ) : null}
+        ) : (
+          <Image
+            alt={photo.fileName}
+            className={styles.detailImage}
+            onError={() => setOriginalFailed(true)}
+            src={photo.originalUrl}
+          />
+        )}
       </AspectRatio>
 
       <dl className={styles.metadataList}>
@@ -241,26 +304,6 @@ function PhotoGridSkeleton() {
       ))}
     </SimpleGrid>
   );
-}
-
-function useObjectUrl(blob: Blob | undefined): string | null {
-  const [url, setUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!blob) {
-      setUrl(null);
-      return;
-    }
-
-    const nextUrl = URL.createObjectURL(blob);
-    setUrl(nextUrl);
-
-    return () => {
-      URL.revokeObjectURL(nextUrl);
-    };
-  }, [blob]);
-
-  return url;
 }
 
 function formatFileSize(bytes: number): string {

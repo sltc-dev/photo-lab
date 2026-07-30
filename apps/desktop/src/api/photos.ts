@@ -1,18 +1,18 @@
-import {
-  getOriginalPhoto,
-  getThumbnailPhoto,
-  listPhotos,
-  uploadPhoto,
-  type PhotoDto,
-} from '../generated/api';
+import { listPhotos, uploadPhoto, type PhotoDto, type PhotoPageDto } from '../generated/api';
+import { resolveApiUrl } from './http';
 
-export type ProjectPhoto = PhotoDto;
+export const PROJECT_PHOTOS_PAGE_SIZE = 12;
+
+export type ProjectPhoto = Omit<PhotoDto, 'originalUrl' | 'thumbnailUrl'> & {
+  originalUrl: string;
+  thumbnailUrl: string;
+};
+
+export type ProjectPhotoPage = Omit<PhotoPageDto, 'items'> & {
+  items: ProjectPhoto[];
+};
 
 export const photosQueryKey = (projectId: string) => ['projects', projectId, 'photos'] as const;
-export const photoOriginalQueryKey = (projectId: string, photoId: string) =>
-  ['projects', projectId, 'photos', photoId, 'original'] as const;
-export const photoThumbnailQueryKey = (projectId: string, photoId: string) =>
-  ['projects', projectId, 'photos', photoId, 'thumbnail'] as const;
 
 export type UploadProjectPhotoInput = {
   file: File;
@@ -22,7 +22,7 @@ export type UploadProjectPhotoInput = {
 export async function uploadProjectPhoto({
   file,
   projectId,
-}: UploadProjectPhotoInput): Promise<PhotoDto> {
+}: UploadProjectPhotoInput): Promise<ProjectPhoto> {
   const response = await uploadPhoto({
     body: {
       file,
@@ -33,40 +33,34 @@ export async function uploadProjectPhoto({
     throwOnError: true,
   });
 
-  return response.data;
+  return resolvePhotoUrls(response.data);
 }
 
-export async function getProjectPhotos(projectId: string): Promise<PhotoDto[]> {
+export async function getProjectPhotosPage(
+  projectId: string,
+  cursor: string | null,
+): Promise<ProjectPhotoPage> {
   const response = await listPhotos({
     path: {
       projectId,
     },
-    throwOnError: true,
-  });
-
-  return response.data;
-}
-
-export async function getPhotoOriginal(projectId: string, photoId: string): Promise<Blob> {
-  const response = await getOriginalPhoto({
-    path: {
-      photoId,
-      projectId,
+    query: {
+      ...(cursor ? { cursor } : {}),
+      limit: PROJECT_PHOTOS_PAGE_SIZE,
     },
     throwOnError: true,
   });
 
-  return response.data;
+  return {
+    ...response.data,
+    items: response.data.items.map(resolvePhotoUrls),
+  };
 }
 
-export async function getPhotoThumbnail(projectId: string, photoId: string): Promise<Blob> {
-  const response = await getThumbnailPhoto({
-    path: {
-      photoId,
-      projectId,
-    },
-    throwOnError: true,
-  });
-
-  return response.data;
+function resolvePhotoUrls(photo: PhotoDto): ProjectPhoto {
+  return {
+    ...photo,
+    originalUrl: resolveApiUrl(photo.originalUrl),
+    thumbnailUrl: resolveApiUrl(photo.thumbnailUrl),
+  };
 }

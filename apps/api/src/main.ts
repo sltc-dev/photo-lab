@@ -1,8 +1,10 @@
 import 'reflect-metadata';
 import { randomUUID } from 'node:crypto';
+import { resolve } from 'node:path';
 import { HttpStatus, Logger, ValidationError, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import type { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
@@ -22,13 +24,24 @@ type RequestWithId = Request & {
  */
 async function bootstrap(): Promise<void> {
   // AppModule 是整个后端的“总装配清单”，Nest 会从它开始创建各个模块和服务。
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const config = app.get(ConfigService<AppEnv, true>);
   const logger = new Logger('Bootstrap');
   const nodeEnv = config.getOrThrow('NODE_ENV');
 
   app.enableShutdownHooks();
   app.use(helmet());
+
+  // 将照片存储目录映射为 /public/* 静态资源，供浏览器直接访问上传后的照片。
+  app.useStaticAssets(resolve(config.getOrThrow('PHOTO_STORAGE_ROOT')), {
+    prefix: '/public/',
+    setHeaders: (response) => {
+      // 照片使用唯一地址，允许浏览器或 CDN 长期缓存，减少重复下载。
+      response.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      // 允许其他域名通过 img 等资源标签加载照片；这不等同于开放 fetch 的 CORS 权限。
+      response.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    },
+  });
 
   // 每个请求都带一个 requestId，响应头和服务端日志可以据此对应到同一次请求。
   // 客户端传来的 ID 只有格式安全时才复用，否则由后端生成新的 UUID。

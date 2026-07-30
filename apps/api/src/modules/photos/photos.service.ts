@@ -6,6 +6,8 @@ import { AppException } from '../../common/errors/app.exception';
 import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import type { PhotoDto } from './dto/photo.dto';
+import type { ListPhotosQueryDto } from './dto/list-photos-query.dto';
+import type { PhotoPageDto } from './dto/photo-page.dto';
 import { PhotoMetadataReader } from './photo-metadata.reader';
 import { PhotoThumbnailGenerator } from './photo-thumbnail.generator';
 import { PhotoUploadValidator, type UploadedPhotoFile } from './photo-upload.validator';
@@ -21,7 +23,9 @@ const photoSelect = {
   sizeBytes: true,
   width: true,
   height: true,
+  originalObjectKey: true,
   status: true,
+  thumbnailObjectKey: true,
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.PhotoSelect;
@@ -128,20 +132,31 @@ export class PhotosService {
     }
   }
 
-  async listPhotos(userId: string, projectId: string): Promise<PhotoDto[]> {
+  async listPhotos(
+    userId: string,
+    projectId: string,
+    query: ListPhotosQueryDto,
+  ): Promise<PhotoPageDto> {
     await this.ensureOwnedProject(userId, projectId);
 
     const photos = await this.prisma.photo.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
+      ...(query.cursor ? { cursor: { id: query.cursor } } : {}),
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       select: photoSelect,
+      skip: query.cursor ? 1 : 0,
+      take: query.limit + 1,
       where: {
         projectId,
       },
     });
 
-    return photos.map((photo) => this.toPhotoDto(photo));
+    const hasMore = photos.length > query.limit;
+    const pageItems = hasMore ? photos.slice(0, query.limit) : photos;
+
+    return {
+      items: pageItems.map((photo) => this.toPhotoDto(photo)),
+      nextCursor: hasMore ? pageItems.at(-1)!.id : null,
+    };
   }
 
   async getOriginalPhoto(
@@ -269,11 +284,22 @@ export class PhotosService {
       sizeBytes: photo.sizeBytes,
       width: photo.width,
       height: photo.height,
+      originalUrl: buildPublicUrl(photo.originalObjectKey),
       status: photo.status,
+      thumbnailUrl: buildPublicUrl(
+        photo.thumbnailObjectKey ??
+          buildThumbnailObjectKey(photo.projectId, photo.id, photo.fileName),
+      ),
       createdAt: photo.createdAt.toISOString(),
       updatedAt: photo.updatedAt.toISOString(),
     };
   }
+}
+
+function buildPublicUrl(objectKey: string): string {
+  const encodedObjectKey = objectKey.split('/').map(encodeURIComponent).join('/');
+
+  return `/public/${encodedObjectKey}`;
 }
 
 function buildOriginalObjectKey(projectId: string, photoId: string, fileName: string): string {

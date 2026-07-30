@@ -25,9 +25,11 @@ const photoDto: PhotoDto = {
   height: null,
   id: 'photo-1',
   mimeType: 'image/jpeg',
+  originalUrl: '/public/projects/project-1/photos/photo-1--holiday.jpg',
   projectId: 'project-1',
   sizeBytes: 4,
   status: PhotoStatus.UPLOADED,
+  thumbnailUrl: '/public/projects/project-1/photos/photo-1--holiday.thumbnail.webp',
   updatedAt: '2026-07-27T09:00:00.000Z',
   width: null,
 };
@@ -45,7 +47,10 @@ function createController() {
     sizeBytes: 2,
     stream: Readable.from(Buffer.from([0x01, 0x02])),
   });
-  const listPhotos = vi.fn().mockResolvedValue([photoDto]);
+  const listPhotos = vi.fn().mockResolvedValue({
+    items: [photoDto],
+    nextCursor: null,
+  });
   const uploadPhoto = vi.fn().mockResolvedValue(photoDto);
   const service = {
     getOriginalPhoto,
@@ -67,8 +72,13 @@ describe('PhotosController', () => {
   it('lists photos for the authenticated project owner', async () => {
     const { controller, listPhotos } = createController();
 
-    await expect(controller.listPhotos(user, 'project-1')).resolves.toEqual([photoDto]);
-    expect(listPhotos).toHaveBeenCalledWith('user-1', 'project-1');
+    const query = { limit: 12 };
+
+    await expect(controller.listPhotos(user, 'project-1', query)).resolves.toEqual({
+      items: [photoDto],
+      nextCursor: null,
+    });
+    expect(listPhotos).toHaveBeenCalledWith('user-1', 'project-1', query);
   });
 
   it('streams an original photo with private image response headers', async () => {

@@ -87,6 +87,14 @@ export type PhotoDto = {
     fileName: string;
     mimeType: string;
     /**
+     * 原始图片的 API 相对 URL
+     */
+    originalUrl: string;
+    /**
+     * 缩略图的 API 相对 URL
+     */
+    thumbnailUrl: string;
+    /**
      * 原始图片大小，单位为字节
      */
     sizeBytes: number;
@@ -95,6 +103,14 @@ export type PhotoDto = {
     status: PhotoStatus;
     createdAt: string;
     updatedAt: string;
+};
+
+export type PhotoPageDto = {
+    items: Array<PhotoDto>;
+    /**
+     * 下一页游标；没有更多数据时为 null
+     */
+    nextCursor: string | null;
 };
 
 export type RegisterData = {
@@ -280,7 +296,16 @@ export type ListPhotosData = {
          */
         projectId: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * 每页照片数量
+         */
+        limit?: number;
+        /**
+         * 上一页返回的游标
+         */
+        cursor?: string;
+    };
     url: '/projects/{projectId}/photos';
 };
 
@@ -292,7 +317,7 @@ export type ListPhotosErrors = {
 export type ListPhotosError = ListPhotosErrors[keyof ListPhotosErrors];
 
 export type ListPhotosResponses = {
-    200: Array<PhotoDto>;
+    200: PhotoPageDto;
 };
 
 export type ListPhotosResponse = ListPhotosResponses[keyof ListPhotosResponses];
