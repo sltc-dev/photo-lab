@@ -61,6 +61,7 @@ function getHttpOrigin(value: string): string {
 
 function createContentSecurityPolicy(isDevelopment: boolean, apiOrigin: string): string {
   const connectSources = ["'self'", apiOrigin];
+  const imageSources = ["'self'", 'data:', 'blob:', apiOrigin];
   const scriptSources = ["'self'"];
 
   if (isDevelopment) {
@@ -75,7 +76,7 @@ function createContentSecurityPolicy(isDevelopment: boolean, apiOrigin: string):
     "font-src 'self' data:",
     "form-action 'none'",
     "frame-src 'none'",
-    "img-src 'self' data: blob:",
+    `img-src ${imageSources.join(' ')}`,
     "object-src 'none'",
     `script-src ${scriptSources.join(' ')}`,
     "style-src 'self' 'unsafe-inline'",

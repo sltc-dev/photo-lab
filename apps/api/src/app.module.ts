@@ -7,6 +7,9 @@ import type { AppEnv } from './config/env';
 import { validateEnv } from './config/env';
 import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
+import { ProjectsModule } from './modules/projects/projects.module';
+import { StorageModule } from './modules/storage/storage.module';
+import { PhotosModule } from './modules/photos/photos.module';
 
 @Module({
   imports: [
@@ -28,6 +31,9 @@ import { HealthModule } from './modules/health/health.module';
     }),
     AuthModule,
     HealthModule,
+    ProjectsModule,
+    StorageModule,
+    PhotosModule,
   ],
   providers: [
     // APP_FILTER 会让统一错误格式应用到所有 Controller。

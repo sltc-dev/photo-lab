@@ -92,6 +92,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
         return 'AUTH_TOKEN_EXPIRED';
       case HttpStatus.NOT_FOUND:
         return 'NOT_FOUND';
+      case HttpStatus.PAYLOAD_TOO_LARGE:
+        return 'PHOTO_FILE_TOO_LARGE';
+      case HttpStatus.UNSUPPORTED_MEDIA_TYPE:
+        return 'PHOTO_UNSUPPORTED_TYPE';
       case HttpStatus.TOO_MANY_REQUESTS:
         return 'RATE_LIMIT_EXCEEDED';
       default:

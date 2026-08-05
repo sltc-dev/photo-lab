@@ -121,6 +121,8 @@ function createService(fakePrisma = new FakeAuthPrisma()): {
     JWT_ACCESS_SECRET: 'test-access-secret-123',
     JWT_REFRESH_SECRET: 'test-refresh-secret-123',
     NODE_ENV: 'test',
+    PHOTO_STORAGE_ROOT: '/tmp/photo-lab-test',
+    PHOTO_UPLOAD_MAX_BYTES: 25 * 1024 * 1024,
     PORT: 3000,
     REFRESH_TOKEN_TTL: '30d',
     THROTTLE_LIMIT: 120,

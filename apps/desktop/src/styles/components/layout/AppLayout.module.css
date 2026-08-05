@@ -1,0 +1,133 @@
+.header {
+  align-items: center;
+  backdrop-filter: blur(14px);
+  background: rgb(255 255 255 / 92%);
+  border-bottom: 1px solid var(--pl-line);
+  display: flex;
+  height: 64px;
+  padding: 0 22px;
+}
+
+.headerInner {
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
+
+.headerGroup {
+  align-items: center;
+}
+
+.logoMark {
+  align-items: center;
+  background: #172033;
+  border-radius: 8px;
+  color: #ffffff;
+  display: flex;
+  height: 34px;
+  justify-content: center;
+  width: 34px;
+}
+
+.appTitle {
+  color: var(--pl-text);
+  font-size: 18px;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.avatar {
+  background: var(--pl-accent-soft);
+  color: var(--pl-accent-strong);
+  font-weight: 700;
+}
+
+.logoutButton {
+  color: var(--pl-text);
+}
+
+.main {
+  background: var(--pl-bg);
+  display: flex;
+  min-height: 100%;
+}
+
+.navbar {
+  background: #fbfcfe;
+  border-right: 1px solid var(--pl-line);
+  display: flex;
+  flex-direction: column;
+}
+
+.navLabel {
+  color: var(--pl-faint);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin: 4px 12px 10px;
+  text-transform: uppercase;
+}
+
+.navLink {
+  border-radius: 8px;
+  color: var(--pl-muted);
+  font-weight: 600;
+  min-height: 44px;
+}
+
+.navLink:hover {
+  background: var(--pl-accent-soft);
+  color: var(--pl-accent-strong);
+}
+
+.navLink[data-active] {
+  background: #172033;
+  color: #ffffff;
+}
+
+.navHint {
+  align-items: flex-start;
+  background: var(--pl-bg-raised);
+  border: 1px solid var(--pl-line);
+  border-radius: 10px;
+  color: var(--pl-muted);
+  display: flex;
+  gap: 10px;
+  line-height: 1.5;
+  margin-top: auto;
+  padding: 14px;
+}
+
+.navHint svg {
+  color: var(--pl-accent);
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+@media (max-width: 48em) {
+  .header {
+    padding: 0 14px;
+  }
+
+  .headerGroup:nth-child(2) > :global(.mantine-Stack-root) {
+    display: none;
+  }
+
+  .logoutButton {
+    height: 40px;
+    padding-inline: 11px;
+    width: 40px;
+  }
+
+  .logoutButton :global(.mantine-Button-section) {
+    margin: 0;
+  }
+
+  .logoutLabel {
+    display: none;
+  }
+
+  .navbar {
+    box-shadow: 16px 0 38px rgb(23 32 51 / 12%);
+  }
+}

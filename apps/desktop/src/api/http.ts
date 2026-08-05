@@ -26,6 +26,14 @@ export function configureApiClient(): void {
   isConfigured = true;
 }
 
+/**
+ * 将后端返回的相对资源路径转换为可直接访问的完整 URL，例如供 img 加载照片。
+ * 先统一 API_BASE_URL 末尾的斜杠，避免基础地址与资源路径拼接时出现重复斜杠。
+ */
+export function resolveApiUrl(path: string): string {
+  return new URL(path, `${API_BASE_URL.replace(/\/+$/, '')}/`).toString();
+}
+
 export async function getApiErrorMessage(error: unknown): Promise<string> {
   if (isApiErrorBody(error)) {
     return error.error.message;

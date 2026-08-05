@@ -1,0 +1,33 @@
+.input :global(.mantine-Input-input) {
+  background: var(--pl-bg-subtle);
+  border-color: var(--pl-line-strong);
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.input :global(.mantine-Input-input:focus) {
+  background: var(--pl-bg-raised);
+  border-color: var(--pl-accent);
+  box-shadow: 0 0 0 3px rgb(47 104 196 / 13%);
+}
+
+.input :global(.mantine-InputWrapper-label) {
+  color: var(--pl-text);
+  font-size: 13px;
+  font-weight: 650;
+  margin-bottom: 7px;
+}
+
+@media (max-width: 30em) {
+  .actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .actions button {
+    min-height: 44px;
+    width: 100%;
+  }
+}

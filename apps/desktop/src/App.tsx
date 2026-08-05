@@ -1,9 +1,12 @@
 import { useEffect, type ReactNode } from 'react';
 import { Center, Loader } from '@mantine/core';
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { AppLayout } from './components/layout/AppLayout';
 import { selectIsAuthenticated, useAuthStore } from './stores/auth.store';
 import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
+import { ProfilePage } from './pages/ProfilePage';
+import { ProjectPhotosPage } from './pages/ProjectPhotosPage';
 import { RegisterPage } from './pages/RegisterPage';
 
 export function App() {
@@ -36,11 +39,14 @@ export function App() {
         <Route
           element={
             <RequireAuth>
-              <HomePage />
+              <AppLayout />
             </RequireAuth>
           }
-          path="/"
-        />
+        >
+          <Route element={<HomePage />} path="/" />
+          <Route element={<ProjectPhotosPage />} path="/projects/:projectId" />
+          <Route element={<ProfilePage />} path="/profile" />
+        </Route>
         <Route element={<Navigate replace to="/" />} path="*" />
       </Routes>
     </HashRouter>

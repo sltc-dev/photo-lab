@@ -5,6 +5,7 @@ const baseEnv = {
   DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
   JWT_ACCESS_SECRET: 'test-access-secret-123',
   JWT_REFRESH_SECRET: 'test-refresh-secret-123',
+  PHOTO_STORAGE_ROOT: '/tmp/photo-lab-test',
 };
 
 describe('environment validation', () => {
@@ -28,5 +29,11 @@ describe('environment validation', () => {
         NODE_ENV: 'production',
       }),
     ).toThrow(/CORS_ORIGINS.*JWT_ACCESS_SECRET.*JWT_REFRESH_SECRET/);
+  });
+
+  it('rejects an empty photo storage root at startup', () => {
+    expect(() => validateEnv({ ...baseEnv, PHOTO_STORAGE_ROOT: '  ' })).toThrow(
+      /PHOTO_STORAGE_ROOT/,
+    );
   });
 });

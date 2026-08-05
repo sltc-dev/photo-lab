@@ -24,7 +24,7 @@ export type AuthSessionDto = {
     user: CurrentUserDto;
 };
 
-export type ErrorCode = 'AUTH_INVALID_CREDENTIALS' | 'AUTH_REFRESH_TOKEN_INVALID' | 'AUTH_TOKEN_EXPIRED' | 'BAD_REQUEST' | 'HTTP_ERROR' | 'INTERNAL_SERVER_ERROR' | 'NOT_FOUND' | 'RATE_LIMIT_EXCEEDED' | 'USER_EMAIL_ALREADY_EXISTS' | 'USER_NOT_FOUND' | 'VALIDATION_FAILED';
+export type ErrorCode = 'AUTH_INVALID_CREDENTIALS' | 'AUTH_REFRESH_TOKEN_INVALID' | 'AUTH_TOKEN_EXPIRED' | 'BAD_REQUEST' | 'HTTP_ERROR' | 'INTERNAL_SERVER_ERROR' | 'NOT_FOUND' | 'PHOTO_FILE_REQUIRED' | 'PHOTO_FILE_TOO_LARGE' | 'PHOTO_NOT_FOUND' | 'PHOTO_STORAGE_FAILED' | 'PHOTO_UNSUPPORTED_TYPE' | 'PROJECT_NOT_FOUND' | 'RATE_LIMIT_EXCEEDED' | 'USER_EMAIL_ALREADY_EXISTS' | 'USER_NOT_FOUND' | 'VALIDATION_FAILED';
 
 export type ErrorBodyDto = {
     code: ErrorCode;
@@ -57,6 +57,60 @@ export type LogoutResultDto = {
 
 export type HealthDto = {
     ok: boolean;
+};
+
+export type CreateProjectDto = {
+    name: string;
+    description?: string;
+};
+
+export type ProjectDto = {
+    id: string;
+    name: string;
+    description: string;
+    /**
+     * 项目中的图片数量
+     */
+    photoCount: number;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type PhotoStatus = 'UPLOADED' | 'PROCESSING' | 'READY' | 'FAILED';
+
+export type PhotoDto = {
+    id: string;
+    projectId: string;
+    /**
+     * 用户上传时的原始文件名
+     */
+    fileName: string;
+    mimeType: string;
+    /**
+     * 原始图片的 API 相对 URL
+     */
+    originalUrl: string;
+    /**
+     * 缩略图的 API 相对 URL
+     */
+    thumbnailUrl: string;
+    /**
+     * 原始图片大小，单位为字节
+     */
+    sizeBytes: number;
+    width: number | null;
+    height: number | null;
+    status: PhotoStatus;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type PhotoPageDto = {
+    items: Array<PhotoDto>;
+    /**
+     * 下一页游标；没有更多数据时为 null
+     */
+    nextCursor: string | null;
 };
 
 export type RegisterData = {
@@ -169,3 +223,201 @@ export type HealthResponses = {
 };
 
 export type HealthResponse = HealthResponses[keyof HealthResponses];
+
+export type ListProjectsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/projects';
+};
+
+export type ListProjectsErrors = {
+    401: ErrorResponseDto;
+};
+
+export type ListProjectsError = ListProjectsErrors[keyof ListProjectsErrors];
+
+export type ListProjectsResponses = {
+    200: Array<ProjectDto>;
+};
+
+export type ListProjectsResponse = ListProjectsResponses[keyof ListProjectsResponses];
+
+export type CreateProjectData = {
+    body: CreateProjectDto;
+    path?: never;
+    query?: never;
+    url: '/projects';
+};
+
+export type CreateProjectErrors = {
+    400: ErrorResponseDto;
+    401: ErrorResponseDto;
+};
+
+export type CreateProjectError = CreateProjectErrors[keyof CreateProjectErrors];
+
+export type CreateProjectResponses = {
+    201: ProjectDto;
+};
+
+export type CreateProjectResponse = CreateProjectResponses[keyof CreateProjectResponses];
+
+export type GetProjectData = {
+    body?: never;
+    path: {
+        /**
+         * 图库项目 ID
+         */
+        projectId: string;
+    };
+    query?: never;
+    url: '/projects/{projectId}';
+};
+
+export type GetProjectErrors = {
+    401: ErrorResponseDto;
+    404: ErrorResponseDto;
+};
+
+export type GetProjectError = GetProjectErrors[keyof GetProjectErrors];
+
+export type GetProjectResponses = {
+    200: ProjectDto;
+};
+
+export type GetProjectResponse = GetProjectResponses[keyof GetProjectResponses];
+
+export type ListPhotosData = {
+    body?: never;
+    path: {
+        /**
+         * 图库项目 ID
+         */
+        projectId: string;
+    };
+    query?: {
+        /**
+         * 每页照片数量
+         */
+        limit?: number;
+        /**
+         * 上一页返回的游标
+         */
+        cursor?: string;
+    };
+    url: '/projects/{projectId}/photos';
+};
+
+export type ListPhotosErrors = {
+    401: ErrorResponseDto;
+    404: ErrorResponseDto;
+};
+
+export type ListPhotosError = ListPhotosErrors[keyof ListPhotosErrors];
+
+export type ListPhotosResponses = {
+    200: PhotoPageDto;
+};
+
+export type ListPhotosResponse = ListPhotosResponses[keyof ListPhotosResponses];
+
+export type UploadPhotoData = {
+    body: {
+        /**
+         * 要上传的单张原始图片
+         */
+        file: Blob | File;
+    };
+    path: {
+        /**
+         * 图库项目 ID
+         */
+        projectId: string;
+    };
+    query?: never;
+    url: '/projects/{projectId}/photos';
+};
+
+export type UploadPhotoErrors = {
+    400: ErrorResponseDto;
+    401: ErrorResponseDto;
+    404: ErrorResponseDto;
+    413: ErrorResponseDto;
+    415: ErrorResponseDto;
+    500: ErrorResponseDto;
+};
+
+export type UploadPhotoError = UploadPhotoErrors[keyof UploadPhotoErrors];
+
+export type UploadPhotoResponses = {
+    201: PhotoDto;
+};
+
+export type UploadPhotoResponse = UploadPhotoResponses[keyof UploadPhotoResponses];
+
+export type GetThumbnailPhotoData = {
+    body?: never;
+    path: {
+        /**
+         * 照片 ID
+         */
+        photoId: string;
+        /**
+         * 图库项目 ID
+         */
+        projectId: string;
+    };
+    query?: never;
+    url: '/projects/{projectId}/photos/{photoId}/thumbnail';
+};
+
+export type GetThumbnailPhotoErrors = {
+    401: ErrorResponseDto;
+    404: ErrorResponseDto;
+    500: ErrorResponseDto;
+};
+
+export type GetThumbnailPhotoError = GetThumbnailPhotoErrors[keyof GetThumbnailPhotoErrors];
+
+export type GetThumbnailPhotoResponses = {
+    /**
+     * 照片缩略图文件
+     */
+    200: Blob | File;
+};
+
+export type GetThumbnailPhotoResponse = GetThumbnailPhotoResponses[keyof GetThumbnailPhotoResponses];
+
+export type GetOriginalPhotoData = {
+    body?: never;
+    path: {
+        /**
+         * 照片 ID
+         */
+        photoId: string;
+        /**
+         * 图库项目 ID
+         */
+        projectId: string;
+    };
+    query?: never;
+    url: '/projects/{projectId}/photos/{photoId}/original';
+};
+
+export type GetOriginalPhotoErrors = {
+    401: ErrorResponseDto;
+    404: ErrorResponseDto;
+    500: ErrorResponseDto;
+};
+
+export type GetOriginalPhotoError = GetOriginalPhotoErrors[keyof GetOriginalPhotoErrors];
+
+export type GetOriginalPhotoResponses = {
+    /**
+     * 原始图片文件
+     */
+    200: Blob | File;
+};
+
+export type GetOriginalPhotoResponse = GetOriginalPhotoResponses[keyof GetOriginalPhotoResponses];

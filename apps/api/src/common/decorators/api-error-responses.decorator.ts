@@ -4,7 +4,9 @@ import {
   ApiConflictResponse,
   ApiInternalServerErrorResponse,
   ApiNotFoundResponse,
+  ApiPayloadTooLargeResponse,
   ApiUnauthorizedResponse,
+  ApiUnsupportedMediaTypeResponse,
 } from '@nestjs/swagger';
 import { ErrorResponseDto } from '../dto/error-response.dto';
 
@@ -13,7 +15,9 @@ type ErrorStatus =
   | HttpStatus.CONFLICT
   | HttpStatus.INTERNAL_SERVER_ERROR
   | HttpStatus.NOT_FOUND
-  | HttpStatus.UNAUTHORIZED;
+  | HttpStatus.PAYLOAD_TOO_LARGE
+  | HttpStatus.UNAUTHORIZED
+  | HttpStatus.UNSUPPORTED_MEDIA_TYPE;
 
 export function ApiErrorResponses(...statuses: ErrorStatus[]): MethodDecorator & ClassDecorator {
   // 这是 OpenAPI 文档装饰器的组合，不参与运行时异常处理。
@@ -29,8 +33,12 @@ export function ApiErrorResponses(...statuses: ErrorStatus[]): MethodDecorator &
         return ApiInternalServerErrorResponse(options);
       case HttpStatus.NOT_FOUND:
         return ApiNotFoundResponse(options);
+      case HttpStatus.PAYLOAD_TOO_LARGE:
+        return ApiPayloadTooLargeResponse(options);
       case HttpStatus.UNAUTHORIZED:
         return ApiUnauthorizedResponse(options);
+      case HttpStatus.UNSUPPORTED_MEDIA_TYPE:
+        return ApiUnsupportedMediaTypeResponse(options);
     }
   });
 
