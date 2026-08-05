@@ -1,6 +1,9 @@
 import {
+  getEditedPhotoState,
+  getOriginalPhoto,
   getThumbnailPhoto,
   listPhotos,
+  saveEditedPhoto,
   uploadPhoto,
   type PhotoDto,
   type PhotoPageDto,
@@ -21,6 +24,8 @@ export type ProjectPhotoPage = Omit<PhotoPageDto, 'items'> & {
 export const photosQueryKey = (projectId: string) => ['projects', projectId, 'photos'] as const;
 export const photoThumbnailQueryKey = (projectId: string, photoId: string) =>
   ['projects', projectId, 'photos', photoId, 'thumbnail'] as const;
+export const photoEditorSourceQueryKey = (projectId: string, photoId: string) =>
+  ['projects', projectId, 'photos', photoId, 'editor-source'] as const;
 
 export type UploadProjectPhotoInput = {
   file: File;
@@ -76,6 +81,68 @@ export async function getPhotoThumbnail(projectId: string, photoId: string): Pro
   });
 
   return response.data;
+}
+
+export async function getPhotoEditorSource(
+  projectId: string,
+  photoId: string,
+): Promise<{ blob: Blob; editState: Record<string, unknown> | null }> {
+  const [stateResponse, imageResponse] = await Promise.all([
+    getEditedPhotoState({
+      path: {
+        photoId,
+        projectId,
+      },
+      throwOnError: true,
+    }),
+    getOriginalPhoto({
+      parseAs: 'blob',
+      path: {
+        photoId,
+        projectId,
+      },
+      throwOnError: true,
+    }),
+  ]);
+  const editState = sanitizeEditState(stateResponse.data.editState);
+
+  return {
+    blob: imageResponse.data,
+    editState,
+  };
+}
+
+export async function saveProjectPhotoEdit(input: {
+  editState: Record<string, unknown>;
+  file: File;
+  finalize: boolean;
+  photoId: string;
+  projectId: string;
+}): Promise<void> {
+  await saveEditedPhoto({
+    body: {
+      editState: JSON.stringify(sanitizeEditState(input.editState)),
+      file: input.file,
+      finalize: input.finalize,
+    },
+    path: {
+      photoId: input.photoId,
+      projectId: input.projectId,
+    },
+    throwOnError: true,
+  });
+}
+
+function sanitizeEditState(
+  editState: Record<string, unknown> | null,
+): Record<string, unknown> | null {
+  if (!editState) {
+    return null;
+  }
+
+  const sanitized = { ...editState };
+  delete sanitized.imgSrc;
+  return sanitized;
 }
 
 function resolvePhotoUrls(photo: PhotoDto): ProjectPhoto {

@@ -5,7 +5,6 @@ import {
   Card,
   Center,
   Drawer,
-  Group,
   Image,
   Loader,
   SimpleGrid,
@@ -13,49 +12,44 @@ import {
   Stack,
   Text,
 } from '@mantine/core';
-import { type InfiniteData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { type InfiniteData, useInfiniteQuery } from '@tanstack/react-query';
 import {
   AlertCircle,
   Check,
   Clock3,
   FileImage,
+  FolderOpen,
   HardDrive,
   ImageOff,
   Images,
   Maximize2,
-  Pencil,
   RefreshCw,
 } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import {
-  getPhotoThumbnail,
-  getProjectPhotosPage,
-  photoThumbnailQueryKey,
-  photosQueryKey,
-  type ProjectPhoto,
-  type ProjectPhotoPage,
-} from '../../api/photos';
+  getMaterialProjectPhotosPage,
+  MATERIAL_QUERY_STALE_TIME,
+  materialProjectPhotosQueryKey,
+  type MaterialPhoto,
+  type MaterialPhotoPage,
+} from '../../api/materials';
 import styles from '../../styles/components/photos/PhotoGrid.module.css';
 
-type PhotoGridProps = {
-  projectId: string;
-};
-
-export function PhotoGrid({ projectId }: PhotoGridProps) {
+export function MaterialPhotoGrid({ projectId }: { projectId: string }) {
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
   const photosQuery = useInfiniteQuery<
-    ProjectPhotoPage,
+    MaterialPhotoPage,
     Error,
-    InfiniteData<ProjectPhotoPage, string | null>,
-    ReturnType<typeof photosQueryKey>,
+    InfiniteData<MaterialPhotoPage, string | null>,
+    ReturnType<typeof materialProjectPhotosQueryKey>,
     string | null
   >({
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     initialPageParam: null as string | null,
-    queryFn: ({ pageParam }) => getProjectPhotosPage(projectId, pageParam),
-    queryKey: photosQueryKey(projectId),
+    queryFn: ({ pageParam }) => getMaterialProjectPhotosPage(projectId, pageParam),
+    queryKey: materialProjectPhotosQueryKey(projectId),
+    staleTime: MATERIAL_QUERY_STALE_TIME,
   });
   const { fetchNextPage, hasNextPage, isFetchingNextPage, isFetchNextPageError } = photosQuery;
 
@@ -72,27 +66,22 @@ export function PhotoGrid({ projectId }: PhotoGridProps) {
           void fetchNextPage();
         }
       },
-      {
-        rootMargin: '400px 0px',
-      },
+      { rootMargin: '400px 0px' },
     );
 
     observer.observe(sentinel);
-
-    return () => {
-      observer.disconnect();
-    };
+    return () => observer.disconnect();
   }, [fetchNextPage, hasNextPage, isFetchingNextPage, isFetchNextPageError]);
 
   if (photosQuery.isLoading) {
-    return <PhotoGridSkeleton />;
+    return <MaterialPhotoGridSkeleton />;
   }
 
   if (photosQuery.isError && !photosQuery.data) {
     return (
       <Alert color="red" icon={<AlertCircle aria-hidden size={20} />} title="照片加载失败">
         <Stack align="flex-start" gap="sm">
-          <Text size="sm">暂时无法加载这个项目的照片，请检查服务连接后重试。</Text>
+          <Text size="sm">暂时无法加载这个图库的照片，请检查服务连接后重试。</Text>
           <Button
             color="red"
             leftSection={<RefreshCw aria-hidden size={16} />}
@@ -117,9 +106,9 @@ export function PhotoGrid({ projectId }: PhotoGridProps) {
           <div className={styles.emptyIcon}>
             <Images aria-hidden size={24} />
           </div>
-          <Text fw={650}>这个项目还没有照片</Text>
+          <Text fw={650}>这个图库还没有照片</Text>
           <Text c="dimmed" size="sm">
-            点击右上角“上传照片”，添加第一张原始图片。
+            该成员尚未在此图库中添加照片素材。
           </Text>
         </Stack>
       </Center>
@@ -130,7 +119,7 @@ export function PhotoGrid({ projectId }: PhotoGridProps) {
     <>
       <SimpleGrid className={styles.photoGrid} cols={{ base: 2, sm: 3, lg: 4 }} spacing="md">
         {photos.map((photo) => (
-          <PhotoGridItem
+          <MaterialPhotoCard
             isSelected={photo.id === selectedPhotoId}
             key={photo.id}
             onSelect={() => setSelectedPhotoId(photo.id)}
@@ -138,13 +127,14 @@ export function PhotoGrid({ projectId }: PhotoGridProps) {
           />
         ))}
       </SimpleGrid>
-      {photosQuery.hasNextPage ? (
+
+      {hasNextPage ? (
         <div
           aria-label="继续加载照片"
           className={styles.loadMoreSentinel}
           ref={loadMoreSentinelRef}
         >
-          {photosQuery.isFetchNextPageError ? (
+          {isFetchNextPageError ? (
             <Stack align="center" gap="xs">
               <Text c="red" size="sm">
                 下一页加载失败
@@ -158,13 +148,14 @@ export function PhotoGrid({ projectId }: PhotoGridProps) {
                 重试
               </Button>
             </Stack>
-          ) : photosQuery.isFetchingNextPage ? (
+          ) : isFetchingNextPage ? (
             <Center>
               <Loader aria-label="正在加载更多照片" size="sm" />
             </Center>
           ) : null}
         </div>
       ) : null}
+
       <Drawer
         classNames={{
           body: styles.drawerBody,
@@ -178,28 +169,24 @@ export function PhotoGrid({ projectId }: PhotoGridProps) {
         overlayProps={{ backgroundOpacity: 0.28, blur: 1 }}
         position="right"
         size={400}
-        title="照片详情"
+        title="素材详情"
       >
-        {selectedPhoto ? <PhotoDetail key={selectedPhoto.id} photo={selectedPhoto} /> : null}
+        {selectedPhoto ? (
+          <MaterialPhotoDetail key={selectedPhoto.id} photo={selectedPhoto} />
+        ) : null}
       </Drawer>
     </>
   );
 }
 
-type PhotoGridItemProps = {
+type MaterialPhotoCardProps = {
   isSelected: boolean;
   onSelect: () => void;
-  photo: ProjectPhoto;
+  photo: MaterialPhoto;
 };
 
-function PhotoGridItem({ isSelected, onSelect, photo }: PhotoGridItemProps) {
-  const [thumbnailFailed, setThumbnailFailed] = useState(false);
-  const thumbnailQuery = useQuery({
-    queryFn: () => getPhotoThumbnail(photo.projectId, photo.id),
-    queryKey: photoThumbnailQueryKey(photo.projectId, photo.id),
-    staleTime: 24 * 60 * 60 * 1000,
-  });
-  const thumbnailUrl = useObjectUrl(thumbnailQuery.data);
+function MaterialPhotoCard({ isSelected, onSelect, photo }: MaterialPhotoCardProps) {
+  const [imageFailed, setImageFailed] = useState(false);
 
   return (
     <Card
@@ -211,19 +198,17 @@ function PhotoGridItem({ isSelected, onSelect, photo }: PhotoGridItemProps) {
       type="button"
     >
       <AspectRatio ratio={4 / 3}>
-        {thumbnailFailed || thumbnailQuery.isError ? (
+        {imageFailed ? (
           <Center className={styles.imageError}>
             <ImageOff aria-hidden size={26} />
           </Center>
-        ) : thumbnailQuery.isLoading || !thumbnailUrl ? (
-          <Skeleton height="100%" />
         ) : (
           <Image
             alt={photo.fileName}
             className={styles.photoImage}
             loading="lazy"
-            onError={() => setThumbnailFailed(true)}
-            src={thumbnailUrl}
+            onError={() => setImageFailed(true)}
+            src={photo.originalUrl}
           />
         )}
       </AspectRatio>
@@ -232,7 +217,7 @@ function PhotoGridItem({ isSelected, onSelect, photo }: PhotoGridItemProps) {
           {photo.fileName}
         </Text>
         <Text c="dimmed" size="xs">
-          {formatFileSize(photo.sizeBytes)}
+          {formatFileSize(photo.sizeBytes)} · {photo.projectName}
         </Text>
       </Stack>
       {isSelected ? (
@@ -244,33 +229,13 @@ function PhotoGridItem({ isSelected, onSelect, photo }: PhotoGridItemProps) {
   );
 }
 
-function useObjectUrl(blob: Blob | undefined): string | null {
-  const [url, setUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!blob) {
-      setUrl(null);
-      return;
-    }
-
-    const nextUrl = URL.createObjectURL(blob);
-    setUrl(nextUrl);
-
-    return () => {
-      URL.revokeObjectURL(nextUrl);
-    };
-  }, [blob]);
-
-  return url;
-}
-
-function PhotoDetail({ photo }: { photo: ProjectPhoto }) {
-  const [originalFailed, setOriginalFailed] = useState(false);
+function MaterialPhotoDetail({ photo }: { photo: MaterialPhoto }) {
+  const [imageFailed, setImageFailed] = useState(false);
 
   return (
     <div>
       <AspectRatio className={styles.detailImageFrame} ratio={4 / 3}>
-        {originalFailed ? (
+        {imageFailed ? (
           <Center className={styles.detailImageError}>
             <Stack align="center" gap={6}>
               <ImageOff aria-hidden size={28} />
@@ -281,7 +246,7 @@ function PhotoDetail({ photo }: { photo: ProjectPhoto }) {
           <Image
             alt={photo.fileName}
             className={styles.detailImage}
-            onError={() => setOriginalFailed(true)}
+            onError={() => setImageFailed(true)}
             src={photo.originalUrl}
           />
         )}
@@ -289,6 +254,7 @@ function PhotoDetail({ photo }: { photo: ProjectPhoto }) {
 
       <dl className={styles.metadataList}>
         <Metadata icon={<FileImage size={17} />} label="文件名" value={photo.fileName} />
+        <Metadata icon={<FolderOpen size={17} />} label="所属图库" value={photo.projectName} />
         <Metadata
           icon={<Maximize2 size={17} />}
           label="尺寸"
@@ -305,15 +271,6 @@ function PhotoDetail({ photo }: { photo: ProjectPhoto }) {
           value={formatDateTime(photo.createdAt)}
         />
       </dl>
-      <Group mt="lg">
-        <Button
-          component={Link}
-          leftSection={<Pencil aria-hidden size={16} />}
-          to={`/projects/${photo.projectId}/photos/${photo.id}/edit`}
-        >
-          编辑照片
-        </Button>
-      </Group>
     </div>
   );
 }
@@ -330,7 +287,7 @@ function Metadata({ icon, label, value }: { icon: ReactNode; label: string; valu
   );
 }
 
-function PhotoGridSkeleton() {
+function MaterialPhotoGridSkeleton() {
   return (
     <SimpleGrid aria-label="正在加载照片" cols={{ base: 2, sm: 3, lg: 4 }} spacing="md">
       {[0, 1, 2, 3].map((item) => (
@@ -348,16 +305,12 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function formatDateTime(value: string | null): string {
-  if (!value) {
-    return '—';
-  }
+const dateTimeFormatter = new Intl.DateTimeFormat('zh-CN', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+});
 
-  return new Intl.DateTimeFormat('zh-CN', {
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  }).format(new Date(value));
+function formatDateTime(value: string): string {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '—' : dateTimeFormatter.format(date);
 }

@@ -113,6 +113,65 @@ export type PhotoPageDto = {
     nextCursor: string | null;
 };
 
+export type PhotoEditStateDto = {
+    editState: {
+        [key: string]: unknown;
+    } | null;
+};
+
+export type MaterialUserDto = {
+    /**
+     * 用户id
+     */
+    id: string;
+    /**
+     * 用户名
+     */
+    userName: string;
+    /**
+     * 用户拥有图库数量
+     */
+    projectCount: number;
+};
+
+export type MaterialPhotoDto = {
+    id: string;
+    /**
+     * 图片所属图库 ID
+     */
+    projectId: string;
+    /**
+     * 图片所属图库名称
+     */
+    projectName: string;
+    /**
+     * 用户上传时的原始文件名
+     */
+    fileName: string;
+    mimeType: string;
+    /**
+     * 原始图片的 API 相对 URL
+     */
+    originalUrl: string;
+    /**
+     * 原始图片大小，单位为字节
+     */
+    sizeBytes: number;
+    width: number | null;
+    height: number | null;
+    status: PhotoStatus;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type MaterialPhotoPageDto = {
+    items: Array<MaterialPhotoDto>;
+    /**
+     * 下一页游标；没有更多图片时为 null
+     */
+    nextCursor: string | null;
+};
+
 export type RegisterData = {
     body: RegisterDto;
     path?: never;
@@ -421,3 +480,162 @@ export type GetOriginalPhotoResponses = {
 };
 
 export type GetOriginalPhotoResponse = GetOriginalPhotoResponses[keyof GetOriginalPhotoResponses];
+
+export type GetEditedPhotoStateData = {
+    body?: never;
+    path: {
+        /**
+         * 照片 ID
+         */
+        photoId: string;
+        /**
+         * 图库项目 ID
+         */
+        projectId: string;
+    };
+    query?: never;
+    url: '/projects/{projectId}/photos/{photoId}/edited/state';
+};
+
+export type GetEditedPhotoStateErrors = {
+    401: ErrorResponseDto;
+    404: ErrorResponseDto;
+};
+
+export type GetEditedPhotoStateError = GetEditedPhotoStateErrors[keyof GetEditedPhotoStateErrors];
+
+export type GetEditedPhotoStateResponses = {
+    200: PhotoEditStateDto;
+};
+
+export type GetEditedPhotoStateResponse = GetEditedPhotoStateResponses[keyof GetEditedPhotoStateResponses];
+
+export type SaveEditedPhotoData = {
+    body: {
+        /**
+         * 编辑器导出的图片
+         */
+        file: Blob | File;
+        /**
+         * 为 true 时新增一张正式图片并清除编辑草稿
+         */
+        finalize?: boolean;
+        /**
+         * 用于恢复文字、水印、裁剪等对象的编辑器状态
+         */
+        editState?: string;
+    };
+    path: {
+        /**
+         * 照片 ID
+         */
+        photoId: string;
+        /**
+         * 图库项目 ID
+         */
+        projectId: string;
+    };
+    query?: never;
+    url: '/projects/{projectId}/photos/{photoId}/edited';
+};
+
+export type SaveEditedPhotoErrors = {
+    400: ErrorResponseDto;
+    401: ErrorResponseDto;
+    404: ErrorResponseDto;
+    413: ErrorResponseDto;
+    415: ErrorResponseDto;
+    500: ErrorResponseDto;
+};
+
+export type SaveEditedPhotoError = SaveEditedPhotoErrors[keyof SaveEditedPhotoErrors];
+
+export type SaveEditedPhotoResponses = {
+    /**
+     * 编辑图片已保存
+     */
+    204: void;
+};
+
+export type SaveEditedPhotoResponse = SaveEditedPhotoResponses[keyof SaveEditedPhotoResponses];
+
+export type ListUsersData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/material/users';
+};
+
+export type ListUsersErrors = {
+    401: ErrorResponseDto;
+};
+
+export type ListUsersError = ListUsersErrors[keyof ListUsersErrors];
+
+export type ListUsersResponses = {
+    /**
+     * 返回所有用户及每个用户用有的图库数量
+     */
+    200: Array<MaterialUserDto>;
+};
+
+export type ListUsersResponse = ListUsersResponses[keyof ListUsersResponses];
+
+export type ListUserProjectsData = {
+    body?: never;
+    path: {
+        /**
+         * 用户 ID
+         */
+        userId: string;
+    };
+    query?: never;
+    url: '/material/users/{userId}/projects';
+};
+
+export type ListUserProjectsErrors = {
+    401: ErrorResponseDto;
+    404: ErrorResponseDto;
+};
+
+export type ListUserProjectsError = ListUserProjectsErrors[keyof ListUserProjectsErrors];
+
+export type ListUserProjectsResponses = {
+    200: Array<ProjectDto>;
+};
+
+export type ListUserProjectsResponse = ListUserProjectsResponses[keyof ListUserProjectsResponses];
+
+export type ListProjectPhotosData = {
+    body?: never;
+    path: {
+        /**
+         * 图库项目 ID
+         */
+        projectId: string;
+    };
+    query?: {
+        /**
+         * 每页返回的图片数量
+         */
+        limit?: number;
+        /**
+         * 上一页返回的图片游标
+         */
+        cursor?: string;
+    };
+    url: '/material/projects/{projectId}/photos';
+};
+
+export type ListProjectPhotosErrors = {
+    401: ErrorResponseDto;
+    404: ErrorResponseDto;
+};
+
+export type ListProjectPhotosError = ListProjectPhotosErrors[keyof ListProjectPhotosErrors];
+
+export type ListProjectPhotosResponses = {
+    200: MaterialPhotoPageDto;
+};
+
+export type ListProjectPhotosResponse = ListProjectPhotosResponses[keyof ListProjectPhotosResponses];

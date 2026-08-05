@@ -70,6 +70,7 @@ model Photo {
   checksumSha256      String?
   originalObjectKey   String      @unique
   previewObjectKey    String?
+  editState           Json?
   thumbnailObjectKey  String?
   status              PhotoStatus @default(UPLOADED)
   processingAttempts  Int         @default(0)

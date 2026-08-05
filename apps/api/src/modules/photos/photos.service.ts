@@ -10,10 +10,11 @@ import type { PhotoDto } from './dto/photo.dto';
 import type { ListPhotosQueryDto } from './dto/list-photos-query.dto';
 import type { PhotoPageDto } from './dto/photo-page.dto';
 import { PhotoMetadataReader } from './photo-metadata.reader';
+import { removeStoredObjects } from './photo-storage-cleanup.util';
+import { buildOriginalObjectKey, getFileNameBase } from './photo-storage-key.util';
 import { PhotoThumbnailGenerator } from './photo-thumbnail.generator';
 import { PhotoUploadValidator, type UploadedPhotoFile } from './photo-upload.validator';
 
-const MAX_STORAGE_FILE_NAME_BYTES = 255;
 const THUMBNAIL_CACHE_CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const THUMBNAIL_CACHE_PREFIX = 'thumbnails';
 const THUMBNAIL_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -86,7 +87,7 @@ export class PhotosService {
   ): Promise<PhotoDto> {
     await this.ensureOwnedProject(userId, projectId);
 
-    const validated = this.uploadValidator.validate(file);
+    const validated = await this.uploadValidator.validate(file);
     const metadata = await this.metadataReader.readMetadata(file!.buffer);
     const photoId = randomUUID();
 
@@ -220,7 +221,11 @@ export class PhotosService {
 
     await this.cleanupThumbnailCacheIfDue();
 
-    const thumbnailObjectKey = buildThumbnailCacheObjectKey(projectId, photo.id);
+    const thumbnailObjectKey = buildThumbnailCacheObjectKey(
+      projectId,
+      photo.id,
+      photo.originalObjectKey,
+    );
     const cachedThumbnail = await this.getFreshCachedThumbnail(thumbnailObjectKey);
 
     if (cachedThumbnail) {
@@ -354,21 +359,7 @@ export class PhotosService {
   }
 
   private async removeStoredObjects(objectKeys: string[]): Promise<void> {
-    const cleanupResults = await Promise.allSettled(
-      objectKeys.map((objectKey) => this.storageService.removeObject(objectKey)),
-    );
-
-    cleanupResults.forEach((result, index) => {
-      if (result.status === 'rejected') {
-        const objectKey = objectKeys[index];
-        const cleanupError = result.reason;
-
-        this.logger.error(
-          `Failed to remove orphaned upload objectKey=${objectKey}`,
-          cleanupError instanceof Error ? cleanupError.stack : String(cleanupError),
-        );
-      }
-    });
+    await removeStoredObjects(this.storageService, objectKeys, this.logger);
   }
 
   private toPhotoDto(photo: PhotoRecord): PhotoDto {
@@ -395,60 +386,16 @@ function buildPublicUrl(objectKey: string): string {
   return `/public/${encodedObjectKey}`;
 }
 
-function buildOriginalObjectKey(projectId: string, photoId: string, fileName: string): string {
-  const uniquePrefix = `${photoId}--`;
-  const availableFileNameBytes =
-    MAX_STORAGE_FILE_NAME_BYTES - Buffer.byteLength(uniquePrefix, 'utf8');
-  const storageFileName = truncateFileName(fileName, availableFileNameBytes);
-
-  return `projects/${projectId}/photos/${uniquePrefix}${storageFileName}`;
-}
-
 function buildThumbnailApiUrl(projectId: string, photoId: string): string {
   return `/projects/${encodeURIComponent(projectId)}/photos/${encodeURIComponent(photoId)}/thumbnail`;
 }
 
-function buildThumbnailCacheObjectKey(projectId: string, photoId: string): string {
-  return `${THUMBNAIL_CACHE_PREFIX}/${projectId}/${photoId}.${THUMBNAIL_CACHE_VERSION}.webp`;
-}
+function buildThumbnailCacheObjectKey(
+  projectId: string,
+  photoId: string,
+  originalObjectKey: string,
+): string {
+  const sourceKey = createHash('sha256').update(originalObjectKey).digest('hex').slice(0, 12);
 
-function getFileNameBase(fileName: string): string {
-  const extensionStart = fileName.lastIndexOf('.');
-
-  return extensionStart > 0 ? fileName.slice(0, extensionStart) : fileName;
-}
-
-function truncateFileName(fileName: string, maxBytes: number): string {
-  if (Buffer.byteLength(fileName, 'utf8') <= maxBytes) {
-    return fileName;
-  }
-
-  const extensionStart = fileName.lastIndexOf('.');
-  const extension = extensionStart > 0 ? fileName.slice(extensionStart) : '';
-
-  if (Buffer.byteLength(extension, 'utf8') >= maxBytes) {
-    return truncateUtf8(fileName, maxBytes);
-  }
-
-  const baseName = extension ? fileName.slice(0, extensionStart) : fileName;
-
-  return `${truncateUtf8(baseName, maxBytes - Buffer.byteLength(extension, 'utf8'))}${extension}`;
-}
-
-function truncateUtf8(value: string, maxBytes: number): string {
-  let bytes = 0;
-  let result = '';
-
-  for (const character of value) {
-    const characterBytes = Buffer.byteLength(character, 'utf8');
-
-    if (bytes + characterBytes > maxBytes) {
-      break;
-    }
-
-    bytes += characterBytes;
-    result += character;
-  }
-
-  return result;
+  return `${THUMBNAIL_CACHE_PREFIX}/${projectId}/${photoId}.${sourceKey}.${THUMBNAIL_CACHE_VERSION}.webp`;
 }

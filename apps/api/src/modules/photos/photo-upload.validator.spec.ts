@@ -1,12 +1,14 @@
-import { HttpStatus } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { describe, expect, it, vi } from 'vitest';
-import { AppException } from '../../common/errors/app.exception';
 import type { AppEnv } from '../../config/env';
 import { PhotoUploadValidator, type UploadedPhotoFile } from './photo-upload.validator';
 
 const JPEG_BUFFER = Buffer.from([0xff, 0xd8, 0xff, 0x00]);
-const PNG_BUFFER = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const PNG_BUFFER = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+  'base64',
+);
 const WEBP_BUFFER = Buffer.from('RIFF0000WEBP', 'ascii');
 
 function createValidator(maxBytes = 1024): PhotoUploadValidator {
@@ -27,40 +29,28 @@ function createFile(buffer: Buffer, overrides: Partial<UploadedPhotoFile> = {}):
   };
 }
 
-function expectAppException(operation: () => unknown, status: HttpStatus, code: string): void {
+async function expectInvalidFile(operation: () => Promise<unknown>): Promise<void> {
   try {
-    operation();
-    throw new Error(`Expected ${code}`);
+    await operation();
+    throw new Error('Expected invalid file');
   } catch (error) {
-    expect(error).toBeInstanceOf(AppException);
-    expect((error as AppException).getStatus()).toBe(status);
-    expect((error as AppException).getResponse()).toMatchObject({ code });
+    expect(error).toBeInstanceOf(BadRequestException);
+    expect((error as BadRequestException).getStatus()).toBe(400);
+    expect((error as BadRequestException).getResponse()).toMatchObject({ message: '文件无效' });
   }
 }
 
 describe('PhotoUploadValidator', () => {
-  it('rejects a missing file', () => {
-    expectAppException(
-      () => createValidator().validate(undefined),
-      HttpStatus.BAD_REQUEST,
-      'PHOTO_FILE_REQUIRED',
-    );
+  it('rejects a missing file', async () => {
+    await expectInvalidFile(() => createValidator().validate(undefined));
   });
 
-  it('rejects an empty file', () => {
-    expectAppException(
-      () => createValidator().validate(createFile(Buffer.alloc(0))),
-      HttpStatus.BAD_REQUEST,
-      'PHOTO_FILE_REQUIRED',
-    );
+  it('rejects an empty file', async () => {
+    await expectInvalidFile(() => createValidator().validate(createFile(Buffer.alloc(0))));
   });
 
-  it('rejects a file that exceeds the configured size limit', () => {
-    expectAppException(
-      () => createValidator(3).validate(createFile(JPEG_BUFFER)),
-      HttpStatus.PAYLOAD_TOO_LARGE,
-      'PHOTO_FILE_TOO_LARGE',
-    );
+  it('rejects a file that exceeds the configured size limit', async () => {
+    await expectInvalidFile(() => createValidator(3).validate(createFile(JPEG_BUFFER)));
   });
 
   it.each([
@@ -82,8 +72,8 @@ describe('PhotoUploadValidator', () => {
       mimeType: 'image/webp',
       originalname: 'holiday.webp',
     },
-  ])('detects $mimeType from the file contents', (example) => {
-    const result = createValidator().validate(
+  ])('detects $mimeType from the file contents', async (example) => {
+    const result = await createValidator().validate(
       createFile(example.buffer, {
         mimetype: 'text/plain',
         originalname: example.originalname,
@@ -98,21 +88,17 @@ describe('PhotoUploadValidator', () => {
     });
   });
 
-  it('rejects unsupported content even when the client claims it is JPEG', () => {
+  it('rejects unsupported content even when the client claims it is JPEG', async () => {
     const file = createFile(Buffer.from('not an image'), {
       mimetype: 'image/jpeg',
       originalname: 'fake.jpg',
     });
 
-    expectAppException(
-      () => createValidator().validate(file),
-      HttpStatus.UNSUPPORTED_MEDIA_TYPE,
-      'PHOTO_UNSUPPORTED_TYPE',
-    );
+    await expectInvalidFile(() => createValidator().validate(file));
   });
 
-  it('removes path components and control characters from the display name', () => {
-    const result = createValidator().validate(
+  it('removes path components and control characters from the display name', async () => {
+    const result = await createValidator().validate(
       createFile(JPEG_BUFFER, {
         originalname: '../../private/family\u0000-photo.jpg',
       }),
@@ -121,8 +107,8 @@ describe('PhotoUploadValidator', () => {
     expect(result.fileName).toBe('family-photo.jpg');
   });
 
-  it('uses a safe fallback when the sanitized file name is empty', () => {
-    const result = createValidator().validate(
+  it('uses a safe fallback when the sanitized file name is empty', async () => {
+    const result = await createValidator().validate(
       createFile(PNG_BUFFER, {
         originalname: '\u0000',
       }),

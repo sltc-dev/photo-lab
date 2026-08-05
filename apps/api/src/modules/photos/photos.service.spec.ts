@@ -454,8 +454,12 @@ describe('PhotosService photo queries', () => {
       stream,
     });
     expect(removeObjectsOlderThan).toHaveBeenCalledWith('thumbnails', expect.any(Date));
-    expect(statObject).toHaveBeenCalledWith('thumbnails/project-1/photo-1.v1.webp');
-    expect(getObject).toHaveBeenCalledWith('thumbnails/project-1/photo-1.v1.webp');
+    expect(statObject).toHaveBeenCalledWith(
+      expect.stringMatching(/^thumbnails\/project-1\/photo-1\.[a-f0-9]{12}\.v1\.webp$/),
+    );
+    expect(getObject).toHaveBeenCalledWith(
+      expect.stringMatching(/^thumbnails\/project-1\/photo-1\.[a-f0-9]{12}\.v1\.webp$/),
+    );
     expect(generate).not.toHaveBeenCalled();
   });
 
@@ -504,7 +508,7 @@ describe('PhotosService photo queries', () => {
     expect(getObject).toHaveBeenCalledWith('projects/project-1/photos/photo-1--holiday.jpg');
     expect(generate).toHaveBeenCalledWith(JPEG_BUFFER);
     expect(putObject).toHaveBeenCalledWith(
-      'thumbnails/project-1/photo-1.v1.webp',
+      expect.stringMatching(/^thumbnails\/project-1\/photo-1\.[a-f0-9]{12}\.v1\.webp$/),
       THUMBNAIL_BUFFER,
     );
   });

@@ -11,6 +11,7 @@ import { AppModule } from './app.module';
 import type { AppEnv } from './config/env';
 import { AppException } from './common/errors/app.exception';
 import { requestLogger } from './common/middleware/request-logger.middleware';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 type RequestWithId = Request & {
   requestId?: string;
@@ -90,6 +91,25 @@ async function bootstrap(): Promise<void> {
       whitelist: true,
     }),
   );
+
+  if (nodeEnv !== 'production') {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('Photo Lab API')
+      .setDescription('Photo Lab 后端接口文档')
+      .setVersion('0.1.0')
+      .addBearerAuth()
+      .build();
+
+    const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig, {
+      operationIdFactory: (_controllerKey, methodKey) => methodKey,
+    });
+
+    SwaggerModule.setup('docs', app, swaggerDocument, {
+      swaggerOptions: {
+        persistAuthorization: true,
+      },
+    });
+  }
 
   const port = config.getOrThrow('PORT');
   await app.listen(port);

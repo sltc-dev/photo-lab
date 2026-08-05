@@ -2,6 +2,7 @@ import { MantineProvider } from '@mantine/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 import type { ProjectPhoto } from '../../../src/api/photos';
 import { PhotoGrid } from '../../../src/components/photos/PhotoGrid';
 
@@ -50,7 +51,9 @@ function renderGrid() {
   render(
     <MantineProvider>
       <QueryClientProvider client={queryClient}>
-        <PhotoGrid projectId="project-1" />
+        <MemoryRouter>
+          <PhotoGrid projectId="project-1" />
+        </MemoryRouter>
       </QueryClientProvider>
     </MantineProvider>,
   );
