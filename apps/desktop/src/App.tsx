@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, type ReactNode } from 'react';
 import { Center, Loader } from '@mantine/core';
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
@@ -8,6 +8,13 @@ import { LoginPage } from './pages/LoginPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { ProjectPhotosPage } from './pages/ProjectPhotosPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { MaterialUsersPage } from './pages/MaterialUsersPage';
+import { MaterialUserProjectsPage } from './pages/MaterialUserProjectsPage';
+import { MaterialProjectPhotosPage } from './pages/MaterialProjectPhotosPage';
+
+const PhotoEditorPage = lazy(() =>
+  import('./pages/PhotoEditorPage').then((module) => ({ default: module.PhotoEditorPage })),
+);
 
 export function App() {
   const restoreSession = useAuthStore((state) => state.restoreSession);
@@ -19,36 +26,45 @@ export function App() {
 
   return (
     <HashRouter>
-      <Routes>
-        <Route
-          element={
-            <GuestRoute>
-              <LoginPage />
-            </GuestRoute>
-          }
-          path="/login"
-        />
-        <Route
-          element={
-            <GuestRoute>
-              <RegisterPage />
-            </GuestRoute>
-          }
-          path="/register"
-        />
-        <Route
-          element={
-            <RequireAuth>
-              <AppLayout />
-            </RequireAuth>
-          }
-        >
-          <Route element={<HomePage />} path="/" />
-          <Route element={<ProjectPhotosPage />} path="/projects/:projectId" />
-          <Route element={<ProfilePage />} path="/profile" />
-        </Route>
-        <Route element={<Navigate replace to="/" />} path="*" />
-      </Routes>
+      <Suspense fallback={<LoadingScreen />}>
+        <Routes>
+          <Route
+            element={
+              <GuestRoute>
+                <LoginPage />
+              </GuestRoute>
+            }
+            path="/login"
+          />
+          <Route
+            element={
+              <GuestRoute>
+                <RegisterPage />
+              </GuestRoute>
+            }
+            path="/register"
+          />
+          <Route
+            element={
+              <RequireAuth>
+                <AppLayout />
+              </RequireAuth>
+            }
+          >
+            <Route element={<HomePage />} path="/" />
+            <Route element={<ProjectPhotosPage />} path="/projects/:projectId" />
+            <Route element={<PhotoEditorPage />} path="/projects/:projectId/photos/:photoId/edit" />
+            <Route element={<MaterialUsersPage />} path="/materials" />
+            <Route element={<MaterialUserProjectsPage />} path="/materials/users/:userId" />
+            <Route
+              element={<MaterialProjectPhotosPage />}
+              path="/materials/users/:userId/projects/:projectId"
+            />
+            <Route element={<ProfilePage />} path="/profile" />
+          </Route>
+          <Route element={<Navigate replace to="/" />} path="*" />
+        </Routes>
+      </Suspense>
     </HashRouter>
   );
 }

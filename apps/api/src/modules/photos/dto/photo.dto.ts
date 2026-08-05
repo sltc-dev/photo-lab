@@ -28,8 +28,8 @@ export class PhotoDto {
   originalUrl!: string;
 
   @ApiProperty({
-    description: '缩略图的 API 相对 URL',
-    example: '/public/projects/project-id/photos/photo-id--holiday.thumbnail.webp',
+    description: '需要认证的按需缩略图 API 相对 URL',
+    example: '/projects/project-id/photos/photo-id/thumbnail',
     type: String,
   })
   thumbnailUrl!: string;

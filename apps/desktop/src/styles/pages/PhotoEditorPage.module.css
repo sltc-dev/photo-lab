@@ -1,0 +1,24 @@
+.page {
+  min-height: calc(100vh - 112px);
+  min-width: 0;
+  width: 100%;
+}
+
+.editor {
+  background: var(--pl-bg-raised);
+  border: 1px solid var(--pl-line);
+  border-radius: 10px;
+  flex: 1;
+  min-height: 560px;
+  overflow: hidden;
+}
+
+.editor :global(.FIE_root) {
+  height: 100%;
+  min-height: 560px;
+}
+
+.loadingState {
+  min-height: 480px;
+  width: 100%;
+}

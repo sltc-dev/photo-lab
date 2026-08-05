@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateProjectData, CreateProjectErrors, CreateProjectResponses, GetOriginalPhotoData, GetOriginalPhotoErrors, GetOriginalPhotoResponses, GetProjectData, GetProjectErrors, GetProjectResponses, GetThumbnailPhotoData, GetThumbnailPhotoErrors, GetThumbnailPhotoResponses, HealthData, HealthResponses, ListPhotosData, ListPhotosErrors, ListPhotosResponses, ListProjectsData, ListProjectsErrors, ListProjectsResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, MeData, MeErrors, MeResponses, RefreshData, RefreshErrors, RefreshResponses, RegisterData, RegisterErrors, RegisterResponses, UploadPhotoData, UploadPhotoErrors, UploadPhotoResponses } from './types.gen';
+import type { CreateProjectData, CreateProjectErrors, CreateProjectResponses, GetEditedPhotoStateData, GetEditedPhotoStateErrors, GetEditedPhotoStateResponses, GetOriginalPhotoData, GetOriginalPhotoErrors, GetOriginalPhotoResponses, GetProjectData, GetProjectErrors, GetProjectResponses, GetThumbnailPhotoData, GetThumbnailPhotoErrors, GetThumbnailPhotoResponses, HealthData, HealthResponses, ListPhotosData, ListPhotosErrors, ListPhotosResponses, ListProjectPhotosData, ListProjectPhotosErrors, ListProjectPhotosResponses, ListProjectsData, ListProjectsErrors, ListProjectsResponses, ListUserProjectsData, ListUserProjectsErrors, ListUserProjectsResponses, ListUsersData, ListUsersErrors, ListUsersResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, MeData, MeErrors, MeResponses, RefreshData, RefreshErrors, RefreshResponses, RegisterData, RegisterErrors, RegisterResponses, SaveEditedPhotoData, SaveEditedPhotoErrors, SaveEditedPhotoResponses, UploadPhotoData, UploadPhotoErrors, UploadPhotoResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -110,5 +110,40 @@ export const getThumbnailPhoto = <ThrowOnError extends boolean = false>(options:
 export const getOriginalPhoto = <ThrowOnError extends boolean = false>(options: Options<GetOriginalPhotoData, ThrowOnError>): RequestResult<GetOriginalPhotoResponses, GetOriginalPhotoErrors, ThrowOnError> => (options.client ?? client).get<GetOriginalPhotoResponses, GetOriginalPhotoErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/projects/{projectId}/photos/{photoId}/original',
+    ...options
+});
+
+export const getEditedPhotoState = <ThrowOnError extends boolean = false>(options: Options<GetEditedPhotoStateData, ThrowOnError>): RequestResult<GetEditedPhotoStateResponses, GetEditedPhotoStateErrors, ThrowOnError> => (options.client ?? client).get<GetEditedPhotoStateResponses, GetEditedPhotoStateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/projects/{projectId}/photos/{photoId}/edited/state',
+    ...options
+});
+
+export const saveEditedPhoto = <ThrowOnError extends boolean = false>(options: Options<SaveEditedPhotoData, ThrowOnError>): RequestResult<SaveEditedPhotoResponses, SaveEditedPhotoErrors, ThrowOnError> => (options.client ?? client).put<SaveEditedPhotoResponses, SaveEditedPhotoErrors, ThrowOnError>({
+    ...formDataBodySerializer,
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/projects/{projectId}/photos/{photoId}/edited',
+    ...options,
+    headers: {
+        'Content-Type': null,
+        ...options.headers
+    }
+});
+
+export const listUsers = <ThrowOnError extends boolean = false>(options?: Options<ListUsersData, ThrowOnError>): RequestResult<ListUsersResponses, ListUsersErrors, ThrowOnError> => (options?.client ?? client).get<ListUsersResponses, ListUsersErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/material/users',
+    ...options
+});
+
+export const listUserProjects = <ThrowOnError extends boolean = false>(options: Options<ListUserProjectsData, ThrowOnError>): RequestResult<ListUserProjectsResponses, ListUserProjectsErrors, ThrowOnError> => (options.client ?? client).get<ListUserProjectsResponses, ListUserProjectsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/material/users/{userId}/projects',
+    ...options
+});
+
+export const listProjectPhotos = <ThrowOnError extends boolean = false>(options: Options<ListProjectPhotosData, ThrowOnError>): RequestResult<ListProjectPhotosResponses, ListProjectPhotosErrors, ThrowOnError> => (options.client ?? client).get<ListProjectPhotosResponses, ListProjectPhotosErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/material/projects/{projectId}/photos',
     ...options
 });

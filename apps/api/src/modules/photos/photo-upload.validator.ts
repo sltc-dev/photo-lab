@@ -1,6 +1,11 @@
-import { HttpStatus, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  FileTypeValidator,
+  Inject,
+  Injectable,
+  MaxFileSizeValidator,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AppException } from '../../common/errors/app.exception';
 import type { AppEnv } from '../../config/env';
 
 export type UploadedPhotoFile = {
@@ -17,42 +22,52 @@ export type ValidatedPhotoUpload = {
   sizeBytes: number;
 };
 
+const supportedImageTypes = [
+  {
+    extension: 'jpg',
+    mimeType: 'image/jpeg',
+    validator: new FileTypeValidator({ fileType: 'image/jpeg' }),
+  },
+  {
+    extension: 'png',
+    mimeType: 'image/png',
+    validator: new FileTypeValidator({ fileType: 'image/png' }),
+  },
+  {
+    extension: 'webp',
+    mimeType: 'image/webp',
+    validator: new FileTypeValidator({ fileType: 'image/webp' }),
+  },
+] as const;
+
 @Injectable()
 export class PhotoUploadValidator {
-  private readonly maxBytes: number;
+  private readonly maxFileSizeValidator: MaxFileSizeValidator;
 
   constructor(@Inject(ConfigService) configService: ConfigService<AppEnv, true>) {
-    this.maxBytes = configService.getOrThrow('PHOTO_UPLOAD_MAX_BYTES');
+    const maxBytes = configService.getOrThrow('PHOTO_UPLOAD_MAX_BYTES');
+
+    // Nest 的最大值校验使用严格小于；配置值表示允许的最大字节数，所以加一保持原有边界语义。
+    this.maxFileSizeValidator = new MaxFileSizeValidator({ maxSize: maxBytes + 1 });
   }
 
-  validate(file: UploadedPhotoFile | undefined): ValidatedPhotoUpload {
+  async validate(file: UploadedPhotoFile | undefined): Promise<ValidatedPhotoUpload> {
     if (!file) {
-      throw new AppException(HttpStatus.BAD_REQUEST, 'PHOTO_FILE_REQUIRED', '请选择要上传的图片');
+      throw new BadRequestException('文件无效');
     }
 
     if (file.size <= 0 || file.buffer.length <= 0) {
-      throw new AppException(HttpStatus.BAD_REQUEST, 'PHOTO_FILE_REQUIRED', '上传的图片不能为空');
+      throw new BadRequestException('文件无效');
     }
 
-    if (file.size > this.maxBytes) {
-      throw new AppException(
-        HttpStatus.PAYLOAD_TOO_LARGE,
-        'PHOTO_FILE_TOO_LARGE',
-        '上传的图片超过大小限制',
-        {
-          maxBytes: this.maxBytes,
-        },
-      );
+    if (!this.maxFileSizeValidator.isValid(file)) {
+      throw new BadRequestException('文件无效');
     }
 
-    const detectedType = detectImageType(file.buffer);
+    const detectedType = await detectImageType(file);
 
     if (!detectedType) {
-      throw new AppException(
-        HttpStatus.UNSUPPORTED_MEDIA_TYPE,
-        'PHOTO_UNSUPPORTED_TYPE',
-        '仅支持 JPEG、PNG 和 WebP 图片',
-      );
+      throw new BadRequestException('文件无效');
     }
 
     return {
@@ -63,48 +78,14 @@ export class PhotoUploadValidator {
   }
 }
 
-function detectImageType(buffer: Buffer):
-  | {
-      extension: 'jpg';
-      mimeType: 'image/jpeg';
+async function detectImageType(file: UploadedPhotoFile) {
+  for (const imageType of supportedImageTypes) {
+    if (await imageType.validator.isValid(file)) {
+      return {
+        extension: imageType.extension,
+        mimeType: imageType.mimeType,
+      };
     }
-  | {
-      extension: 'png';
-      mimeType: 'image/png';
-    }
-  | {
-      extension: 'webp';
-      mimeType: 'image/webp';
-    }
-  | null {
-  if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
-    return {
-      extension: 'jpg',
-      mimeType: 'image/jpeg',
-    };
-  }
-
-  const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-
-  if (
-    buffer.length >= pngSignature.length &&
-    buffer.subarray(0, pngSignature.length).equals(pngSignature)
-  ) {
-    return {
-      extension: 'png',
-      mimeType: 'image/png',
-    };
-  }
-
-  if (
-    buffer.length >= 12 &&
-    buffer.subarray(0, 4).toString('ascii') === 'RIFF' &&
-    buffer.subarray(8, 12).toString('ascii') === 'WEBP'
-  ) {
-    return {
-      extension: 'webp',
-      mimeType: 'image/webp',
-    };
   }
 
   return null;

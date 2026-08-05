@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { randomUUID } from 'node:crypto';
-import { resolve } from 'node:path';
+import { resolve, sep } from 'node:path';
 import { HttpStatus, Logger, ValidationError, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
@@ -11,6 +11,7 @@ import { AppModule } from './app.module';
 import type { AppEnv } from './config/env';
 import { AppException } from './common/errors/app.exception';
 import { requestLogger } from './common/middleware/request-logger.middleware';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 type RequestWithId = Request & {
   requestId?: string;
@@ -35,9 +36,13 @@ async function bootstrap(): Promise<void> {
   // 将照片存储目录映射为 /public/* 静态资源，供浏览器直接访问上传后的照片。
   app.useStaticAssets(resolve(config.getOrThrow('PHOTO_STORAGE_ROOT')), {
     prefix: '/public/',
-    setHeaders: (response) => {
-      // 照片使用唯一地址，允许浏览器或 CDN 长期缓存，减少重复下载。
-      response.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    setHeaders: (response, filePath) => {
+      const isThumbnailCache = filePath.includes(`${sep}thumbnails${sep}`);
+      // 缩略图磁盘缓存七天后会重建，因此浏览器只缓存一天；原图地址保持长期不变。
+      response.setHeader(
+        'Cache-Control',
+        isThumbnailCache ? 'public, max-age=86400' : 'public, max-age=31536000, immutable',
+      );
       // 允许其他域名通过 img 等资源标签加载照片；这不等同于开放 fetch 的 CORS 权限。
       response.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     },
@@ -86,6 +91,25 @@ async function bootstrap(): Promise<void> {
       whitelist: true,
     }),
   );
+
+  if (nodeEnv !== 'production') {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('Photo Lab API')
+      .setDescription('Photo Lab 后端接口文档')
+      .setVersion('0.1.0')
+      .addBearerAuth()
+      .build();
+
+    const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig, {
+      operationIdFactory: (_controllerKey, methodKey) => methodKey,
+    });
+
+    SwaggerModule.setup('docs', app, swaggerDocument, {
+      swaggerOptions: {
+        persistAuthorization: true,
+      },
+    });
+  }
 
   const port = config.getOrThrow('PORT');
   await app.listen(port);

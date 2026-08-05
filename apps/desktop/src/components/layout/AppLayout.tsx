@@ -13,7 +13,7 @@ import {
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { useMutation } from '@tanstack/react-query';
-import { Image, Images, LogOut, User, type LucideIcon } from 'lucide-react';
+import { Image, Images, LibraryBig, LogOut, User, type LucideIcon } from 'lucide-react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { getApiErrorMessage } from '../../api/http';
 import { terminateSession } from '../../api/session';
@@ -139,6 +139,12 @@ const navigationItems: NavigationItem[] = [
     isActive: (pathname) => pathname === '/' || pathname.startsWith('/projects/'),
     label: '图库',
     to: '/',
+  },
+  {
+    icon: LibraryBig,
+    isActive: (pathname) => pathname.startsWith('/materials'),
+    label: '素材库',
+    to: '/materials',
   },
   {
     icon: User,

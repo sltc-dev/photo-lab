@@ -31,7 +31,6 @@ const photoRecord = {
   projectId: 'project-1',
   sizeBytes: JPEG_BUFFER.length,
   status: PhotoStatus.UPLOADED,
-  thumbnailObjectKey: 'projects/project-1/photos/photo-1--holiday.thumbnail.webp',
   updatedAt: new Date('2026-07-27T09:00:00.000Z'),
   width: 1200,
 };
@@ -42,7 +41,6 @@ type HarnessOptions = {
   metadataError?: Error;
   project?: { id: string } | null;
   storageError?: Error;
-  thumbnailError?: Error;
 };
 
 function createHarness(options: HarnessOptions = {}) {
@@ -68,9 +66,7 @@ function createHarness(options: HarnessOptions = {}) {
         height: 800,
         width: 1200,
       });
-  const generateThumbnail = options.thumbnailError
-    ? vi.fn().mockRejectedValue(options.thumbnailError)
-    : vi.fn().mockResolvedValue(THUMBNAIL_BUFFER);
+  const generateThumbnail = vi.fn().mockResolvedValue(THUMBNAIL_BUFFER);
 
   const prisma = {
     photo: {
@@ -121,7 +117,7 @@ describe('PhotosService.uploadPhoto', () => {
         projectId: 'project-1',
         sizeBytes: JPEG_BUFFER.length,
         status: PhotoStatus.UPLOADED,
-        thumbnailUrl: '/public/projects/project-1/photos/photo-1--holiday.thumbnail.webp',
+        thumbnailUrl: '/projects/project-1/photos/photo-1/thumbnail',
         updatedAt: '2026-07-27T09:00:00.000Z',
         width: 1200,
       },
@@ -138,16 +134,11 @@ describe('PhotosService.uploadPhoto', () => {
     });
     expect(harness.validate).toHaveBeenCalledWith(uploadedFile);
     expect(harness.readMetadata).toHaveBeenCalledWith(JPEG_BUFFER);
-    expect(harness.generateThumbnail).toHaveBeenCalledWith(JPEG_BUFFER);
-    expect(harness.putObject).toHaveBeenNthCalledWith(
-      1,
+    expect(harness.generateThumbnail).not.toHaveBeenCalled();
+    expect(harness.putObject).toHaveBeenCalledTimes(1);
+    expect(harness.putObject).toHaveBeenCalledWith(
       expect.stringMatching(/^projects\/project-1\/photos\/[^/]+--holiday\.jpg$/),
       JPEG_BUFFER,
-    );
-    expect(harness.putObject).toHaveBeenNthCalledWith(
-      2,
-      expect.stringMatching(/^projects\/project-1\/photos\/[^/]+--holiday\.thumbnail\.webp$/),
-      THUMBNAIL_BUFFER,
     );
     expect(harness.create).toHaveBeenCalledWith({
       data: {
@@ -163,9 +154,6 @@ describe('PhotosService.uploadPhoto', () => {
         relativePath: 'holiday.jpg',
         sizeBytes: JPEG_BUFFER.length,
         status: PhotoStatus.UPLOADED,
-        thumbnailObjectKey: expect.stringMatching(
-          /^projects\/project-1\/photos\/[^/]+--holiday\.thumbnail\.webp$/,
-        ),
         width: 1200,
       },
       select: expect.any(Object),
@@ -239,7 +227,7 @@ describe('PhotosService.uploadPhoto', () => {
     }
 
     expect(harness.create).not.toHaveBeenCalled();
-    expect(harness.removeObject).toHaveBeenCalledTimes(2);
+    expect(harness.removeObject).toHaveBeenCalledTimes(1);
   });
 
   it('does not store an invalid image when its metadata cannot be read', async () => {
@@ -258,21 +246,6 @@ describe('PhotosService.uploadPhoto', () => {
     expect(harness.create).not.toHaveBeenCalled();
   });
 
-  it('does not store an image when thumbnail generation fails', async () => {
-    const thumbnailError = new AppException(
-      HttpStatus.INTERNAL_SERVER_ERROR,
-      'PHOTO_STORAGE_FAILED',
-      '缩略图生成失败',
-    );
-    const harness = createHarness({ thumbnailError });
-
-    await expect(harness.service.uploadPhoto('user-1', 'project-1', uploadedFile)).rejects.toBe(
-      thumbnailError,
-    );
-    expect(harness.putObject).not.toHaveBeenCalled();
-    expect(harness.create).not.toHaveBeenCalled();
-  });
-
   it('removes the stored object when database creation fails', async () => {
     const databaseError = new Error('database unavailable');
     const harness = createHarness({
@@ -284,9 +257,8 @@ describe('PhotosService.uploadPhoto', () => {
     );
 
     const storedObjectKeys = harness.putObject.mock.calls.map(([objectKey]) => objectKey);
-    expect(harness.removeObject).toHaveBeenCalledTimes(2);
+    expect(harness.removeObject).toHaveBeenCalledTimes(1);
     expect(harness.removeObject).toHaveBeenCalledWith(storedObjectKeys[0]);
-    expect(harness.removeObject).toHaveBeenCalledWith(storedObjectKeys[1]);
   });
 });
 
@@ -322,7 +294,7 @@ describe('PhotosService photo queries', () => {
           projectId: 'project-1',
           sizeBytes: JPEG_BUFFER.length,
           status: PhotoStatus.UPLOADED,
-          thumbnailUrl: '/public/projects/project-1/photos/photo-1--holiday.thumbnail.webp',
+          thumbnailUrl: '/projects/project-1/photos/photo-1/thumbnail',
           updatedAt: '2026-07-27T09:00:00.000Z',
           width: 1200,
         },
@@ -395,6 +367,7 @@ describe('PhotosService photo queries', () => {
       id: 'photo-1',
       fileName: 'holiday.jpg',
       mimeType: 'image/jpeg',
+      originalObjectKey: 'projects/project-1/photos/photo-1--holiday.jpg',
       sizeBytes: JPEG_BUFFER.length,
     });
     const statObject = vi.fn().mockResolvedValue({
@@ -440,12 +413,13 @@ describe('PhotosService photo queries', () => {
     expect(getObject).toHaveBeenCalledWith('projects/project-1/photos/photo-1--holiday.jpg');
   });
 
-  it('returns an owned WebP thumbnail stream from the current storage path', async () => {
+  it('returns a fresh WebP thumbnail from the disk cache without regenerating it', async () => {
     const stream = Readable.from(THUMBNAIL_BUFFER);
     const photoFindFirst = vi.fn().mockResolvedValue({
       id: 'photo-1',
       fileName: 'holiday.jpg',
       mimeType: 'image/jpeg',
+      originalObjectKey: 'projects/project-1/photos/photo-1--holiday.jpg',
       sizeBytes: JPEG_BUFFER.length,
     });
     const statObject = vi.fn().mockResolvedValue({
@@ -453,6 +427,7 @@ describe('PhotosService photo queries', () => {
       size: THUMBNAIL_BUFFER.length,
     });
     const getObject = vi.fn().mockResolvedValue(stream);
+    const removeObjectsOlderThan = vi.fn().mockResolvedValue(0);
     const prisma = {
       photo: {
         findFirst: photoFindFirst,
@@ -460,14 +435,16 @@ describe('PhotosService photo queries', () => {
     } as unknown as PrismaService;
     const storage = {
       getObject,
+      removeObjectsOlderThan,
       statObject,
     } as unknown as StorageService;
+    const generate = vi.fn();
     const service = new PhotosService(
       prisma,
       storage,
       {} as PhotoUploadValidator,
       {} as PhotoMetadataReader,
-      {} as PhotoThumbnailGenerator,
+      { generate } as unknown as PhotoThumbnailGenerator,
     );
 
     await expect(service.getThumbnailPhoto('user-1', 'project-1', 'photo-1')).resolves.toEqual({
@@ -476,11 +453,63 @@ describe('PhotosService photo queries', () => {
       sizeBytes: THUMBNAIL_BUFFER.length,
       stream,
     });
+    expect(removeObjectsOlderThan).toHaveBeenCalledWith('thumbnails', expect.any(Date));
     expect(statObject).toHaveBeenCalledWith(
-      'projects/project-1/photos/photo-1--holiday.thumbnail.webp',
+      expect.stringMatching(/^thumbnails\/project-1\/photo-1\.[a-f0-9]{12}\.v1\.webp$/),
     );
     expect(getObject).toHaveBeenCalledWith(
-      'projects/project-1/photos/photo-1--holiday.thumbnail.webp',
+      expect.stringMatching(/^thumbnails\/project-1\/photo-1\.[a-f0-9]{12}\.v1\.webp$/),
+    );
+    expect(generate).not.toHaveBeenCalled();
+  });
+
+  it('generates and caches a WebP thumbnail when the disk cache is missing', async () => {
+    const photoFindFirst = vi.fn().mockResolvedValue({
+      id: 'photo-1',
+      fileName: 'holiday.jpg',
+      mimeType: 'image/jpeg',
+      originalObjectKey: 'projects/project-1/photos/photo-1--holiday.jpg',
+      sizeBytes: JPEG_BUFFER.length,
+    });
+    const statObject = vi
+      .fn()
+      .mockRejectedValue(Object.assign(new Error('missing'), { code: 'ENOENT' }));
+    const getObject = vi.fn().mockResolvedValue(Readable.from(JPEG_BUFFER));
+    const putObject = vi.fn().mockResolvedValue(undefined);
+    const removeObjectsOlderThan = vi.fn().mockResolvedValue(0);
+    const generate = vi.fn().mockResolvedValue(THUMBNAIL_BUFFER);
+    const prisma = {
+      photo: {
+        findFirst: photoFindFirst,
+      },
+    } as unknown as PrismaService;
+    const storage = {
+      getObject,
+      putObject,
+      removeObjectsOlderThan,
+      statObject,
+    } as unknown as StorageService;
+    const service = new PhotosService(
+      prisma,
+      storage,
+      {} as PhotoUploadValidator,
+      {} as PhotoMetadataReader,
+      { generate } as unknown as PhotoThumbnailGenerator,
+    );
+
+    const result = await service.getThumbnailPhoto('user-1', 'project-1', 'photo-1');
+
+    expect(result).toMatchObject({
+      fileName: 'holiday.thumbnail.webp',
+      mimeType: 'image/webp',
+      sizeBytes: THUMBNAIL_BUFFER.length,
+    });
+    await expect(readStream(result.stream)).resolves.toEqual(THUMBNAIL_BUFFER);
+    expect(getObject).toHaveBeenCalledWith('projects/project-1/photos/photo-1--holiday.jpg');
+    expect(generate).toHaveBeenCalledWith(JPEG_BUFFER);
+    expect(putObject).toHaveBeenCalledWith(
+      expect.stringMatching(/^thumbnails\/project-1\/photo-1\.[a-f0-9]{12}\.v1\.webp$/),
+      THUMBNAIL_BUFFER,
     );
   });
 
@@ -512,3 +541,13 @@ describe('PhotosService photo queries', () => {
     }
   });
 });
+
+async function readStream(stream: Readable): Promise<Buffer> {
+  const chunks: Buffer[] = [];
+
+  for await (const chunk of stream) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+
+  return Buffer.concat(chunks);
+}

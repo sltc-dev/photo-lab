@@ -5,6 +5,8 @@ import type { AppEnv } from '../../config/env';
 import { SecurityModule } from '../../common/security/security.module';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { StorageModule } from '../storage/storage.module';
+import { PhotoEditController } from './edit/photo-edit.controller';
+import { PhotoEditService } from './edit/photo-edit.service';
 import { PhotoMetadataReader } from './photo-metadata.reader';
 import { PhotoThumbnailGenerator } from './photo-thumbnail.generator';
 import { PhotoUploadValidator } from './photo-upload.validator';
@@ -26,7 +28,13 @@ import { PhotosService } from './photos.service';
       }),
     }),
   ],
-  controllers: [PhotosController],
-  providers: [PhotosService, PhotoMetadataReader, PhotoThumbnailGenerator, PhotoUploadValidator],
+  controllers: [PhotosController, PhotoEditController],
+  providers: [
+    PhotosService,
+    PhotoEditService,
+    PhotoMetadataReader,
+    PhotoThumbnailGenerator,
+    PhotoUploadValidator,
+  ],
 })
 export class PhotosModule {}
