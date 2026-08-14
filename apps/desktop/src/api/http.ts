@@ -34,6 +34,11 @@ export function resolveApiUrl(path: string): string {
   return new URL(path, `${API_BASE_URL.replace(/\/+$/, '')}/`).toString();
 }
 
+/** 供 SSE 等未经过 OpenAPI 生成器的请求复用同一套 Bearer Token 刷新逻辑。 */
+export function fetchWithAuth(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  return authFetch(input, init);
+}
+
 export async function getApiErrorMessage(error: unknown): Promise<string> {
   if (isApiErrorBody(error)) {
     return error.error.message;

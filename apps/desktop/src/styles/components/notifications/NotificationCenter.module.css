@@ -1,0 +1,18 @@
+.bellButton {
+  color: var(--pl-muted);
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.bellButton:hover,
+.bellButton:focus-visible {
+  background: var(--pl-accent-soft);
+  color: var(--pl-accent-strong);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bellButton {
+    transition: none;
+  }
+}

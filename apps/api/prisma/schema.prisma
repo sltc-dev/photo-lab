@@ -9,19 +9,20 @@ datasource db {
 
 model User {
   // cuid 由 Prisma 在创建用户时生成，不依赖数据库自增序列。
-  id             String          @id @default(cuid())
+  id                   String                @id @default(cuid())
   // email 是登录标识，唯一约束由数据库做最终并发裁决。
-  email          String          @unique
-  username       String
+  email                String                @unique
+  username             String
   // 这里只保存 Argon2id Hash，绝不保存可以直接登录的明文密码。
-  passwordHash   String
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  passwordHash         String
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
   // 关系字段不是真实数组列，它表示“一位用户可以拥有多条 RefreshToken 记录”。
-  refreshTokens  RefreshToken[]
-  projects       Project[]
-  photoLikes     PhotoLike[]
-  photoFavorites PhotoFavorite[]
+  refreshTokens        RefreshToken[]
+  projects             Project[]
+  photoLikes           PhotoLike[]
+  photoFavorites       PhotoFavorite[]
+  notificationReceipts NotificationReceipt[]
 }
 
 model RefreshToken {
@@ -117,4 +118,44 @@ model PhotoFavorite {
 
   @@id([userId, photoId])
   @@index([photoId, createdAt])
+}
+
+enum NotificationType {
+  SYSTEM
+  VERSION_UPGRADE
+}
+
+enum NotificationLevel {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+model Notification {
+  id            String                @id @default(cuid())
+  type          NotificationType      @default(SYSTEM)
+  level         NotificationLevel     @default(INFO)
+  title         String
+  summary       String
+  content       String
+  targetVersion String?
+  publishedAt   DateTime              @default(now())
+  expiresAt     DateTime?
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  receipts      NotificationReceipt[]
+
+  @@index([publishedAt, id])
+  @@index([expiresAt])
+}
+
+model NotificationReceipt {
+  userId         String
+  notificationId String
+  readAt         DateTime     @default(now())
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@id([userId, notificationId])
+  @@index([notificationId])
 }

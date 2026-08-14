@@ -2,6 +2,7 @@
   flex: 1;
   margin: 0 auto;
   max-width: 1400px;
+  min-height: calc(100dvh - 112px);
   min-width: 0;
   width: 100%;
 }
@@ -233,6 +234,10 @@
 }
 
 @media (max-width: 48em) {
+  .content {
+    min-height: calc(100dvh - 96px);
+  }
+
   .pageTitle {
     font-size: 24px;
   }

@@ -3,6 +3,17 @@ import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
 import type { DesktopAuthApi } from '../electron/ipc/auth.channels';
 
+vi.stubGlobal(
+  'ResizeObserver',
+  class {
+    disconnect() {}
+
+    observe() {}
+
+    unobserve() {}
+  },
+);
+
 afterEach(() => {
   cleanup();
 });

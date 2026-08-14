@@ -149,6 +149,7 @@ function ProjectPhotosContent({ projectId, queryClient }: ProjectPhotosContentPr
 
       <section aria-label="项目照片" className={styles.gallerySection}>
         <Tabs
+          className={styles.photoTabs}
           classNames={{
             list: styles.photoTabList,
             tab: styles.photoTab,

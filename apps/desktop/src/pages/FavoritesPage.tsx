@@ -25,6 +25,7 @@ export function FavoritesPage() {
 
       <section aria-label="收藏照片" className={styles.gallerySection}>
         <Tabs
+          className={styles.photoTabs}
           classNames={{ list: styles.photoTabList, tab: styles.photoTab }}
           keepMounted={false}
           onChange={(value) => setActivePhotoTab(value === 'edited' ? 'edited' : 'original')}

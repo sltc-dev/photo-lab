@@ -105,6 +105,7 @@ function MaterialProjectPhotosContent({
 
       <section aria-label="素材照片" className={styles.gallerySection}>
         <Tabs
+          className={styles.photoTabs}
           classNames={{
             list: styles.photoTabList,
             tab: styles.photoTab,

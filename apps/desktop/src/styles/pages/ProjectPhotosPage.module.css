@@ -1,4 +1,5 @@
 .page {
+  min-height: calc(100dvh - 112px);
   margin: 0 auto;
   max-width: 1400px;
   min-width: 0;
@@ -46,8 +47,24 @@
 }
 
 .gallerySection {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
   min-height: 460px;
   padding: 24px;
+}
+
+.photoTabs {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.photoTabs :global(.mantine-Tabs-panel:not([hidden])) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
 }
 
 .galleryHeader {
@@ -101,6 +118,10 @@
 }
 
 @media (max-width: 48em) {
+  .page {
+    min-height: calc(100dvh - 96px);
+  }
+
   .pageHeader,
   .gallerySection {
     padding: 20px;

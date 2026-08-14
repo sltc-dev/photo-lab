@@ -18,6 +18,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 import { getApiErrorMessage } from '../../api/http';
 import { terminateSession } from '../../api/session';
 import { useAuthStore } from '../../stores/auth.store';
+import { NotificationCenter } from '../notifications/NotificationCenter';
 import styles from '../../styles/components/layout/AppLayout.module.css';
 
 export function AppLayout() {
@@ -71,6 +72,7 @@ export function AppLayout() {
             </Title>
           </Group>
           <Group className={styles.headerGroup} gap="sm">
+            <NotificationCenter />
             <Avatar className={styles.avatar} radius="xl" size="sm">
               {currentUser?.username.slice(0, 1).toUpperCase()}
             </Avatar>

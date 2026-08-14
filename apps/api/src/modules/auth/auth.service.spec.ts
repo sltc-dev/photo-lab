@@ -120,6 +120,7 @@ function createService(fakePrisma = new FakeAuthPrisma()): {
     DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
     JWT_ACCESS_SECRET: 'test-access-secret-123',
     JWT_REFRESH_SECRET: 'test-refresh-secret-123',
+    NOTIFICATION_PUBLISH_SECRET: 'test-notification-publish-secret-123456',
     NODE_ENV: 'test',
     PHOTO_STORAGE_ROOT: '/tmp/photo-lab-test',
     PHOTO_UPLOAD_MAX_BYTES: 25 * 1024 * 1024,

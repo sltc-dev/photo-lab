@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateProjectData, CreateProjectErrors, CreateProjectResponses, FavoriteMaterialPhotoData, FavoriteMaterialPhotoErrors, FavoriteMaterialPhotoResponses, GetEditedPhotoStateData, GetEditedPhotoStateErrors, GetEditedPhotoStateResponses, GetOriginalPhotoData, GetOriginalPhotoErrors, GetOriginalPhotoResponses, GetProjectData, GetProjectErrors, GetProjectResponses, GetThumbnailPhotoData, GetThumbnailPhotoErrors, GetThumbnailPhotoResponses, HealthData, HealthResponses, LikeMaterialPhotoData, LikeMaterialPhotoErrors, LikeMaterialPhotoResponses, ListFavoritePhotosData, ListFavoritePhotosErrors, ListFavoritePhotosResponses, ListPhotosData, ListPhotosErrors, ListPhotosResponses, ListProjectPhotosData, ListProjectPhotosErrors, ListProjectPhotosResponses, ListProjectsData, ListProjectsErrors, ListProjectsResponses, ListUserProjectsData, ListUserProjectsErrors, ListUserProjectsResponses, ListUsersData, ListUsersErrors, ListUsersResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, MeData, MeErrors, MeResponses, RefreshData, RefreshErrors, RefreshResponses, RegisterData, RegisterErrors, RegisterResponses, SaveEditedPhotoData, SaveEditedPhotoErrors, SaveEditedPhotoResponses, UnfavoriteMaterialPhotoData, UnfavoriteMaterialPhotoErrors, UnfavoriteMaterialPhotoResponses, UnlikeMaterialPhotoData, UnlikeMaterialPhotoErrors, UnlikeMaterialPhotoResponses, UploadPhotoData, UploadPhotoErrors, UploadPhotoResponses } from './types.gen';
+import type { CreateProjectData, CreateProjectErrors, CreateProjectResponses, FavoriteMaterialPhotoData, FavoriteMaterialPhotoErrors, FavoriteMaterialPhotoResponses, GetEditedPhotoStateData, GetEditedPhotoStateErrors, GetEditedPhotoStateResponses, GetNotificationData, GetNotificationErrors, GetNotificationResponses, GetOriginalPhotoData, GetOriginalPhotoErrors, GetOriginalPhotoResponses, GetProjectData, GetProjectErrors, GetProjectResponses, GetThumbnailPhotoData, GetThumbnailPhotoErrors, GetThumbnailPhotoResponses, HealthData, HealthResponses, LikeMaterialPhotoData, LikeMaterialPhotoErrors, LikeMaterialPhotoResponses, ListFavoritePhotosData, ListFavoritePhotosErrors, ListFavoritePhotosResponses, ListNotificationsData, ListNotificationsErrors, ListNotificationsResponses, ListPhotosData, ListPhotosErrors, ListPhotosResponses, ListProjectPhotosData, ListProjectPhotosErrors, ListProjectPhotosResponses, ListProjectsData, ListProjectsErrors, ListProjectsResponses, ListUserProjectsData, ListUserProjectsErrors, ListUserProjectsResponses, ListUsersData, ListUsersErrors, ListUsersResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, MarkNotificationReadData, MarkNotificationReadErrors, MarkNotificationReadResponses, MeData, MeErrors, MeResponses, RefreshData, RefreshErrors, RefreshResponses, RegisterData, RegisterErrors, RegisterResponses, SaveEditedPhotoData, SaveEditedPhotoErrors, SaveEditedPhotoResponses, UnfavoriteMaterialPhotoData, UnfavoriteMaterialPhotoErrors, UnfavoriteMaterialPhotoResponses, UnlikeMaterialPhotoData, UnlikeMaterialPhotoErrors, UnlikeMaterialPhotoResponses, UploadPhotoData, UploadPhotoErrors, UploadPhotoResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -175,5 +175,23 @@ export const unfavoriteMaterialPhoto = <ThrowOnError extends boolean = false>(op
 export const favoriteMaterialPhoto = <ThrowOnError extends boolean = false>(options: Options<FavoriteMaterialPhotoData, ThrowOnError>): RequestResult<FavoriteMaterialPhotoResponses, FavoriteMaterialPhotoErrors, ThrowOnError> => (options.client ?? client).put<FavoriteMaterialPhotoResponses, FavoriteMaterialPhotoErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/material/photos/{photoId}/favorite',
+    ...options
+});
+
+export const listNotifications = <ThrowOnError extends boolean = false>(options?: Options<ListNotificationsData, ThrowOnError>): RequestResult<ListNotificationsResponses, ListNotificationsErrors, ThrowOnError> => (options?.client ?? client).get<ListNotificationsResponses, ListNotificationsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/notifications',
+    ...options
+});
+
+export const getNotification = <ThrowOnError extends boolean = false>(options: Options<GetNotificationData, ThrowOnError>): RequestResult<GetNotificationResponses, GetNotificationErrors, ThrowOnError> => (options.client ?? client).get<GetNotificationResponses, GetNotificationErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/notifications/{notificationId}',
+    ...options
+});
+
+export const markNotificationRead = <ThrowOnError extends boolean = false>(options: Options<MarkNotificationReadData, ThrowOnError>): RequestResult<MarkNotificationReadResponses, MarkNotificationReadErrors, ThrowOnError> => (options.client ?? client).patch<MarkNotificationReadResponses, MarkNotificationReadErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/notifications/{notificationId}/read',
     ...options
 });

@@ -198,6 +198,7 @@
 }
 
 .emptyState {
+  flex: 1;
   min-height: 360px;
   padding: 40px 24px;
   text-align: center;

@@ -24,7 +24,7 @@ export type AuthSessionDto = {
     user: CurrentUserDto;
 };
 
-export type ErrorCode = 'AUTH_INVALID_CREDENTIALS' | 'AUTH_REFRESH_TOKEN_INVALID' | 'AUTH_TOKEN_EXPIRED' | 'BAD_REQUEST' | 'HTTP_ERROR' | 'INTERNAL_SERVER_ERROR' | 'NOT_FOUND' | 'PHOTO_FILE_REQUIRED' | 'PHOTO_FILE_TOO_LARGE' | 'PHOTO_NOT_FOUND' | 'PHOTO_STORAGE_FAILED' | 'PHOTO_UNSUPPORTED_TYPE' | 'PROJECT_NOT_FOUND' | 'RATE_LIMIT_EXCEEDED' | 'USER_EMAIL_ALREADY_EXISTS' | 'USER_NOT_FOUND' | 'VALIDATION_FAILED';
+export type ErrorCode = 'AUTH_INVALID_CREDENTIALS' | 'AUTH_REFRESH_TOKEN_INVALID' | 'AUTH_TOKEN_EXPIRED' | 'BAD_REQUEST' | 'HTTP_ERROR' | 'INTERNAL_SERVER_ERROR' | 'NOT_FOUND' | 'NOTIFICATION_NOT_FOUND' | 'NOTIFICATION_PUBLISH_FORBIDDEN' | 'PHOTO_FILE_REQUIRED' | 'PHOTO_FILE_TOO_LARGE' | 'PHOTO_NOT_FOUND' | 'PHOTO_STORAGE_FAILED' | 'PHOTO_UNSUPPORTED_TYPE' | 'PROJECT_NOT_FOUND' | 'RATE_LIMIT_EXCEEDED' | 'USER_EMAIL_ALREADY_EXISTS' | 'USER_NOT_FOUND' | 'VALIDATION_FAILED';
 
 export type ErrorBodyDto = {
     code: ErrorCode;
@@ -205,6 +205,52 @@ export type MaterialPhotoLikeStateDto = {
 export type MaterialPhotoFavoriteStateDto = {
     photoId: string;
     isFavorited: boolean;
+};
+
+export type NotificationType = 'SYSTEM' | 'VERSION_UPGRADE';
+
+export type NotificationLevel = 'INFO' | 'WARNING' | 'CRITICAL';
+
+export type NotificationListItemDto = {
+    id: string;
+    type: NotificationType;
+    level: NotificationLevel;
+    title: string;
+    summary: string;
+    isRead: boolean;
+    publishedAt: string;
+    expiresAt?: string | null;
+};
+
+export type NotificationPageDto = {
+    items: Array<NotificationListItemDto>;
+    nextCursor?: string | null;
+    /**
+     * 当前用户的未读通知总数
+     */
+    unreadCount: number;
+};
+
+export type NotificationDetailDto = {
+    id: string;
+    type: NotificationType;
+    level: NotificationLevel;
+    title: string;
+    summary: string;
+    isRead: boolean;
+    publishedAt: string;
+    expiresAt?: string | null;
+    /**
+     * 通知正文，使用纯文本或 Markdown 展示
+     */
+    content: string;
+    targetVersion?: string | null;
+};
+
+export type NotificationReadDto = {
+    id: string;
+    isRead: boolean;
+    readAt: string;
 };
 
 export type RegisterData = {
@@ -802,3 +848,71 @@ export type FavoriteMaterialPhotoResponses = {
 };
 
 export type FavoriteMaterialPhotoResponse = FavoriteMaterialPhotoResponses[keyof FavoriteMaterialPhotoResponses];
+
+export type ListNotificationsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        isRead?: boolean;
+        limit?: number;
+        cursor?: string;
+    };
+    url: '/notifications';
+};
+
+export type ListNotificationsErrors = {
+    400: ErrorResponseDto;
+    401: ErrorResponseDto;
+};
+
+export type ListNotificationsError = ListNotificationsErrors[keyof ListNotificationsErrors];
+
+export type ListNotificationsResponses = {
+    200: NotificationPageDto;
+};
+
+export type ListNotificationsResponse = ListNotificationsResponses[keyof ListNotificationsResponses];
+
+export type GetNotificationData = {
+    body?: never;
+    path: {
+        notificationId: string;
+    };
+    query?: never;
+    url: '/notifications/{notificationId}';
+};
+
+export type GetNotificationErrors = {
+    401: ErrorResponseDto;
+    404: ErrorResponseDto;
+};
+
+export type GetNotificationError = GetNotificationErrors[keyof GetNotificationErrors];
+
+export type GetNotificationResponses = {
+    200: NotificationDetailDto;
+};
+
+export type GetNotificationResponse = GetNotificationResponses[keyof GetNotificationResponses];
+
+export type MarkNotificationReadData = {
+    body?: never;
+    path: {
+        notificationId: string;
+    };
+    query?: never;
+    url: '/notifications/{notificationId}/read';
+};
+
+export type MarkNotificationReadErrors = {
+    401: ErrorResponseDto;
+    404: ErrorResponseDto;
+};
+
+export type MarkNotificationReadError = MarkNotificationReadErrors[keyof MarkNotificationReadErrors];
+
+export type MarkNotificationReadResponses = {
+    200: NotificationReadDto;
+};
+
+export type MarkNotificationReadResponse = MarkNotificationReadResponses[keyof MarkNotificationReadResponses];

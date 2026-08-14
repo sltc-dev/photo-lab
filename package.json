@@ -9,6 +9,7 @@
     "api:openapi": "pnpm --filter api openapi",
     "api:client": "pnpm api:openapi && pnpm --filter desktop generate:api-client",
     "api:client:check": "pnpm api:client && git diff --exit-code packages/api-contract/openapi.json apps/desktop/src/generated/api",
+    "notification:publish": "pnpm --filter api notifications:publish",
     "db:validate": "pnpm --filter api prisma validate",
     "db:migrate": "pnpm db:migrate:dev",
     "db:migrate:deploy": "pnpm --filter api prisma migrate deploy",
