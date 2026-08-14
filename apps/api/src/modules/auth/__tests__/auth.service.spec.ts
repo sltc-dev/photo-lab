@@ -2,11 +2,11 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { RefreshToken, User } from '@prisma/client';
 import { describe, expect, it } from 'vitest';
-import { AppException } from '../../common/errors/app.exception';
-import type { AppEnv } from '../../config/env';
-import { PrismaService } from '../../prisma/prisma.service';
-import { UsersService } from '../users/users.service';
-import { AuthService } from './auth.service';
+import { AppException } from '../../../common/errors/app.exception';
+import type { AppEnv } from '../../../config/env';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { UsersService } from '../../users/users.service';
+import { AuthService } from '../auth.service';
 
 type RefreshTokenWithUser = RefreshToken & {
   user: User;

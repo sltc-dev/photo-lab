@@ -1,8 +1,8 @@
 import { HttpStatus } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
-import { AppException } from '../../common/errors/app.exception';
-import { PrismaService } from '../../prisma/prisma.service';
-import { ProjectsService } from './projects.service';
+import { AppException } from '../../../common/errors/app.exception';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { ProjectsService } from '../projects.service';
 
 const projectRecord = {
   _count: {

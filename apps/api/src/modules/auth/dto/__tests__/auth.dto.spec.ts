@@ -1,8 +1,8 @@
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import { describe, expect, it } from 'vitest';
-import { LoginDto } from './login.dto';
-import { RegisterDto } from './register.dto';
+import { LoginDto } from '../login.dto';
+import { RegisterDto } from '../register.dto';
 
 describe('authentication DTOs', () => {
   it('normalizes the registration identity fields', () => {

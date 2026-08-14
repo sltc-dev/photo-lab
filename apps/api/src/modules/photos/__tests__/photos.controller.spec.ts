@@ -2,11 +2,11 @@ import { Readable } from 'node:stream';
 import { PhotoKind, PhotoStatus } from '@prisma/client';
 import { describe, expect, it, vi } from 'vitest';
 import type { Response } from 'express';
-import type { RequestUser } from '../../common/types/authenticated-request';
-import type { PhotoDto } from './dto/photo.dto';
-import type { UploadedPhotoFile } from './photo-upload.validator';
-import { PhotosController } from './photos.controller';
-import { PhotosService } from './photos.service';
+import type { RequestUser } from '../../../common/types/authenticated-request';
+import type { PhotoDto } from '../dto/photo.dto';
+import type { UploadedPhotoFile } from '../photo-upload.validator';
+import { PhotosController } from '../photos.controller';
+import { PhotosService } from '../photos.service';
 
 const user: RequestUser = {
   id: 'user-1',

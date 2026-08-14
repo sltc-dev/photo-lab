@@ -1,7 +1,7 @@
 import { PhotoKind } from '@prisma/client';
 import { describe, expect, it, vi } from 'vitest';
-import { PrismaService } from '../../prisma/prisma.service';
-import { MaterialPhotosService } from './material-photos.service';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { MaterialPhotosService } from '../material-photos.service';
 
 describe('MaterialPhotosService', () => {
   it('filters project photos by the requested photo kind', async () => {

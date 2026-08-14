@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { RequestUser } from '../../../common/types/authenticated-request';
-import type { UploadedPhotoFile } from '../photo-upload.validator';
-import { PhotoEditController } from './photo-edit.controller';
-import { PhotoEditService } from './photo-edit.service';
+import type { RequestUser } from '../../../../common/types/authenticated-request';
+import type { UploadedPhotoFile } from '../../photo-upload.validator';
+import { PhotoEditController } from '../photo-edit.controller';
+import { PhotoEditService } from '../photo-edit.service';
 
 const user: RequestUser = { id: 'user-1' };
 const uploadedFile: UploadedPhotoFile = {

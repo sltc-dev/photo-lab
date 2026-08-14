@@ -29,6 +29,11 @@ src/
 7. Validate environment values during startup, not on the first user request.
 8. Add roles or permissions only when the product has a concrete authorization requirement.
 
+Keep unit tests close to the relevant feature without mixing them into implementation file lists.
+Place `*.spec.ts` files in a local `__tests__/` directory, such as
+`src/modules/photos/__tests__/photos.service.spec.ts`. Reserve top-level `tests/integration/` and
+`tests/e2e/` directories for scenarios that span multiple modules.
+
 ## Current Dependency Shape
 
 ```text

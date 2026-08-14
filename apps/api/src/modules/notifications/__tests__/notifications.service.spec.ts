@@ -1,11 +1,11 @@
 import { HttpStatus } from '@nestjs/common';
 import { NotificationLevel, NotificationType } from '@prisma/client';
 import { describe, expect, it, vi } from 'vitest';
-import { AppException } from '../../common/errors/app.exception';
-import type { PrismaService } from '../../prisma/prisma.service';
-import type { ListNotificationsQueryDto } from './dto/list-notifications-query.dto';
-import type { NotificationStreamService } from './notification-stream.service';
-import { NotificationsService } from './notifications.service';
+import { AppException } from '../../../common/errors/app.exception';
+import type { PrismaService } from '../../../prisma/prisma.service';
+import type { ListNotificationsQueryDto } from '../dto/list-notifications-query.dto';
+import type { NotificationStreamService } from '../notification-stream.service';
+import { NotificationsService } from '../notifications.service';
 
 const notificationRecord = {
   content: '请升级到新版本以获得最新功能。',

@@ -1,9 +1,9 @@
 import { ExecutionContext, HttpStatus } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
 import { describe, expect, it } from 'vitest';
-import { AppException } from '../../common/errors/app.exception';
-import type { AppEnv } from '../../config/env';
-import { NotificationPublishGuard } from './notification-publish.guard';
+import { AppException } from '../../../common/errors/app.exception';
+import type { AppEnv } from '../../../config/env';
+import { NotificationPublishGuard } from '../notification-publish.guard';
 
 const secret = 'test-notification-publish-secret-123456';
 
