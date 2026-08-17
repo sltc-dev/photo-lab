@@ -1,9 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
-import { PhotoStatus } from '@prisma/client';
+import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { PhotoKind, PhotoStatus } from '@prisma/client';
 
 export class ListMaterialPhotosQueryDto {
+  @ApiPropertyOptional({
+    description: '照片类型；不传时返回全部照片',
+    enum: PhotoKind,
+    enumName: 'PhotoKind',
+  })
+  @IsEnum(PhotoKind)
+  @IsOptional()
+  kind?: PhotoKind;
+
   @ApiPropertyOptional({
     description: '上一页返回的图片游标',
     type: String,
@@ -80,6 +89,12 @@ export class MaterialPhotoDto {
     type: Number,
   })
   height!: number | null;
+
+  @ApiProperty({
+    enum: PhotoKind,
+    enumName: 'PhotoKind',
+  })
+  kind!: PhotoKind;
 
   @ApiProperty({
     enum: PhotoStatus,

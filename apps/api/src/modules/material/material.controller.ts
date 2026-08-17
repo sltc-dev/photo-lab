@@ -1,5 +1,6 @@
 import { Controller, Get, HttpStatus, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { PhotoKind } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { MaterialUserService } from './material-users.service';
 import { MaterialUserDto } from './dto/material-user.dto';
@@ -66,6 +67,13 @@ export class MaterialController {
     name: 'cursor',
     required: false,
     type: String,
+  })
+  @ApiQuery({
+    description: '照片类型；不传时返回全部照片',
+    enum: PhotoKind,
+    enumName: 'PhotoKind',
+    name: 'kind',
+    required: false,
   })
   @ApiQuery({
     description: '每页返回的图片数量',

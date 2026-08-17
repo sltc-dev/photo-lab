@@ -1,5 +1,5 @@
 import { Readable } from 'node:stream';
-import { PhotoStatus } from '@prisma/client';
+import { PhotoKind, PhotoStatus } from '@prisma/client';
 import { describe, expect, it, vi } from 'vitest';
 import type { Response } from 'express';
 import type { RequestUser } from '../../common/types/authenticated-request';
@@ -24,6 +24,7 @@ const photoDto: PhotoDto = {
   fileName: 'holiday.jpg',
   height: null,
   id: 'photo-1',
+  kind: PhotoKind.ORIGINAL,
   mimeType: 'image/jpeg',
   originalUrl: '/public/projects/project-1/photos/photo-1--holiday.jpg',
   projectId: 'project-1',

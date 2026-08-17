@@ -76,6 +76,8 @@ export type ProjectDto = {
     updatedAt: string;
 };
 
+export type PhotoKind = 'ORIGINAL' | 'EDITED';
+
 export type PhotoStatus = 'UPLOADED' | 'PROCESSING' | 'READY' | 'FAILED';
 
 export type PhotoDto = {
@@ -100,6 +102,7 @@ export type PhotoDto = {
     sizeBytes: number;
     width: number | null;
     height: number | null;
+    kind: PhotoKind;
     status: PhotoStatus;
     createdAt: string;
     updatedAt: string;
@@ -159,6 +162,7 @@ export type MaterialPhotoDto = {
     sizeBytes: number;
     width: number | null;
     height: number | null;
+    kind: PhotoKind;
     status: PhotoStatus;
     createdAt: string;
     updatedAt: string;
@@ -360,6 +364,10 @@ export type ListPhotosData = {
          * 每页照片数量
          */
         limit?: number;
+        /**
+         * 照片类型；不传时返回全部照片
+         */
+        kind?: PhotoKind;
         /**
          * 上一页返回的游标
          */
@@ -619,6 +627,10 @@ export type ListProjectPhotosData = {
          * 每页返回的图片数量
          */
         limit?: number;
+        /**
+         * 照片类型；不传时返回全部照片
+         */
+        kind?: PhotoKind;
         /**
          * 上一页返回的图片游标
          */

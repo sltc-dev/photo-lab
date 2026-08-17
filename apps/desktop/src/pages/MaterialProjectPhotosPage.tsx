@@ -1,6 +1,7 @@
-import { Alert, Box, Button, Group, Skeleton, Stack, Text, Title } from '@mantine/core';
+import { Alert, Box, Button, Group, Skeleton, Stack, Tabs, Text, Title } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { AlertCircle, ArrowLeft } from 'lucide-react';
+import { useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import {
   getMaterialUserProjects,
@@ -29,6 +30,7 @@ function MaterialProjectPhotosContent({
   projectId: string;
   userId: string;
 }) {
+  const [activePhotoTab, setActivePhotoTab] = useState<'edited' | 'original'>('original');
   const usersQuery = useQuery({
     queryFn: getMaterialUsers,
     queryKey: materialUsersQueryKey,
@@ -101,16 +103,32 @@ function MaterialProjectPhotosContent({
         </Group>
       </Box>
 
-      <section aria-labelledby="material-photo-grid-title" className={styles.gallerySection}>
-        <Group className={styles.galleryHeader} justify="space-between">
-          <Title id="material-photo-grid-title" order={3}>
-            全部照片
-          </Title>
-          <Text c="dimmed" size="sm">
-            按上传时间从新到旧排列
-          </Text>
-        </Group>
-        <MaterialPhotoGrid projectId={projectId} />
+      <section aria-label="素材照片" className={styles.gallerySection}>
+        <Tabs
+          classNames={{
+            list: styles.photoTabList,
+            tab: styles.photoTab,
+          }}
+          keepMounted={false}
+          onChange={(value) => setActivePhotoTab(value === 'edited' ? 'edited' : 'original')}
+          value={activePhotoTab}
+        >
+          <Group align="flex-end" className={styles.galleryHeader} justify="space-between">
+            <Tabs.List aria-label="照片类型">
+              <Tabs.Tab value="original">原图</Tabs.Tab>
+              <Tabs.Tab value="edited">效果图</Tabs.Tab>
+            </Tabs.List>
+            <Text c="dimmed" size="sm">
+              按上传时间从新到旧排列
+            </Text>
+          </Group>
+          <Tabs.Panel value="original">
+            <MaterialPhotoGrid kind="ORIGINAL" projectId={projectId} />
+          </Tabs.Panel>
+          <Tabs.Panel value="edited">
+            <MaterialPhotoGrid kind="EDITED" projectId={projectId} />
+          </Tabs.Panel>
+        </Tabs>
       </section>
     </Stack>
   );

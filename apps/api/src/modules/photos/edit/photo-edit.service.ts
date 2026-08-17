@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
-import { PhotoStatus, Prisma } from '@prisma/client';
+import { PhotoKind, PhotoStatus, Prisma } from '@prisma/client';
 import { AppException } from '../../../common/errors/app.exception';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { StorageService } from '../../storage/storage.service';
@@ -106,6 +106,7 @@ export class PhotoEditService {
               fileName: finalizedPhoto.fileName,
               height: metadata.height,
               id: finalizedPhoto.id,
+              kind: PhotoKind.EDITED,
               mimeType: validated.mimeType,
               originalObjectKey: objectKey,
               projectId,

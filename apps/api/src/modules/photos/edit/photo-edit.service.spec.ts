@@ -1,4 +1,4 @@
-import { PhotoStatus, Prisma } from '@prisma/client';
+import { PhotoKind, PhotoStatus, Prisma } from '@prisma/client';
 import { describe, expect, it, vi } from 'vitest';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { StorageService } from '../../storage/storage.service';
@@ -108,6 +108,7 @@ describe('PhotoEditService', () => {
       data: expect.objectContaining({
         fileName: 'holiday.edited.jpg',
         height: 600,
+        kind: PhotoKind.EDITED,
         originalObjectKey: storedKey,
         projectId: 'project-1',
         status: PhotoStatus.UPLOADED,

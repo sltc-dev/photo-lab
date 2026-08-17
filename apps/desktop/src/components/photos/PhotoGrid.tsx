@@ -32,30 +32,32 @@ import {
   getPhotoThumbnail,
   getProjectPhotosPage,
   photoThumbnailQueryKey,
-  photosQueryKey,
+  projectPhotosByKindQueryKey,
   type ProjectPhoto,
+  type ProjectPhotoKind,
   type ProjectPhotoPage,
 } from '../../api/photos';
 import styles from '../../styles/components/photos/PhotoGrid.module.css';
 
 type PhotoGridProps = {
+  kind: ProjectPhotoKind;
   projectId: string;
 };
 
-export function PhotoGrid({ projectId }: PhotoGridProps) {
+export function PhotoGrid({ kind, projectId }: PhotoGridProps) {
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
   const photosQuery = useInfiniteQuery<
     ProjectPhotoPage,
     Error,
     InfiniteData<ProjectPhotoPage, string | null>,
-    ReturnType<typeof photosQueryKey>,
+    ReturnType<typeof projectPhotosByKindQueryKey>,
     string | null
   >({
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     initialPageParam: null as string | null,
-    queryFn: ({ pageParam }) => getProjectPhotosPage(projectId, pageParam),
-    queryKey: photosQueryKey(projectId),
+    queryFn: ({ pageParam }) => getProjectPhotosPage(projectId, pageParam, kind),
+    queryKey: projectPhotosByKindQueryKey(projectId, kind),
   });
   const { fetchNextPage, hasNextPage, isFetchingNextPage, isFetchNextPageError } = photosQuery;
 
@@ -111,15 +113,19 @@ export function PhotoGrid({ projectId }: PhotoGridProps) {
   const selectedPhoto = photos.find((photo) => photo.id === selectedPhotoId) ?? null;
 
   if (photos.length === 0) {
+    const isEditedKind = kind === 'EDITED';
+
     return (
       <Center className={styles.emptyState}>
         <Stack align="center" gap="sm">
           <div className={styles.emptyIcon}>
             <Images aria-hidden size={24} />
           </div>
-          <Text fw={650}>这个项目还没有照片</Text>
+          <Text fw={650}>{isEditedKind ? '暂无效果图' : '暂无原图'}</Text>
           <Text c="dimmed" size="sm">
-            点击右上角“上传照片”，添加第一张原始图片。
+            {isEditedKind
+              ? '完成照片编辑后，效果图会显示在这里。'
+              : '点击右上角“上传照片”，添加第一张原始图片。'}
           </Text>
         </Stack>
       </Center>

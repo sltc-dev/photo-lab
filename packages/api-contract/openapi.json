@@ -418,6 +418,15 @@
             }
           },
           {
+            "name": "kind",
+            "required": false,
+            "in": "query",
+            "description": "照片类型；不传时返回全部照片",
+            "schema": {
+              "$ref": "#/components/schemas/PhotoKind"
+            }
+          },
+          {
             "name": "cursor",
             "required": false,
             "in": "query",
@@ -1093,6 +1102,15 @@
             }
           },
           {
+            "name": "kind",
+            "required": false,
+            "in": "query",
+            "description": "照片类型；不传时返回全部照片",
+            "schema": {
+              "$ref": "#/components/schemas/PhotoKind"
+            }
+          },
+          {
             "name": "cursor",
             "required": false,
             "in": "query",
@@ -1423,6 +1441,13 @@
           "updatedAt"
         ]
       },
+      "PhotoKind": {
+        "type": "string",
+        "enum": [
+          "ORIGINAL",
+          "EDITED"
+        ]
+      },
       "PhotoStatus": {
         "type": "string",
         "enum": [
@@ -1472,6 +1497,13 @@
             "type": "number",
             "nullable": true
           },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PhotoKind"
+              }
+            ]
+          },
           "status": {
             "allOf": [
               {
@@ -1498,6 +1530,7 @@
           "sizeBytes",
           "width",
           "height",
+          "kind",
           "status",
           "createdAt",
           "updatedAt"
@@ -1599,6 +1632,13 @@
             "type": "number",
             "nullable": true
           },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PhotoKind"
+              }
+            ]
+          },
           "status": {
             "allOf": [
               {
@@ -1625,6 +1665,7 @@
           "sizeBytes",
           "width",
           "height",
+          "kind",
           "status",
           "createdAt",
           "updatedAt"

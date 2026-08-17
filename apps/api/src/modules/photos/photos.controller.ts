@@ -26,6 +26,7 @@ import {
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
+import { PhotoKind } from '@prisma/client';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ApiErrorResponses } from '../../common/decorators/api-error-responses.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -57,6 +58,13 @@ export class PhotosController {
     name: 'cursor',
     required: false,
     type: String,
+  })
+  @ApiQuery({
+    description: '照片类型；不传时返回全部照片',
+    enum: PhotoKind,
+    enumName: 'PhotoKind',
+    name: 'kind',
+    required: false,
   })
   @ApiQuery({
     description: '每页照片数量',

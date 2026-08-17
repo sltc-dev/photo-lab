@@ -5,6 +5,7 @@ import {
   type MaterialPhotoDto,
   type MaterialPhotoPageDto,
   type MaterialUserDto,
+  type PhotoKind,
   type ProjectDto,
 } from '../generated/api';
 import { resolveApiUrl } from './http';
@@ -20,11 +21,13 @@ export type MaterialPhotoPage = Omit<MaterialPhotoPageDto, 'items'> & {
   items: MaterialPhoto[];
 };
 
+export type MaterialPhotoKind = PhotoKind;
+
 export const materialUsersQueryKey = ['materials', 'users'] as const;
 export const materialUserProjectsQueryKey = (userId: string) =>
   ['materials', 'users', userId, 'projects'] as const;
-export const materialProjectPhotosQueryKey = (projectId: string) =>
-  ['materials', 'projects', projectId, 'photos'] as const;
+export const materialProjectPhotosQueryKey = (projectId: string, kind: MaterialPhotoKind) =>
+  ['materials', 'projects', projectId, 'photos', kind] as const;
 
 export async function getMaterialUsers(): Promise<MaterialUserDto[]> {
   const response = await listUsers({
@@ -48,6 +51,7 @@ export async function getMaterialUserProjects(userId: string): Promise<ProjectDt
 export async function getMaterialProjectPhotosPage(
   projectId: string,
   cursor: string | null,
+  kind: MaterialPhotoKind,
 ): Promise<MaterialPhotoPage> {
   const response = await listProjectPhotos({
     path: {
@@ -55,6 +59,7 @@ export async function getMaterialProjectPhotosPage(
     },
     query: {
       ...(cursor ? { cursor } : {}),
+      kind,
       limit: MATERIAL_PHOTOS_PAGE_SIZE,
     },
     throwOnError: true,

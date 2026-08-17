@@ -31,11 +31,18 @@ import {
   MATERIAL_QUERY_STALE_TIME,
   materialProjectPhotosQueryKey,
   type MaterialPhoto,
+  type MaterialPhotoKind,
   type MaterialPhotoPage,
 } from '../../api/materials';
 import styles from '../../styles/components/photos/PhotoGrid.module.css';
 
-export function MaterialPhotoGrid({ projectId }: { projectId: string }) {
+export function MaterialPhotoGrid({
+  kind,
+  projectId,
+}: {
+  kind: MaterialPhotoKind;
+  projectId: string;
+}) {
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
   const photosQuery = useInfiniteQuery<
@@ -47,8 +54,8 @@ export function MaterialPhotoGrid({ projectId }: { projectId: string }) {
   >({
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     initialPageParam: null as string | null,
-    queryFn: ({ pageParam }) => getMaterialProjectPhotosPage(projectId, pageParam),
-    queryKey: materialProjectPhotosQueryKey(projectId),
+    queryFn: ({ pageParam }) => getMaterialProjectPhotosPage(projectId, pageParam, kind),
+    queryKey: materialProjectPhotosQueryKey(projectId, kind),
     staleTime: MATERIAL_QUERY_STALE_TIME,
   });
   const { fetchNextPage, hasNextPage, isFetchingNextPage, isFetchNextPageError } = photosQuery;
@@ -100,15 +107,19 @@ export function MaterialPhotoGrid({ projectId }: { projectId: string }) {
   const selectedPhoto = photos.find((photo) => photo.id === selectedPhotoId) ?? null;
 
   if (photos.length === 0) {
+    const isEditedKind = kind === 'EDITED';
+
     return (
       <Center className={styles.emptyState}>
         <Stack align="center" gap="sm">
           <div className={styles.emptyIcon}>
             <Images aria-hidden size={24} />
           </div>
-          <Text fw={650}>这个图库还没有照片</Text>
+          <Text fw={650}>{isEditedKind ? '暂无效果图' : '暂无原图'}</Text>
           <Text c="dimmed" size="sm">
-            该成员尚未在此图库中添加照片素材。
+            {isEditedKind
+              ? '该成员尚未在此图库中生成效果图。'
+              : '该成员尚未在此图库中添加原始照片。'}
           </Text>
         </Stack>
       </Center>

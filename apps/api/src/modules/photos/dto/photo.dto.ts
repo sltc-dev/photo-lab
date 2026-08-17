@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PhotoStatus } from '@prisma/client';
+import { PhotoKind, PhotoStatus } from '@prisma/client';
 
 export class PhotoDto {
   @ApiProperty({ type: String })
@@ -52,6 +52,12 @@ export class PhotoDto {
     type: Number,
   })
   height!: number | null;
+
+  @ApiProperty({
+    enum: PhotoKind,
+    enumName: 'PhotoKind',
+  })
+  kind!: PhotoKind;
 
   @ApiProperty({
     enum: PhotoStatus,

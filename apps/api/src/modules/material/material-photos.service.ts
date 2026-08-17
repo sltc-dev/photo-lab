@@ -40,6 +40,7 @@ const materialPhotoSelect = {
   sizeBytes: true,
   width: true,
   height: true,
+  kind: true,
   originalObjectKey: true,
   status: true,
   createdAt: true,
@@ -115,6 +116,7 @@ export class MaterialPhotosService {
       //取比当前页多一条的数据，判断是否还有下一页
       take: query.limit + 1,
       where: {
+        ...(query.kind ? { kind: query.kind } : {}),
         projectId,
       },
     });
@@ -129,6 +131,7 @@ export class MaterialPhotosService {
       nextCursor: hasMore ? pageItems.at(-1)!.id : null,
     };
   }
+
   private toProjectDto(project: MaterialProjectRecord): ProjectDto {
     return {
       id: project.id,
@@ -151,6 +154,7 @@ export class MaterialPhotosService {
       sizeBytes: photo.sizeBytes,
       width: photo.width,
       height: photo.height,
+      kind: photo.kind,
       status: photo.status,
       createdAt: photo.createdAt.toISOString(),
       updatedAt: photo.updatedAt.toISOString(),

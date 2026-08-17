@@ -8,7 +8,7 @@ import FilerobotImageEditor, {
   type FilerobotImageEditorConfig,
   type getCurrentImgDataFunction,
 } from 'react-filerobot-image-editor';
-import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useEffect, useRef, useState, type RefObject, type WheelEvent } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { getApiErrorMessage } from '../api/http';
 import { projectQueryKey, projectsQueryKey } from '../api/projects';
@@ -171,7 +171,7 @@ function PhotoEditorContent({ photoId, projectId }: { photoId: string; projectId
           </Button>
         </Group>
       </Group>
-      <div className={styles.editor}>
+      <div className={styles.editor} onWheelCapture={handleEditorWheelCapture}>
         <OpenSourceImageEditor
           editState={sourceQuery.data.editState}
           editorDataRef={editorDataRef}
@@ -180,6 +180,19 @@ function PhotoEditorContent({ photoId, projectId }: { photoId: string; projectId
       </div>
     </Stack>
   );
+}
+
+function handleEditorWheelCapture(event: WheelEvent<HTMLDivElement>) {
+  const target = event.target;
+
+  if (
+    target instanceof Element &&
+    target.closest('.FIE_canvas-node') &&
+    !event.ctrlKey &&
+    !event.metaKey
+  ) {
+    event.stopPropagation();
+  }
 }
 
 function OpenSourceImageEditor({
