@@ -342,12 +342,12 @@ function MaterialPhotoCard({
         ) : null}
       </button>
       <PhotoReactionBar
-        compact
         favoritePending={favoritePending}
         likePending={likePending}
         onToggleFavorite={onToggleFavorite}
         onToggleLike={onToggleLike}
         photo={photo}
+        variant="overlay"
       />
     </Card>
   );
@@ -422,15 +422,17 @@ function MaterialPhotoDetail({
 }
 
 function PhotoReactionBar({
-  compact = false,
   favoritePending,
   likePending,
   onToggleFavorite,
   onToggleLike,
   photo,
-}: PhotoReactionProps & { compact?: boolean }) {
+  variant = 'detail',
+}: PhotoReactionProps & { variant?: 'detail' | 'overlay' }) {
+  const isOverlay = variant === 'overlay';
+
   return (
-    <div className={`${styles.reactionBar} ${compact ? styles.compactReactionBar : ''}`}>
+    <div className={`${styles.reactionBar} ${isOverlay ? styles.overlayReactionBar : ''}`}>
       <button
         aria-label={`${photo.isLiked ? '取消点赞' : '点赞'} ${photo.fileName}`}
         aria-pressed={photo.isLiked}
@@ -443,7 +445,7 @@ function PhotoReactionBar({
         <Heart
           aria-hidden
           fill={photo.isLiked ? 'currentColor' : 'none'}
-          size={compact ? 17 : 21}
+          size={isOverlay ? 11 : 21}
         />
         <span>{photo.likeCount}</span>
       </button>
@@ -459,9 +461,9 @@ function PhotoReactionBar({
         <Star
           aria-hidden
           fill={photo.isFavorited ? 'currentColor' : 'none'}
-          size={compact ? 17 : 21}
+          size={isOverlay ? 11 : 21}
         />
-        <span>{photo.isFavorited ? '已收藏' : '收藏'}</span>
+        {!isOverlay ? <span>{photo.isFavorited ? '已收藏' : '收藏'}</span> : null}
       </button>
     </div>
   );

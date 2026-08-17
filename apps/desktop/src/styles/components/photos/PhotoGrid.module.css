@@ -79,12 +79,6 @@
   overflow: hidden;
 }
 
-.compactReactionBar {
-  border-width: 1px 0 0;
-  border-radius: 0;
-  margin-top: 0;
-}
-
 .reactionButton {
   align-items: center;
   appearance: none;
@@ -105,14 +99,43 @@
     color 160ms ease;
 }
 
-.compactReactionBar .reactionButton {
-  font-size: 12px;
-  min-height: 44px;
-  padding: 0 8px;
-}
-
 .reactionButton + .reactionButton {
   border-left: 1px solid var(--pl-line);
+}
+
+.overlayReactionBar {
+  backdrop-filter: blur(6px);
+  background: rgb(255 255 255 / 90%);
+  border-color: rgb(255 255 255 / 72%);
+  border-radius: 999px;
+  box-shadow: 0 2px 7px rgb(23 32 51 / 12%);
+  display: flex;
+  margin: 0;
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  z-index: 2;
+}
+
+.overlayReactionBar .reactionButton {
+  background: transparent;
+  border: 0;
+  font-size: 9px;
+  gap: 2px;
+  min-height: 20px;
+  min-width: 20px;
+  padding: 0 4px;
+}
+
+.overlayReactionBar .reactionButton + .reactionButton {
+  border-left: 0;
+  padding-left: 2px;
+}
+
+.overlayReactionBar .reactionButton:hover:not(:disabled),
+.overlayReactionBar .likedReaction,
+.overlayReactionBar .favoritedReaction {
+  background: rgb(23 32 51 / 7%);
 }
 
 .reactionButton:hover:not(:disabled) {
@@ -186,7 +209,7 @@
   height: 26px;
   justify-content: center;
   position: absolute;
-  right: 9px;
+  left: 9px;
   top: 9px;
   width: 26px;
 }
