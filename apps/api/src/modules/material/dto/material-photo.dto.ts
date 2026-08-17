@@ -102,6 +102,15 @@ export class MaterialPhotoDto {
   })
   status!: PhotoStatus;
 
+  @ApiProperty({ description: '当前用户是否已点赞', type: Boolean })
+  isLiked!: boolean;
+
+  @ApiProperty({ description: '图片收到的点赞总数', type: Number })
+  likeCount!: number;
+
+  @ApiProperty({ description: '当前用户是否已收藏', type: Boolean })
+  isFavorited!: boolean;
+
   @ApiProperty({
     format: 'date-time',
     type: String,
@@ -113,6 +122,25 @@ export class MaterialPhotoDto {
     type: String,
   })
   updatedAt!: string;
+}
+
+export class MaterialPhotoLikeStateDto {
+  @ApiProperty({ type: String })
+  photoId!: string;
+
+  @ApiProperty({ type: Boolean })
+  isLiked!: boolean;
+
+  @ApiProperty({ type: Number })
+  likeCount!: number;
+}
+
+export class MaterialPhotoFavoriteStateDto {
+  @ApiProperty({ type: String })
+  photoId!: string;
+
+  @ApiProperty({ type: Boolean })
+  isFavorited!: boolean;
 }
 
 export class MaterialPhotoPageDto {

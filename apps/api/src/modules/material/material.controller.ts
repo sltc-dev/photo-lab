@@ -1,4 +1,4 @@
-import { Controller, Get, HttpStatus, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Delete, Get, HttpStatus, Param, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { PhotoKind } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -6,7 +6,12 @@ import { MaterialUserService } from './material-users.service';
 import { MaterialUserDto } from './dto/material-user.dto';
 import { ApiErrorResponses } from '../../common/decorators/api-error-responses.decorator';
 import { MaterialPhotosService } from './material-photos.service';
-import { ListMaterialPhotosQueryDto, MaterialPhotoPageDto } from './dto/material-photo.dto';
+import {
+  ListMaterialPhotosQueryDto,
+  MaterialPhotoFavoriteStateDto,
+  MaterialPhotoLikeStateDto,
+  MaterialPhotoPageDto,
+} from './dto/material-photo.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequestUser } from '../../common/types/authenticated-request';
 import { ProjectDto } from '../projects/dto/project.dto';
@@ -93,5 +98,78 @@ export class MaterialController {
     @Query() query: ListMaterialPhotosQueryDto,
   ): Promise<MaterialPhotoPageDto> {
     return this.materialPhotosService.listProjectPhotos(projectId, query, currentUser.id);
+  }
+
+  @Get('favorites')
+  @ApiOkResponse({ type: MaterialPhotoPageDto })
+  @ApiQuery({
+    description: '上一页返回的图片游标',
+    name: 'cursor',
+    required: false,
+    type: String,
+  })
+  @ApiQuery({
+    description: '照片类型；不传时返回全部照片',
+    enum: PhotoKind,
+    enumName: 'PhotoKind',
+    name: 'kind',
+    required: false,
+  })
+  @ApiQuery({
+    description: '每页返回的图片数量',
+    name: 'limit',
+    required: false,
+    schema: { default: 24, maximum: 100, minimum: 1, type: 'integer' },
+  })
+  @ApiErrorResponses(HttpStatus.UNAUTHORIZED)
+  listFavoritePhotos(
+    @CurrentUser() currentUser: RequestUser,
+    @Query() query: ListMaterialPhotosQueryDto,
+  ): Promise<MaterialPhotoPageDto> {
+    return this.materialPhotosService.listFavoritePhotos(query, currentUser.id);
+  }
+
+  @Put('photos/:photoId/like')
+  @ApiParam({ name: 'photoId', type: String })
+  @ApiOkResponse({ type: MaterialPhotoLikeStateDto })
+  @ApiErrorResponses(HttpStatus.UNAUTHORIZED, HttpStatus.NOT_FOUND)
+  likeMaterialPhoto(
+    @CurrentUser() currentUser: RequestUser,
+    @Param('photoId') photoId: string,
+  ): Promise<MaterialPhotoLikeStateDto> {
+    return this.materialPhotosService.likePhoto(photoId, currentUser.id);
+  }
+
+  @Delete('photos/:photoId/like')
+  @ApiParam({ name: 'photoId', type: String })
+  @ApiOkResponse({ type: MaterialPhotoLikeStateDto })
+  @ApiErrorResponses(HttpStatus.UNAUTHORIZED, HttpStatus.NOT_FOUND)
+  unlikeMaterialPhoto(
+    @CurrentUser() currentUser: RequestUser,
+    @Param('photoId') photoId: string,
+  ): Promise<MaterialPhotoLikeStateDto> {
+    return this.materialPhotosService.unlikePhoto(photoId, currentUser.id);
+  }
+
+  @Put('photos/:photoId/favorite')
+  @ApiParam({ name: 'photoId', type: String })
+  @ApiOkResponse({ type: MaterialPhotoFavoriteStateDto })
+  @ApiErrorResponses(HttpStatus.UNAUTHORIZED, HttpStatus.NOT_FOUND)
+  favoriteMaterialPhoto(
+    @CurrentUser() currentUser: RequestUser,
+    @Param('photoId') photoId: string,
+  ): Promise<MaterialPhotoFavoriteStateDto> {
+    return this.materialPhotosService.favoritePhoto(photoId, currentUser.id);
+  }
+
+  @Delete('photos/:photoId/favorite')
+  @ApiParam({ name: 'photoId', type: String })
+  @ApiOkResponse({ type: MaterialPhotoFavoriteStateDto })
+  @ApiErrorResponses(HttpStatus.UNAUTHORIZED, HttpStatus.NOT_FOUND)
+  unfavoriteMaterialPhoto(
+    @CurrentUser() currentUser: RequestUser,
+    @Param('photoId') photoId: string,
+  ): Promise<MaterialPhotoFavoriteStateDto> {
+    return this.materialPhotosService.unfavoritePhoto(photoId, currentUser.id);
   }
 }

@@ -34,6 +34,12 @@ const photoSelect = {
   status: true,
   createdAt: true,
   updatedAt: true,
+  _count: {
+    select: {
+      favorites: true,
+      likes: true,
+    },
+  },
 } satisfies Prisma.PhotoSelect;
 
 type PhotoRecord = Prisma.PhotoGetPayload<{
@@ -377,6 +383,8 @@ export class PhotosService {
       kind: photo.kind,
       originalUrl: buildPublicUrl(photo.originalObjectKey),
       status: photo.status,
+      likeCount: photo._count.likes,
+      favoriteCount: photo._count.favorites,
       thumbnailUrl: buildThumbnailApiUrl(photo.projectId, photo.id),
       createdAt: photo.createdAt.toISOString(),
       updatedAt: photo.updatedAt.toISOString(),

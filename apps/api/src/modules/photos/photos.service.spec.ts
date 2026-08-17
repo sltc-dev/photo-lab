@@ -22,6 +22,10 @@ const uploadedFile: UploadedPhotoFile = {
 };
 
 const photoRecord = {
+  _count: {
+    favorites: 2,
+    likes: 5,
+  },
   createdAt: new Date('2026-07-27T08:00:00.000Z'),
   fileName: 'holiday.jpg',
   height: 800,
@@ -111,9 +115,11 @@ describe('PhotosService.uploadPhoto', () => {
       {
         createdAt: '2026-07-27T08:00:00.000Z',
         fileName: 'holiday.jpg',
+        favoriteCount: 2,
         height: 800,
         id: 'photo-1',
         kind: PhotoKind.ORIGINAL,
+        likeCount: 5,
         mimeType: 'image/jpeg',
         originalUrl: '/public/projects/project-1/photos/photo-1--holiday.jpg',
         projectId: 'project-1',
@@ -290,9 +296,11 @@ describe('PhotosService photo queries', () => {
         {
           createdAt: '2026-07-27T08:00:00.000Z',
           fileName: 'holiday.jpg',
+          favoriteCount: 2,
           height: 800,
           id: 'photo-1',
           kind: PhotoKind.ORIGINAL,
+          likeCount: 5,
           mimeType: 'image/jpeg',
           originalUrl: '/public/projects/project-1/photos/photo-1--holiday.jpg',
           projectId: 'project-1',

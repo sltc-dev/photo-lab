@@ -65,6 +65,12 @@ export class PhotoDto {
   })
   status!: PhotoStatus;
 
+  @ApiProperty({ description: '图片收到的点赞总数', type: Number })
+  likeCount!: number;
+
+  @ApiProperty({ description: '图片被收藏的总数，仅图片所有者可见', type: Number })
+  favoriteCount!: number;
+
   @ApiProperty({
     format: 'date-time',
     type: String,

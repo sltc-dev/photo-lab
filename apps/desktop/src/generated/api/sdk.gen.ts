@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateProjectData, CreateProjectErrors, CreateProjectResponses, GetEditedPhotoStateData, GetEditedPhotoStateErrors, GetEditedPhotoStateResponses, GetOriginalPhotoData, GetOriginalPhotoErrors, GetOriginalPhotoResponses, GetProjectData, GetProjectErrors, GetProjectResponses, GetThumbnailPhotoData, GetThumbnailPhotoErrors, GetThumbnailPhotoResponses, HealthData, HealthResponses, ListPhotosData, ListPhotosErrors, ListPhotosResponses, ListProjectPhotosData, ListProjectPhotosErrors, ListProjectPhotosResponses, ListProjectsData, ListProjectsErrors, ListProjectsResponses, ListUserProjectsData, ListUserProjectsErrors, ListUserProjectsResponses, ListUsersData, ListUsersErrors, ListUsersResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, MeData, MeErrors, MeResponses, RefreshData, RefreshErrors, RefreshResponses, RegisterData, RegisterErrors, RegisterResponses, SaveEditedPhotoData, SaveEditedPhotoErrors, SaveEditedPhotoResponses, UploadPhotoData, UploadPhotoErrors, UploadPhotoResponses } from './types.gen';
+import type { CreateProjectData, CreateProjectErrors, CreateProjectResponses, FavoriteMaterialPhotoData, FavoriteMaterialPhotoErrors, FavoriteMaterialPhotoResponses, GetEditedPhotoStateData, GetEditedPhotoStateErrors, GetEditedPhotoStateResponses, GetOriginalPhotoData, GetOriginalPhotoErrors, GetOriginalPhotoResponses, GetProjectData, GetProjectErrors, GetProjectResponses, GetThumbnailPhotoData, GetThumbnailPhotoErrors, GetThumbnailPhotoResponses, HealthData, HealthResponses, LikeMaterialPhotoData, LikeMaterialPhotoErrors, LikeMaterialPhotoResponses, ListFavoritePhotosData, ListFavoritePhotosErrors, ListFavoritePhotosResponses, ListPhotosData, ListPhotosErrors, ListPhotosResponses, ListProjectPhotosData, ListProjectPhotosErrors, ListProjectPhotosResponses, ListProjectsData, ListProjectsErrors, ListProjectsResponses, ListUserProjectsData, ListUserProjectsErrors, ListUserProjectsResponses, ListUsersData, ListUsersErrors, ListUsersResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, MeData, MeErrors, MeResponses, RefreshData, RefreshErrors, RefreshResponses, RegisterData, RegisterErrors, RegisterResponses, SaveEditedPhotoData, SaveEditedPhotoErrors, SaveEditedPhotoResponses, UnfavoriteMaterialPhotoData, UnfavoriteMaterialPhotoErrors, UnfavoriteMaterialPhotoResponses, UnlikeMaterialPhotoData, UnlikeMaterialPhotoErrors, UnlikeMaterialPhotoResponses, UploadPhotoData, UploadPhotoErrors, UploadPhotoResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -145,5 +145,35 @@ export const listUserProjects = <ThrowOnError extends boolean = false>(options: 
 export const listProjectPhotos = <ThrowOnError extends boolean = false>(options: Options<ListProjectPhotosData, ThrowOnError>): RequestResult<ListProjectPhotosResponses, ListProjectPhotosErrors, ThrowOnError> => (options.client ?? client).get<ListProjectPhotosResponses, ListProjectPhotosErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/material/projects/{projectId}/photos',
+    ...options
+});
+
+export const listFavoritePhotos = <ThrowOnError extends boolean = false>(options?: Options<ListFavoritePhotosData, ThrowOnError>): RequestResult<ListFavoritePhotosResponses, ListFavoritePhotosErrors, ThrowOnError> => (options?.client ?? client).get<ListFavoritePhotosResponses, ListFavoritePhotosErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/material/favorites',
+    ...options
+});
+
+export const unlikeMaterialPhoto = <ThrowOnError extends boolean = false>(options: Options<UnlikeMaterialPhotoData, ThrowOnError>): RequestResult<UnlikeMaterialPhotoResponses, UnlikeMaterialPhotoErrors, ThrowOnError> => (options.client ?? client).delete<UnlikeMaterialPhotoResponses, UnlikeMaterialPhotoErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/material/photos/{photoId}/like',
+    ...options
+});
+
+export const likeMaterialPhoto = <ThrowOnError extends boolean = false>(options: Options<LikeMaterialPhotoData, ThrowOnError>): RequestResult<LikeMaterialPhotoResponses, LikeMaterialPhotoErrors, ThrowOnError> => (options.client ?? client).put<LikeMaterialPhotoResponses, LikeMaterialPhotoErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/material/photos/{photoId}/like',
+    ...options
+});
+
+export const unfavoriteMaterialPhoto = <ThrowOnError extends boolean = false>(options: Options<UnfavoriteMaterialPhotoData, ThrowOnError>): RequestResult<UnfavoriteMaterialPhotoResponses, UnfavoriteMaterialPhotoErrors, ThrowOnError> => (options.client ?? client).delete<UnfavoriteMaterialPhotoResponses, UnfavoriteMaterialPhotoErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/material/photos/{photoId}/favorite',
+    ...options
+});
+
+export const favoriteMaterialPhoto = <ThrowOnError extends boolean = false>(options: Options<FavoriteMaterialPhotoData, ThrowOnError>): RequestResult<FavoriteMaterialPhotoResponses, FavoriteMaterialPhotoErrors, ThrowOnError> => (options.client ?? client).put<FavoriteMaterialPhotoResponses, FavoriteMaterialPhotoErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/material/photos/{photoId}/favorite',
     ...options
 });

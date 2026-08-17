@@ -22,9 +22,11 @@ const uploadedFile: UploadedPhotoFile = {
 const photoDto: PhotoDto = {
   createdAt: '2026-07-27T08:00:00.000Z',
   fileName: 'holiday.jpg',
+  favoriteCount: 2,
   height: null,
   id: 'photo-1',
   kind: PhotoKind.ORIGINAL,
+  likeCount: 5,
   mimeType: 'image/jpeg',
   originalUrl: '/public/projects/project-1/photos/photo-1--holiday.jpg',
   projectId: 'project-1',

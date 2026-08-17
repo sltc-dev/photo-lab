@@ -26,9 +26,11 @@ vi.mock('../../../src/api/photos', async (importOriginal) => {
 const photo: ProjectPhoto = {
   createdAt: '2026-07-27T08:00:00.000Z',
   fileName: 'holiday.jpg',
+  favoriteCount: 2,
   height: null,
   id: 'photo-1',
   kind: 'ORIGINAL',
+  likeCount: 5,
   mimeType: 'image/jpeg',
   originalUrl: 'http://localhost:3000/public/projects/project-1/photos/photo-1--holiday.jpg',
   projectId: 'project-1',
@@ -111,6 +113,7 @@ describe('PhotoGrid', () => {
     expect(apiMocks.getPhotoThumbnail).toHaveBeenCalledWith('project-1', 'photo-1');
     expect(image).toHaveAttribute('src', 'blob:thumbnail');
     expect(screen.getByText('2 KB')).toBeInTheDocument();
+    expect(screen.getByLabelText('5 人点赞，2 人收藏')).toBeInTheDocument();
   });
 
   it('requests and renders the edited photo kind', async () => {
@@ -152,6 +155,7 @@ describe('PhotoGrid', () => {
     expect(screen.getByText('1200 × 800')).toBeInTheDocument();
     expect(screen.getByText('文件名')).toBeInTheDocument();
     expect(screen.getByText('上传时间')).toBeInTheDocument();
+    expect(screen.getAllByLabelText('5 人点赞，2 人收藏')).toHaveLength(2);
     expect(
       screen
         .getAllByAltText('holiday.jpg')

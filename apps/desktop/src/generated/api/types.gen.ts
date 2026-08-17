@@ -104,6 +104,14 @@ export type PhotoDto = {
     height: number | null;
     kind: PhotoKind;
     status: PhotoStatus;
+    /**
+     * 图片收到的点赞总数
+     */
+    likeCount: number;
+    /**
+     * 图片被收藏的总数，仅图片所有者可见
+     */
+    favoriteCount: number;
     createdAt: string;
     updatedAt: string;
 };
@@ -164,6 +172,18 @@ export type MaterialPhotoDto = {
     height: number | null;
     kind: PhotoKind;
     status: PhotoStatus;
+    /**
+     * 当前用户是否已点赞
+     */
+    isLiked: boolean;
+    /**
+     * 图片收到的点赞总数
+     */
+    likeCount: number;
+    /**
+     * 当前用户是否已收藏
+     */
+    isFavorited: boolean;
     createdAt: string;
     updatedAt: string;
 };
@@ -174,6 +194,17 @@ export type MaterialPhotoPageDto = {
      * 下一页游标；没有更多图片时为 null
      */
     nextCursor: string | null;
+};
+
+export type MaterialPhotoLikeStateDto = {
+    photoId: string;
+    isLiked: boolean;
+    likeCount: number;
+};
+
+export type MaterialPhotoFavoriteStateDto = {
+    photoId: string;
+    isFavorited: boolean;
 };
 
 export type RegisterData = {
@@ -651,3 +682,123 @@ export type ListProjectPhotosResponses = {
 };
 
 export type ListProjectPhotosResponse = ListProjectPhotosResponses[keyof ListProjectPhotosResponses];
+
+export type ListFavoritePhotosData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * 每页返回的图片数量
+         */
+        limit?: number;
+        /**
+         * 照片类型；不传时返回全部照片
+         */
+        kind?: PhotoKind;
+        /**
+         * 上一页返回的图片游标
+         */
+        cursor?: string;
+    };
+    url: '/material/favorites';
+};
+
+export type ListFavoritePhotosErrors = {
+    401: ErrorResponseDto;
+};
+
+export type ListFavoritePhotosError = ListFavoritePhotosErrors[keyof ListFavoritePhotosErrors];
+
+export type ListFavoritePhotosResponses = {
+    200: MaterialPhotoPageDto;
+};
+
+export type ListFavoritePhotosResponse = ListFavoritePhotosResponses[keyof ListFavoritePhotosResponses];
+
+export type UnlikeMaterialPhotoData = {
+    body?: never;
+    path: {
+        photoId: string;
+    };
+    query?: never;
+    url: '/material/photos/{photoId}/like';
+};
+
+export type UnlikeMaterialPhotoErrors = {
+    401: ErrorResponseDto;
+    404: ErrorResponseDto;
+};
+
+export type UnlikeMaterialPhotoError = UnlikeMaterialPhotoErrors[keyof UnlikeMaterialPhotoErrors];
+
+export type UnlikeMaterialPhotoResponses = {
+    200: MaterialPhotoLikeStateDto;
+};
+
+export type UnlikeMaterialPhotoResponse = UnlikeMaterialPhotoResponses[keyof UnlikeMaterialPhotoResponses];
+
+export type LikeMaterialPhotoData = {
+    body?: never;
+    path: {
+        photoId: string;
+    };
+    query?: never;
+    url: '/material/photos/{photoId}/like';
+};
+
+export type LikeMaterialPhotoErrors = {
+    401: ErrorResponseDto;
+    404: ErrorResponseDto;
+};
+
+export type LikeMaterialPhotoError = LikeMaterialPhotoErrors[keyof LikeMaterialPhotoErrors];
+
+export type LikeMaterialPhotoResponses = {
+    200: MaterialPhotoLikeStateDto;
+};
+
+export type LikeMaterialPhotoResponse = LikeMaterialPhotoResponses[keyof LikeMaterialPhotoResponses];
+
+export type UnfavoriteMaterialPhotoData = {
+    body?: never;
+    path: {
+        photoId: string;
+    };
+    query?: never;
+    url: '/material/photos/{photoId}/favorite';
+};
+
+export type UnfavoriteMaterialPhotoErrors = {
+    401: ErrorResponseDto;
+    404: ErrorResponseDto;
+};
+
+export type UnfavoriteMaterialPhotoError = UnfavoriteMaterialPhotoErrors[keyof UnfavoriteMaterialPhotoErrors];
+
+export type UnfavoriteMaterialPhotoResponses = {
+    200: MaterialPhotoFavoriteStateDto;
+};
+
+export type UnfavoriteMaterialPhotoResponse = UnfavoriteMaterialPhotoResponses[keyof UnfavoriteMaterialPhotoResponses];
+
+export type FavoriteMaterialPhotoData = {
+    body?: never;
+    path: {
+        photoId: string;
+    };
+    query?: never;
+    url: '/material/photos/{photoId}/favorite';
+};
+
+export type FavoriteMaterialPhotoErrors = {
+    401: ErrorResponseDto;
+    404: ErrorResponseDto;
+};
+
+export type FavoriteMaterialPhotoError = FavoriteMaterialPhotoErrors[keyof FavoriteMaterialPhotoErrors];
+
+export type FavoriteMaterialPhotoResponses = {
+    200: MaterialPhotoFavoriteStateDto;
+};
+
+export type FavoriteMaterialPhotoResponse = FavoriteMaterialPhotoResponses[keyof FavoriteMaterialPhotoResponses];

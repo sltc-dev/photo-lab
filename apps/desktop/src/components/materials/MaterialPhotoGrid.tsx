@@ -12,7 +12,13 @@ import {
   Stack,
   Text,
 } from '@mantine/core';
-import { type InfiniteData, useInfiniteQuery } from '@tanstack/react-query';
+import { notifications } from '@mantine/notifications';
+import {
+  type InfiniteData,
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query';
 import {
   AlertCircle,
   Check,
@@ -20,43 +26,96 @@ import {
   FileImage,
   FolderOpen,
   HardDrive,
+  Heart,
   ImageOff,
   Images,
   Maximize2,
   RefreshCw,
+  Star,
 } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import {
+  getMaterialFavoritePhotosPage,
   getMaterialProjectPhotosPage,
   MATERIAL_QUERY_STALE_TIME,
+  materialFavoritePhotosQueryKey,
   materialProjectPhotosQueryKey,
+  setMaterialPhotoFavorite,
+  setMaterialPhotoLike,
   type MaterialPhoto,
   type MaterialPhotoKind,
   type MaterialPhotoPage,
 } from '../../api/materials';
+import { getApiErrorMessage } from '../../api/http';
 import styles from '../../styles/components/photos/PhotoGrid.module.css';
 
-export function MaterialPhotoGrid({
-  kind,
-  projectId,
-}: {
+type MaterialPhotoGridProps = {
   kind: MaterialPhotoKind;
-  projectId: string;
-}) {
+} & ({ favoritesOnly: true; projectId?: never } | { favoritesOnly?: false; projectId: string });
+
+export function MaterialPhotoGrid(props: MaterialPhotoGridProps) {
+  const { kind } = props;
+  const isFavoritesView = props.favoritesOnly === true;
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
+  const queryKey = isFavoritesView
+    ? materialFavoritePhotosQueryKey(kind)
+    : materialProjectPhotosQueryKey(props.projectId, kind);
   const photosQuery = useInfiniteQuery<
     MaterialPhotoPage,
     Error,
     InfiniteData<MaterialPhotoPage, string | null>,
-    ReturnType<typeof materialProjectPhotosQueryKey>,
+    typeof queryKey,
     string | null
   >({
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     initialPageParam: null as string | null,
-    queryFn: ({ pageParam }) => getMaterialProjectPhotosPage(projectId, pageParam, kind),
-    queryKey: materialProjectPhotosQueryKey(projectId, kind),
+    queryFn: ({ pageParam }) =>
+      isFavoritesView
+        ? getMaterialFavoritePhotosPage(pageParam, kind)
+        : getMaterialProjectPhotosPage(props.projectId, pageParam, kind),
+    queryKey,
     staleTime: MATERIAL_QUERY_STALE_TIME,
+  });
+  const likeMutation = useMutation({
+    mutationFn: ({ isLiked, photoId }: { isLiked: boolean; photoId: string }) =>
+      setMaterialPhotoLike(photoId, isLiked),
+    onError: async (error) => {
+      notifications.show({
+        color: 'red',
+        message: await getApiErrorMessage(error),
+        title: '点赞操作失败',
+      });
+    },
+    onSuccess: (state) => {
+      updateCachedMaterialPhoto(queryClient, state.photoId, (photo) => ({
+        ...photo,
+        isLiked: state.isLiked,
+        likeCount: state.likeCount,
+      }));
+    },
+  });
+  const favoriteMutation = useMutation({
+    mutationFn: ({ isFavorited, photoId }: { isFavorited: boolean; photoId: string }) =>
+      setMaterialPhotoFavorite(photoId, isFavorited),
+    onError: async (error) => {
+      notifications.show({
+        color: 'red',
+        message: await getApiErrorMessage(error),
+        title: '收藏操作失败',
+      });
+    },
+    onSuccess: (state) => {
+      updateCachedMaterialPhoto(queryClient, state.photoId, (photo) => ({
+        ...photo,
+        isFavorited: state.isFavorited,
+      }));
+      void queryClient.invalidateQueries({ queryKey: ['materials', 'favorites'] });
+      if (!state.isFavorited && isFavoritesView) {
+        setSelectedPhotoId(null);
+      }
+    },
   });
   const { fetchNextPage, hasNextPage, isFetchingNextPage, isFetchNextPageError } = photosQuery;
 
@@ -88,7 +147,7 @@ export function MaterialPhotoGrid({
     return (
       <Alert color="red" icon={<AlertCircle aria-hidden size={20} />} title="照片加载失败">
         <Stack align="flex-start" gap="sm">
-          <Text size="sm">暂时无法加载这个图库的照片，请检查服务连接后重试。</Text>
+          <Text size="sm">暂时无法加载照片，请检查服务连接后重试。</Text>
           <Button
             color="red"
             leftSection={<RefreshCw aria-hidden size={16} />}
@@ -117,9 +176,11 @@ export function MaterialPhotoGrid({
           </div>
           <Text fw={650}>{isEditedKind ? '暂无效果图' : '暂无原图'}</Text>
           <Text c="dimmed" size="sm">
-            {isEditedKind
-              ? '该成员尚未在此图库中生成效果图。'
-              : '该成员尚未在此图库中添加原始照片。'}
+            {isFavoritesView
+              ? `你还没有收藏任何${isEditedKind ? '效果图' : '原图'}。`
+              : isEditedKind
+                ? '该成员尚未在此图库中生成效果图。'
+                : '该成员尚未在此图库中添加原始照片。'}
           </Text>
         </Stack>
       </Center>
@@ -131,9 +192,17 @@ export function MaterialPhotoGrid({
       <SimpleGrid className={styles.photoGrid} cols={{ base: 2, sm: 3, lg: 4 }} spacing="md">
         {photos.map((photo) => (
           <MaterialPhotoCard
+            favoritePending={
+              favoriteMutation.isPending && favoriteMutation.variables?.photoId === photo.id
+            }
             isSelected={photo.id === selectedPhotoId}
             key={photo.id}
+            likePending={likeMutation.isPending && likeMutation.variables?.photoId === photo.id}
             onSelect={() => setSelectedPhotoId(photo.id)}
+            onToggleFavorite={() =>
+              favoriteMutation.mutate({ isFavorited: !photo.isFavorited, photoId: photo.id })
+            }
+            onToggleLike={() => likeMutation.mutate({ isLiked: !photo.isLiked, photoId: photo.id })}
             photo={photo}
           />
         ))}
@@ -183,7 +252,28 @@ export function MaterialPhotoGrid({
         title="素材详情"
       >
         {selectedPhoto ? (
-          <MaterialPhotoDetail key={selectedPhoto.id} photo={selectedPhoto} />
+          <MaterialPhotoDetail
+            favoritePending={
+              favoriteMutation.isPending && favoriteMutation.variables?.photoId === selectedPhoto.id
+            }
+            key={selectedPhoto.id}
+            likePending={
+              likeMutation.isPending && likeMutation.variables?.photoId === selectedPhoto.id
+            }
+            onToggleFavorite={() =>
+              favoriteMutation.mutate({
+                isFavorited: !selectedPhoto.isFavorited,
+                photoId: selectedPhoto.id,
+              })
+            }
+            onToggleLike={() =>
+              likeMutation.mutate({
+                isLiked: !selectedPhoto.isLiked,
+                photoId: selectedPhoto.id,
+              })
+            }
+            photo={selectedPhoto}
+          />
         ) : null}
       </Drawer>
     </>
@@ -191,56 +281,93 @@ export function MaterialPhotoGrid({
 }
 
 type MaterialPhotoCardProps = {
+  favoritePending: boolean;
   isSelected: boolean;
+  likePending: boolean;
   onSelect: () => void;
+  onToggleFavorite: () => void;
+  onToggleLike: () => void;
   photo: MaterialPhoto;
 };
 
-function MaterialPhotoCard({ isSelected, onSelect, photo }: MaterialPhotoCardProps) {
+function MaterialPhotoCard({
+  favoritePending,
+  isSelected,
+  likePending,
+  onSelect,
+  onToggleFavorite,
+  onToggleLike,
+  photo,
+}: MaterialPhotoCardProps) {
   const [imageFailed, setImageFailed] = useState(false);
 
   return (
     <Card
-      aria-label={`查看 ${photo.fileName} 详情`}
       className={`${styles.photoCard} ${isSelected ? styles.selectedPhotoCard : ''}`}
-      component="button"
-      onClick={onSelect}
       padding={0}
-      type="button"
     >
-      <AspectRatio ratio={4 / 3}>
-        {imageFailed ? (
-          <Center className={styles.imageError}>
-            <ImageOff aria-hidden size={26} />
-          </Center>
-        ) : (
-          <Image
-            alt={photo.fileName}
-            className={styles.photoImage}
-            loading="lazy"
-            onError={() => setImageFailed(true)}
-            src={photo.originalUrl}
-          />
-        )}
-      </AspectRatio>
-      <Stack className={styles.photoInfo} gap={2}>
-        <Text fw={600} lineClamp={1} size="sm" title={photo.fileName}>
-          {photo.fileName}
-        </Text>
-        <Text c="dimmed" size="xs">
-          {formatFileSize(photo.sizeBytes)} · {photo.projectName}
-        </Text>
-      </Stack>
-      {isSelected ? (
-        <span aria-hidden className={styles.selectedMark}>
-          <Check size={14} strokeWidth={3} />
-        </span>
-      ) : null}
+      <button
+        aria-label={`查看 ${photo.fileName} 详情`}
+        className={styles.photoSelectButton}
+        onClick={onSelect}
+        type="button"
+      >
+        <AspectRatio ratio={4 / 3}>
+          {imageFailed ? (
+            <Center className={styles.imageError}>
+              <ImageOff aria-hidden size={26} />
+            </Center>
+          ) : (
+            <Image
+              alt={photo.fileName}
+              className={styles.photoImage}
+              loading="lazy"
+              onError={() => setImageFailed(true)}
+              src={photo.originalUrl}
+            />
+          )}
+        </AspectRatio>
+        <Stack className={styles.photoInfo} gap={2}>
+          <Text fw={600} lineClamp={1} size="sm" title={photo.fileName}>
+            {photo.fileName}
+          </Text>
+          <Text c="dimmed" size="xs">
+            {formatFileSize(photo.sizeBytes)} · {photo.projectName}
+          </Text>
+        </Stack>
+        {isSelected ? (
+          <span aria-hidden className={styles.selectedMark}>
+            <Check size={14} strokeWidth={3} />
+          </span>
+        ) : null}
+      </button>
+      <PhotoReactionBar
+        compact
+        favoritePending={favoritePending}
+        likePending={likePending}
+        onToggleFavorite={onToggleFavorite}
+        onToggleLike={onToggleLike}
+        photo={photo}
+      />
     </Card>
   );
 }
 
-function MaterialPhotoDetail({ photo }: { photo: MaterialPhoto }) {
+type PhotoReactionProps = {
+  favoritePending: boolean;
+  likePending: boolean;
+  onToggleFavorite: () => void;
+  onToggleLike: () => void;
+  photo: MaterialPhoto;
+};
+
+function MaterialPhotoDetail({
+  favoritePending,
+  likePending,
+  onToggleFavorite,
+  onToggleLike,
+  photo,
+}: PhotoReactionProps) {
   const [imageFailed, setImageFailed] = useState(false);
 
   return (
@@ -263,6 +390,14 @@ function MaterialPhotoDetail({ photo }: { photo: MaterialPhoto }) {
         )}
       </AspectRatio>
 
+      <PhotoReactionBar
+        favoritePending={favoritePending}
+        likePending={likePending}
+        onToggleFavorite={onToggleFavorite}
+        onToggleLike={onToggleLike}
+        photo={photo}
+      />
+
       <dl className={styles.metadataList}>
         <Metadata icon={<FileImage size={17} />} label="文件名" value={photo.fileName} />
         <Metadata icon={<FolderOpen size={17} />} label="所属图库" value={photo.projectName} />
@@ -282,6 +417,52 @@ function MaterialPhotoDetail({ photo }: { photo: MaterialPhoto }) {
           value={formatDateTime(photo.createdAt)}
         />
       </dl>
+    </div>
+  );
+}
+
+function PhotoReactionBar({
+  compact = false,
+  favoritePending,
+  likePending,
+  onToggleFavorite,
+  onToggleLike,
+  photo,
+}: PhotoReactionProps & { compact?: boolean }) {
+  return (
+    <div className={`${styles.reactionBar} ${compact ? styles.compactReactionBar : ''}`}>
+      <button
+        aria-label={`${photo.isLiked ? '取消点赞' : '点赞'} ${photo.fileName}`}
+        aria-pressed={photo.isLiked}
+        className={`${styles.reactionButton} ${photo.isLiked ? styles.likedReaction : ''}`}
+        disabled={likePending}
+        onClick={onToggleLike}
+        title={photo.isLiked ? '取消点赞' : '点赞'}
+        type="button"
+      >
+        <Heart
+          aria-hidden
+          fill={photo.isLiked ? 'currentColor' : 'none'}
+          size={compact ? 17 : 21}
+        />
+        <span>{photo.likeCount}</span>
+      </button>
+      <button
+        aria-label={`${photo.isFavorited ? '取消收藏' : '收藏'} ${photo.fileName}`}
+        aria-pressed={photo.isFavorited}
+        className={`${styles.reactionButton} ${photo.isFavorited ? styles.favoritedReaction : ''}`}
+        disabled={favoritePending}
+        onClick={onToggleFavorite}
+        title={photo.isFavorited ? '取消收藏' : '收藏'}
+        type="button"
+      >
+        <Star
+          aria-hidden
+          fill={photo.isFavorited ? 'currentColor' : 'none'}
+          size={compact ? 17 : 21}
+        />
+        <span>{photo.isFavorited ? '已收藏' : '收藏'}</span>
+      </button>
     </div>
   );
 }
@@ -324,4 +505,30 @@ const dateTimeFormatter = new Intl.DateTimeFormat('zh-CN', {
 function formatDateTime(value: string): string {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? '—' : dateTimeFormatter.format(date);
+}
+
+function updateCachedMaterialPhoto(
+  queryClient: ReturnType<typeof useQueryClient>,
+  photoId: string,
+  update: (photo: MaterialPhoto) => MaterialPhoto,
+) {
+  const updatePages = (data: InfiniteData<MaterialPhotoPage, string | null> | undefined) =>
+    data
+      ? {
+          ...data,
+          pages: data.pages.map((page) => ({
+            ...page,
+            items: page.items.map((photo) => (photo.id === photoId ? update(photo) : photo)),
+          })),
+        }
+      : data;
+
+  queryClient.setQueriesData<InfiniteData<MaterialPhotoPage, string | null>>(
+    { queryKey: ['materials', 'projects'] },
+    updatePages,
+  );
+  queryClient.setQueriesData<InfiniteData<MaterialPhotoPage, string | null>>(
+    { queryKey: ['materials', 'favorites'] },
+    updatePages,
+  );
 }

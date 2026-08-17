@@ -11,6 +11,7 @@ import { RegisterPage } from './pages/RegisterPage';
 import { MaterialUsersPage } from './pages/MaterialUsersPage';
 import { MaterialUserProjectsPage } from './pages/MaterialUserProjectsPage';
 import { MaterialProjectPhotosPage } from './pages/MaterialProjectPhotosPage';
+import { FavoritesPage } from './pages/FavoritesPage';
 
 const PhotoEditorPage = lazy(() =>
   import('./pages/PhotoEditorPage').then((module) => ({ default: module.PhotoEditorPage })),
@@ -60,6 +61,7 @@ export function App() {
               element={<MaterialProjectPhotosPage />}
               path="/materials/users/:userId/projects/:projectId"
             />
+            <Route element={<FavoritesPage />} path="/favorites" />
             <Route element={<ProfilePage />} path="/profile" />
           </Route>
           <Route element={<Navigate replace to="/" />} path="*" />
