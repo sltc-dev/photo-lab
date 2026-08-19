@@ -1,15 +1,15 @@
 import { createHash } from 'node:crypto';
 import { Readable } from 'node:stream';
 import { HttpStatus } from '@nestjs/common';
-import { PhotoStatus } from '@prisma/client';
+import { PhotoKind, PhotoStatus } from '@prisma/client';
 import { describe, expect, it, vi } from 'vitest';
-import { AppException } from '../../common/errors/app.exception';
-import { PrismaService } from '../../prisma/prisma.service';
-import { StorageService } from '../storage/storage.service';
-import { PhotoMetadataReader } from './photo-metadata.reader';
-import { PhotoThumbnailGenerator } from './photo-thumbnail.generator';
-import { PhotoUploadValidator, type UploadedPhotoFile } from './photo-upload.validator';
-import { PhotosService } from './photos.service';
+import { AppException } from '../../../common/errors/app.exception';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { StorageService } from '../../storage/storage.service';
+import { PhotoMetadataReader } from '../photo-metadata.reader';
+import { PhotoThumbnailGenerator } from '../photo-thumbnail.generator';
+import { PhotoUploadValidator, type UploadedPhotoFile } from '../photo-upload.validator';
+import { PhotosService } from '../photos.service';
 
 const JPEG_BUFFER = Buffer.from([0xff, 0xd8, 0xff, 0x00]);
 const THUMBNAIL_BUFFER = Buffer.from('thumbnail');
@@ -22,10 +22,15 @@ const uploadedFile: UploadedPhotoFile = {
 };
 
 const photoRecord = {
+  _count: {
+    favorites: 2,
+    likes: 5,
+  },
   createdAt: new Date('2026-07-27T08:00:00.000Z'),
   fileName: 'holiday.jpg',
   height: 800,
   id: 'photo-1',
+  kind: PhotoKind.ORIGINAL,
   mimeType: 'image/jpeg',
   originalObjectKey: 'projects/project-1/photos/photo-1--holiday.jpg',
   projectId: 'project-1',
@@ -110,8 +115,11 @@ describe('PhotosService.uploadPhoto', () => {
       {
         createdAt: '2026-07-27T08:00:00.000Z',
         fileName: 'holiday.jpg',
+        favoriteCount: 2,
         height: 800,
         id: 'photo-1',
+        kind: PhotoKind.ORIGINAL,
+        likeCount: 5,
         mimeType: 'image/jpeg',
         originalUrl: '/public/projects/project-1/photos/photo-1--holiday.jpg',
         projectId: 'project-1',
@@ -145,6 +153,7 @@ describe('PhotosService.uploadPhoto', () => {
         checksumSha256: createHash('sha256').update(JPEG_BUFFER).digest('hex'),
         fileName: 'holiday.jpg',
         id: expect.any(String),
+        kind: PhotoKind.ORIGINAL,
         height: 800,
         mimeType: 'image/jpeg',
         originalObjectKey: expect.stringMatching(
@@ -287,8 +296,11 @@ describe('PhotosService photo queries', () => {
         {
           createdAt: '2026-07-27T08:00:00.000Z',
           fileName: 'holiday.jpg',
+          favoriteCount: 2,
           height: 800,
           id: 'photo-1',
+          kind: PhotoKind.ORIGINAL,
+          likeCount: 5,
           mimeType: 'image/jpeg',
           originalUrl: '/public/projects/project-1/photos/photo-1--holiday.jpg',
           projectId: 'project-1',
@@ -357,6 +369,40 @@ describe('PhotosService photo queries', () => {
         cursor: { id: 'photo-previous' },
         skip: 1,
         take: 2,
+      }),
+    );
+  });
+
+  it('filters the page by the requested photo kind', async () => {
+    const projectFindFirst = vi.fn().mockResolvedValue({ id: 'project-1' });
+    const photoFindMany = vi.fn().mockResolvedValue([]);
+    const prisma = {
+      photo: {
+        findMany: photoFindMany,
+      },
+      project: {
+        findFirst: projectFindFirst,
+      },
+    } as unknown as PrismaService;
+    const service = new PhotosService(
+      prisma,
+      {} as StorageService,
+      {} as PhotoUploadValidator,
+      {} as PhotoMetadataReader,
+      {} as PhotoThumbnailGenerator,
+    );
+
+    await service.listPhotos('user-1', 'project-1', {
+      kind: PhotoKind.EDITED,
+      limit: 12,
+    });
+
+    expect(photoFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          kind: PhotoKind.EDITED,
+          projectId: 'project-1',
+        },
       }),
     );
   });

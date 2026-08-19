@@ -1,12 +1,12 @@
 import { Readable } from 'node:stream';
-import { PhotoStatus } from '@prisma/client';
+import { PhotoKind, PhotoStatus } from '@prisma/client';
 import { describe, expect, it, vi } from 'vitest';
 import type { Response } from 'express';
-import type { RequestUser } from '../../common/types/authenticated-request';
-import type { PhotoDto } from './dto/photo.dto';
-import type { UploadedPhotoFile } from './photo-upload.validator';
-import { PhotosController } from './photos.controller';
-import { PhotosService } from './photos.service';
+import type { RequestUser } from '../../../common/types/authenticated-request';
+import type { PhotoDto } from '../dto/photo.dto';
+import type { UploadedPhotoFile } from '../photo-upload.validator';
+import { PhotosController } from '../photos.controller';
+import { PhotosService } from '../photos.service';
 
 const user: RequestUser = {
   id: 'user-1',
@@ -22,8 +22,11 @@ const uploadedFile: UploadedPhotoFile = {
 const photoDto: PhotoDto = {
   createdAt: '2026-07-27T08:00:00.000Z',
   fileName: 'holiday.jpg',
+  favoriteCount: 2,
   height: null,
   id: 'photo-1',
+  kind: PhotoKind.ORIGINAL,
+  likeCount: 5,
   mimeType: 'image/jpeg',
   originalUrl: '/public/projects/project-1/photos/photo-1--holiday.jpg',
   projectId: 'project-1',

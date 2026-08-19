@@ -1,8 +1,8 @@
 import { HttpStatus } from '@nestjs/common';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
-import { AppException } from '../../common/errors/app.exception';
-import { PhotoMetadataReader } from './photo-metadata.reader';
+import { AppException } from '../../../common/errors/app.exception';
+import { PhotoMetadataReader } from '../photo-metadata.reader';
 
 describe('PhotoMetadataReader', () => {
   const reader = new PhotoMetadataReader();

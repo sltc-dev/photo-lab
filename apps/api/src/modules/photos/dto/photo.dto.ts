@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PhotoStatus } from '@prisma/client';
+import { PhotoKind, PhotoStatus } from '@prisma/client';
 
 export class PhotoDto {
   @ApiProperty({ type: String })
@@ -54,10 +54,22 @@ export class PhotoDto {
   height!: number | null;
 
   @ApiProperty({
+    enum: PhotoKind,
+    enumName: 'PhotoKind',
+  })
+  kind!: PhotoKind;
+
+  @ApiProperty({
     enum: PhotoStatus,
     enumName: 'PhotoStatus',
   })
   status!: PhotoStatus;
+
+  @ApiProperty({ description: '图片收到的点赞总数', type: Number })
+  likeCount!: number;
+
+  @ApiProperty({ description: '图片被收藏的总数，仅图片所有者可见', type: Number })
+  favoriteCount!: number;
 
   @ApiProperty({
     format: 'date-time',

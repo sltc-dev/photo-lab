@@ -13,11 +13,12 @@ import {
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { useMutation } from '@tanstack/react-query';
-import { Image, Images, LibraryBig, LogOut, User, type LucideIcon } from 'lucide-react';
+import { Image, Images, LibraryBig, LogOut, Star, User, type LucideIcon } from 'lucide-react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { getApiErrorMessage } from '../../api/http';
 import { terminateSession } from '../../api/session';
 import { useAuthStore } from '../../stores/auth.store';
+import { NotificationCenter } from '../notifications/NotificationCenter';
 import styles from '../../styles/components/layout/AppLayout.module.css';
 
 export function AppLayout() {
@@ -71,6 +72,7 @@ export function AppLayout() {
             </Title>
           </Group>
           <Group className={styles.headerGroup} gap="sm">
+            <NotificationCenter />
             <Avatar className={styles.avatar} radius="xl" size="sm">
               {currentUser?.username.slice(0, 1).toUpperCase()}
             </Avatar>
@@ -145,6 +147,12 @@ const navigationItems: NavigationItem[] = [
     isActive: (pathname) => pathname.startsWith('/materials'),
     label: '素材库',
     to: '/materials',
+  },
+  {
+    icon: Star,
+    isActive: (pathname) => pathname.startsWith('/favorites'),
+    label: '我的收藏',
+    to: '/favorites',
   },
   {
     icon: User,

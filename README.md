@@ -17,18 +17,19 @@ permissions are not part of the current system.
 
 Copy `.env.example` to `.env` for local development and replace the example secrets.
 
-| Variable                     | Purpose                                                              |
-| ---------------------------- | -------------------------------------------------------------------- |
-| `DATABASE_URL`               | Prisma PostgreSQL connection string                                  |
-| `JWT_ACCESS_SECRET`          | Secret for short-lived access tokens; minimum 16 characters          |
-| `JWT_REFRESH_SECRET`         | Secret mixed into stored refresh-token hashes; minimum 16 characters |
-| `ACCESS_TOKEN_TTL`           | Access-token lifetime, default `15m`, maximum `24h`                  |
-| `REFRESH_TOKEN_TTL`          | Refresh-token lifetime, default `30d`, maximum `366d`                |
-| `CORS_ORIGINS`               | Comma-separated allowed renderer origins; required in production     |
-| `THROTTLE_LIMIT`             | Default request limit per rate-limit window                          |
-| `THROTTLE_TTL_MS`            | Default rate-limit window in milliseconds                            |
-| `VITE_API_BASE_URL`          | Desktop build-time API base URL                                      |
-| `VITE_ENABLE_QUERY_DEVTOOLS` | Enables TanStack Query Devtools in local builds                      |
+| Variable                      | Purpose                                                              |
+| ----------------------------- | -------------------------------------------------------------------- |
+| `DATABASE_URL`                | Prisma PostgreSQL connection string                                  |
+| `JWT_ACCESS_SECRET`           | Secret for short-lived access tokens; minimum 16 characters          |
+| `JWT_REFRESH_SECRET`          | Secret mixed into stored refresh-token hashes; minimum 16 characters |
+| `ACCESS_TOKEN_TTL`            | Access-token lifetime, default `15m`, maximum `24h`                  |
+| `REFRESH_TOKEN_TTL`           | Refresh-token lifetime, default `30d`, maximum `366d`                |
+| `CORS_ORIGINS`                | Comma-separated allowed renderer origins; required in production     |
+| `THROTTLE_LIMIT`              | Default request limit per rate-limit window                          |
+| `THROTTLE_TTL_MS`             | Default rate-limit window in milliseconds                            |
+| `VITE_API_BASE_URL`           | Desktop build-time API base URL                                      |
+| `VITE_ENABLE_QUERY_DEVTOOLS`  | Enables TanStack Query Devtools in local builds                      |
+| `NOTIFICATION_PUBLISH_SECRET` | Protects the internal command-line notification publish endpoint     |
 
 ## Local Development
 
@@ -76,6 +77,37 @@ pnpm api:client:check
 ```
 
 Use `pnpm db:migrate:deploy` rather than `migrate dev` in production or shared test environments.
+
+## Publishing Notifications
+
+With the API running, publish a system or version-upgrade notification from the command line:
+
+- Types: `SYSTEM`, `VERSION_UPGRADE`
+- Levels: `INFO`, `WARNING`, `CRITICAL`
+
+```bash
+pnpm notification:publish -- \
+  --type VERSION_UPGRADE \
+  --level WARNING \
+  --title "发现新版本 0.2.0" \
+  --summary "建议升级以获得最新功能" \
+  --content "Photo Lab 0.2.0 已发布，请安排升级。"
+```
+
+For example, publish a planned-maintenance system notification:
+
+```bash
+pnpm notification:publish -- \
+  --type SYSTEM \
+  --level WARNING \
+  --title "今晚服务维护" \
+  --summary "22:00 至 22:30 期间部分功能可能暂时不可用" \
+  --content "维护期间请提前保存当前工作，服务恢复后无需重新登录。"
+```
+
+Use `--content-file ./release-notes/0.2.0.md` instead of `--content` for longer details. Optional
+`--published-at` and `--expires-at` values use ISO 8601 timestamps. The command calls the running API
+so the persisted notification and the real-time SSE event are emitted together.
 
 ## Project Structure
 

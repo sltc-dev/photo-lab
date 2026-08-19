@@ -1,7 +1,8 @@
-import { Alert, Box, Button, Group, Skeleton, Stack, Text, Title } from '@mantine/core';
+import { Alert, Box, Button, Group, Skeleton, Stack, Tabs, Text, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, ArrowLeft } from 'lucide-react';
+import { useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { getApiErrorMessage } from '../api/http';
 import { photosQueryKey, uploadProjectPhoto } from '../api/photos';
@@ -27,6 +28,7 @@ type ProjectPhotosContentProps = {
 };
 
 function ProjectPhotosContent({ projectId, queryClient }: ProjectPhotosContentProps) {
+  const [activePhotoTab, setActivePhotoTab] = useState<'edited' | 'original'>('original');
   const projectQuery = useQuery({
     queryFn: () => getProjectById(projectId),
     queryKey: projectQueryKey(projectId),
@@ -145,16 +147,33 @@ function ProjectPhotosContent({ projectId, queryClient }: ProjectPhotosContentPr
         </Group>
       </Box>
 
-      <section aria-labelledby="photo-grid-title" className={styles.gallerySection}>
-        <Group className={styles.galleryHeader} justify="space-between">
-          <Title id="photo-grid-title" order={3}>
-            全部照片
-          </Title>
-          <Text c="dimmed" size="sm">
-            按上传时间从新到旧排列
-          </Text>
-        </Group>
-        <PhotoGrid projectId={projectId} />
+      <section aria-label="项目照片" className={styles.gallerySection}>
+        <Tabs
+          className={styles.photoTabs}
+          classNames={{
+            list: styles.photoTabList,
+            tab: styles.photoTab,
+          }}
+          keepMounted={false}
+          onChange={(value) => setActivePhotoTab(value === 'edited' ? 'edited' : 'original')}
+          value={activePhotoTab}
+        >
+          <Group align="flex-end" className={styles.galleryHeader} justify="space-between">
+            <Tabs.List aria-label="照片类型">
+              <Tabs.Tab value="original">原图</Tabs.Tab>
+              <Tabs.Tab value="edited">效果图</Tabs.Tab>
+            </Tabs.List>
+            <Text c="dimmed" size="sm">
+              按上传时间从新到旧排列
+            </Text>
+          </Group>
+          <Tabs.Panel value="original">
+            <PhotoGrid kind="ORIGINAL" projectId={projectId} />
+          </Tabs.Panel>
+          <Tabs.Panel value="edited">
+            <PhotoGrid kind="EDITED" projectId={projectId} />
+          </Tabs.Panel>
+        </Tabs>
       </section>
     </Stack>
   );

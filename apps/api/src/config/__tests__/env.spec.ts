@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseDurationToMs, validateEnv } from './env';
+import { parseDurationToMs, validateEnv } from '../env';
 
 const baseEnv = {
   DATABASE_URL: 'postgresql://test:test@localhost:5432/test',

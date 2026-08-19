@@ -3,5 +3,5 @@
   "compilerOptions": {
     "declaration": false
   },
-  "exclude": ["src/**/*.spec.ts", "dist", "node_modules", "vitest.config.ts"]
+  "exclude": ["src/**/__tests__/**", "dist", "node_modules", "vitest.config.ts"]
 }

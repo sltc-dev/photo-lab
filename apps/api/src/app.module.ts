@@ -11,6 +11,7 @@ import { ProjectsModule } from './modules/projects/projects.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { PhotosModule } from './modules/photos/photos.module';
 import { MaterialModule } from './modules/material/material.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { MaterialModule } from './modules/material/material.module';
     StorageModule,
     PhotosModule,
     MaterialModule,
+    NotificationsModule,
   ],
   providers: [
     // APP_FILTER 会让统一错误格式应用到所有 Controller。

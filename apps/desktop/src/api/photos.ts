@@ -6,6 +6,7 @@ import {
   saveEditedPhoto,
   uploadPhoto,
   type PhotoDto,
+  type PhotoKind,
   type PhotoPageDto,
 } from '../generated/api';
 import { resolveApiUrl } from './http';
@@ -21,7 +22,11 @@ export type ProjectPhotoPage = Omit<PhotoPageDto, 'items'> & {
   items: ProjectPhoto[];
 };
 
+export type ProjectPhotoKind = PhotoKind;
+
 export const photosQueryKey = (projectId: string) => ['projects', projectId, 'photos'] as const;
+export const projectPhotosByKindQueryKey = (projectId: string, kind: ProjectPhotoKind) =>
+  [...photosQueryKey(projectId), kind] as const;
 export const photoThumbnailQueryKey = (projectId: string, photoId: string) =>
   ['projects', projectId, 'photos', photoId, 'thumbnail'] as const;
 export const photoEditorSourceQueryKey = (projectId: string, photoId: string) =>
@@ -52,6 +57,7 @@ export async function uploadProjectPhoto({
 export async function getProjectPhotosPage(
   projectId: string,
   cursor: string | null,
+  kind: ProjectPhotoKind,
 ): Promise<ProjectPhotoPage> {
   const response = await listPhotos({
     path: {
@@ -59,6 +65,7 @@ export async function getProjectPhotosPage(
     },
     query: {
       ...(cursor ? { cursor } : {}),
+      kind,
       limit: PROJECT_PHOTOS_PAGE_SIZE,
     },
     throwOnError: true,

@@ -9,13 +9,11 @@
 }
 
 .photoCard {
-  appearance: none;
   background: var(--pl-bg-raised);
   border: 1px solid var(--pl-line);
   border-radius: 10px;
   box-shadow: 0 1px 2px rgb(23 32 51 / 4%);
   color: inherit;
-  cursor: pointer;
   min-width: 0;
   overflow: hidden;
   position: relative;
@@ -32,9 +30,27 @@
   transform: translateY(-2px);
 }
 
-.photoCard:focus-visible {
+.photoCard:focus-within {
+  border-color: var(--pl-accent);
+}
+
+.photoSelectButton:focus-visible,
+.reactionButton:focus-visible {
   outline: 3px solid rgb(47 104 196 / 24%);
   outline-offset: 2px;
+}
+
+.photoSelectButton {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  display: block;
+  padding: 0;
+  position: relative;
+  text-align: left;
+  width: 100%;
 }
 
 .selectedPhotoCard {
@@ -53,6 +69,136 @@
   padding: 11px 12px 12px;
 }
 
+.reactionBar {
+  background: var(--pl-bg-raised);
+  border: 1px solid var(--pl-line);
+  border-radius: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 16px;
+  overflow: hidden;
+}
+
+.reactionButton {
+  align-items: center;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: var(--pl-muted);
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  gap: 8px;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0 14px;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.reactionButton + .reactionButton {
+  border-left: 1px solid var(--pl-line);
+}
+
+.overlayReactionBar {
+  backdrop-filter: blur(6px);
+  background: rgb(255 255 255 / 90%);
+  border-color: rgb(255 255 255 / 72%);
+  border-radius: 999px;
+  box-shadow: 0 2px 7px rgb(23 32 51 / 12%);
+  display: flex;
+  margin: 0;
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  z-index: 2;
+}
+
+.overlayReactionBar .reactionButton {
+  background: transparent;
+  border: 0;
+  font-size: 9px;
+  gap: 2px;
+  min-height: 20px;
+  min-width: 20px;
+  padding: 0 4px;
+}
+
+.overlayReactionBar .reactionButton + .reactionButton {
+  border-left: 0;
+  padding-left: 2px;
+}
+
+.overlayReactionBar .reactionButton:hover:not(:disabled),
+.overlayReactionBar .likedReaction,
+.overlayReactionBar .favoritedReaction {
+  background: rgb(23 32 51 / 7%);
+}
+
+.reactionButton:hover:not(:disabled) {
+  background: var(--pl-bg-subtle);
+  color: var(--pl-text);
+}
+
+.reactionButton:disabled {
+  cursor: wait;
+  opacity: 0.48;
+}
+
+.likedReaction,
+.favoritedReaction {
+  background: #f2f4f7;
+  color: #172033;
+}
+
+.ownerStats {
+  background: var(--pl-bg-subtle);
+  border: 1px solid var(--pl-line);
+  border-radius: 9px;
+  color: var(--pl-muted);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 16px;
+  min-height: 52px;
+}
+
+.ownerStats > span {
+  align-items: center;
+  display: flex;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  gap: 7px;
+  justify-content: center;
+}
+
+.ownerStats > span + span {
+  border-left: 1px solid var(--pl-line);
+}
+
+.compactOwnerStats {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  display: flex;
+  gap: 14px;
+  margin-top: 7px;
+  min-height: auto;
+}
+
+.compactOwnerStats > span {
+  font-size: 12px;
+  gap: 5px;
+  justify-content: flex-start;
+}
+
+.compactOwnerStats > span + span {
+  border-left: 0;
+}
+
 .selectedMark {
   align-items: center;
   background: var(--pl-accent);
@@ -63,7 +209,7 @@
   height: 26px;
   justify-content: center;
   position: absolute;
-  right: 9px;
+  left: 9px;
   top: 9px;
   width: 26px;
 }
@@ -75,6 +221,7 @@
 }
 
 .emptyState {
+  flex: 1;
   min-height: 360px;
   padding: 40px 24px;
   text-align: center;
@@ -167,7 +314,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .photoCard {
+  .photoCard,
+  .reactionButton {
     transition: none;
   }
 

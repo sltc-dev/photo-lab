@@ -1,8 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { describe, expect, it, vi } from 'vitest';
-import type { AppEnv } from '../../config/env';
-import { PhotoUploadValidator, type UploadedPhotoFile } from './photo-upload.validator';
+import type { AppEnv } from '../../../config/env';
+import { PhotoUploadValidator, type UploadedPhotoFile } from '../photo-upload.validator';
 
 const JPEG_BUFFER = Buffer.from([0xff, 0xd8, 0xff, 0x00]);
 const PNG_BUFFER = Buffer.from(

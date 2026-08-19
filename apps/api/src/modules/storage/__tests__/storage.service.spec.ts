@@ -4,8 +4,8 @@ import { Readable } from 'node:stream';
 import { tmpdir } from 'node:os';
 import { ConfigService } from '@nestjs/config';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AppEnv } from '../../config/env';
-import { StorageService } from './storage.service';
+import type { AppEnv } from '../../../config/env';
+import { StorageService } from '../storage.service';
 
 describe('StorageService', () => {
   let sandbox: string;

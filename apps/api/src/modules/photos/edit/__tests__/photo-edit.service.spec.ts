@@ -1,10 +1,10 @@
-import { PhotoStatus, Prisma } from '@prisma/client';
+import { PhotoKind, PhotoStatus, Prisma } from '@prisma/client';
 import { describe, expect, it, vi } from 'vitest';
-import { PrismaService } from '../../../prisma/prisma.service';
-import { StorageService } from '../../storage/storage.service';
-import { PhotoMetadataReader } from '../photo-metadata.reader';
-import { PhotoUploadValidator, type UploadedPhotoFile } from '../photo-upload.validator';
-import { PhotoEditService } from './photo-edit.service';
+import { PrismaService } from '../../../../prisma/prisma.service';
+import { StorageService } from '../../../storage/storage.service';
+import { PhotoMetadataReader } from '../../photo-metadata.reader';
+import { PhotoUploadValidator, type UploadedPhotoFile } from '../../photo-upload.validator';
+import { PhotoEditService } from '../photo-edit.service';
 
 const JPEG_BUFFER = Buffer.from([0xff, 0xd8, 0xff, 0x00]);
 const uploadedFile: UploadedPhotoFile = {
@@ -108,6 +108,7 @@ describe('PhotoEditService', () => {
       data: expect.objectContaining({
         fileName: 'holiday.edited.jpg',
         height: 600,
+        kind: PhotoKind.EDITED,
         originalObjectKey: storedKey,
         projectId: 'project-1',
         status: PhotoStatus.UPLOADED,

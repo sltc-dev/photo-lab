@@ -24,7 +24,7 @@ export type AuthSessionDto = {
     user: CurrentUserDto;
 };
 
-export type ErrorCode = 'AUTH_INVALID_CREDENTIALS' | 'AUTH_REFRESH_TOKEN_INVALID' | 'AUTH_TOKEN_EXPIRED' | 'BAD_REQUEST' | 'HTTP_ERROR' | 'INTERNAL_SERVER_ERROR' | 'NOT_FOUND' | 'PHOTO_FILE_REQUIRED' | 'PHOTO_FILE_TOO_LARGE' | 'PHOTO_NOT_FOUND' | 'PHOTO_STORAGE_FAILED' | 'PHOTO_UNSUPPORTED_TYPE' | 'PROJECT_NOT_FOUND' | 'RATE_LIMIT_EXCEEDED' | 'USER_EMAIL_ALREADY_EXISTS' | 'USER_NOT_FOUND' | 'VALIDATION_FAILED';
+export type ErrorCode = 'AUTH_INVALID_CREDENTIALS' | 'AUTH_REFRESH_TOKEN_INVALID' | 'AUTH_TOKEN_EXPIRED' | 'BAD_REQUEST' | 'HTTP_ERROR' | 'INTERNAL_SERVER_ERROR' | 'NOT_FOUND' | 'NOTIFICATION_NOT_FOUND' | 'NOTIFICATION_PUBLISH_FORBIDDEN' | 'PHOTO_FILE_REQUIRED' | 'PHOTO_FILE_TOO_LARGE' | 'PHOTO_NOT_FOUND' | 'PHOTO_STORAGE_FAILED' | 'PHOTO_UNSUPPORTED_TYPE' | 'PROJECT_NOT_FOUND' | 'RATE_LIMIT_EXCEEDED' | 'USER_EMAIL_ALREADY_EXISTS' | 'USER_NOT_FOUND' | 'VALIDATION_FAILED';
 
 export type ErrorBodyDto = {
     code: ErrorCode;
@@ -76,6 +76,8 @@ export type ProjectDto = {
     updatedAt: string;
 };
 
+export type PhotoKind = 'ORIGINAL' | 'EDITED';
+
 export type PhotoStatus = 'UPLOADED' | 'PROCESSING' | 'READY' | 'FAILED';
 
 export type PhotoDto = {
@@ -100,7 +102,16 @@ export type PhotoDto = {
     sizeBytes: number;
     width: number | null;
     height: number | null;
+    kind: PhotoKind;
     status: PhotoStatus;
+    /**
+     * 图片收到的点赞总数
+     */
+    likeCount: number;
+    /**
+     * 图片被收藏的总数，仅图片所有者可见
+     */
+    favoriteCount: number;
     createdAt: string;
     updatedAt: string;
 };
@@ -159,7 +170,20 @@ export type MaterialPhotoDto = {
     sizeBytes: number;
     width: number | null;
     height: number | null;
+    kind: PhotoKind;
     status: PhotoStatus;
+    /**
+     * 当前用户是否已点赞
+     */
+    isLiked: boolean;
+    /**
+     * 图片收到的点赞总数
+     */
+    likeCount: number;
+    /**
+     * 当前用户是否已收藏
+     */
+    isFavorited: boolean;
     createdAt: string;
     updatedAt: string;
 };
@@ -170,6 +194,63 @@ export type MaterialPhotoPageDto = {
      * 下一页游标；没有更多图片时为 null
      */
     nextCursor: string | null;
+};
+
+export type MaterialPhotoLikeStateDto = {
+    photoId: string;
+    isLiked: boolean;
+    likeCount: number;
+};
+
+export type MaterialPhotoFavoriteStateDto = {
+    photoId: string;
+    isFavorited: boolean;
+};
+
+export type NotificationType = 'SYSTEM' | 'VERSION_UPGRADE';
+
+export type NotificationLevel = 'INFO' | 'WARNING' | 'CRITICAL';
+
+export type NotificationListItemDto = {
+    id: string;
+    type: NotificationType;
+    level: NotificationLevel;
+    title: string;
+    summary: string;
+    isRead: boolean;
+    publishedAt: string;
+    expiresAt?: string | null;
+};
+
+export type NotificationPageDto = {
+    items: Array<NotificationListItemDto>;
+    nextCursor?: string | null;
+    /**
+     * 当前用户的未读通知总数
+     */
+    unreadCount: number;
+};
+
+export type NotificationDetailDto = {
+    id: string;
+    type: NotificationType;
+    level: NotificationLevel;
+    title: string;
+    summary: string;
+    isRead: boolean;
+    publishedAt: string;
+    expiresAt?: string | null;
+    /**
+     * 通知正文，使用纯文本或 Markdown 展示
+     */
+    content: string;
+    targetVersion?: string | null;
+};
+
+export type NotificationReadDto = {
+    id: string;
+    isRead: boolean;
+    readAt: string;
 };
 
 export type RegisterData = {
@@ -360,6 +441,10 @@ export type ListPhotosData = {
          * 每页照片数量
          */
         limit?: number;
+        /**
+         * 照片类型；不传时返回全部照片
+         */
+        kind?: PhotoKind;
         /**
          * 上一页返回的游标
          */
@@ -620,6 +705,10 @@ export type ListProjectPhotosData = {
          */
         limit?: number;
         /**
+         * 照片类型；不传时返回全部照片
+         */
+        kind?: PhotoKind;
+        /**
          * 上一页返回的图片游标
          */
         cursor?: string;
@@ -639,3 +728,191 @@ export type ListProjectPhotosResponses = {
 };
 
 export type ListProjectPhotosResponse = ListProjectPhotosResponses[keyof ListProjectPhotosResponses];
+
+export type ListFavoritePhotosData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * 每页返回的图片数量
+         */
+        limit?: number;
+        /**
+         * 照片类型；不传时返回全部照片
+         */
+        kind?: PhotoKind;
+        /**
+         * 上一页返回的图片游标
+         */
+        cursor?: string;
+    };
+    url: '/material/favorites';
+};
+
+export type ListFavoritePhotosErrors = {
+    401: ErrorResponseDto;
+};
+
+export type ListFavoritePhotosError = ListFavoritePhotosErrors[keyof ListFavoritePhotosErrors];
+
+export type ListFavoritePhotosResponses = {
+    200: MaterialPhotoPageDto;
+};
+
+export type ListFavoritePhotosResponse = ListFavoritePhotosResponses[keyof ListFavoritePhotosResponses];
+
+export type UnlikeMaterialPhotoData = {
+    body?: never;
+    path: {
+        photoId: string;
+    };
+    query?: never;
+    url: '/material/photos/{photoId}/like';
+};
+
+export type UnlikeMaterialPhotoErrors = {
+    401: ErrorResponseDto;
+    404: ErrorResponseDto;
+};
+
+export type UnlikeMaterialPhotoError = UnlikeMaterialPhotoErrors[keyof UnlikeMaterialPhotoErrors];
+
+export type UnlikeMaterialPhotoResponses = {
+    200: MaterialPhotoLikeStateDto;
+};
+
+export type UnlikeMaterialPhotoResponse = UnlikeMaterialPhotoResponses[keyof UnlikeMaterialPhotoResponses];
+
+export type LikeMaterialPhotoData = {
+    body?: never;
+    path: {
+        photoId: string;
+    };
+    query?: never;
+    url: '/material/photos/{photoId}/like';
+};
+
+export type LikeMaterialPhotoErrors = {
+    401: ErrorResponseDto;
+    404: ErrorResponseDto;
+};
+
+export type LikeMaterialPhotoError = LikeMaterialPhotoErrors[keyof LikeMaterialPhotoErrors];
+
+export type LikeMaterialPhotoResponses = {
+    200: MaterialPhotoLikeStateDto;
+};
+
+export type LikeMaterialPhotoResponse = LikeMaterialPhotoResponses[keyof LikeMaterialPhotoResponses];
+
+export type UnfavoriteMaterialPhotoData = {
+    body?: never;
+    path: {
+        photoId: string;
+    };
+    query?: never;
+    url: '/material/photos/{photoId}/favorite';
+};
+
+export type UnfavoriteMaterialPhotoErrors = {
+    401: ErrorResponseDto;
+    404: ErrorResponseDto;
+};
+
+export type UnfavoriteMaterialPhotoError = UnfavoriteMaterialPhotoErrors[keyof UnfavoriteMaterialPhotoErrors];
+
+export type UnfavoriteMaterialPhotoResponses = {
+    200: MaterialPhotoFavoriteStateDto;
+};
+
+export type UnfavoriteMaterialPhotoResponse = UnfavoriteMaterialPhotoResponses[keyof UnfavoriteMaterialPhotoResponses];
+
+export type FavoriteMaterialPhotoData = {
+    body?: never;
+    path: {
+        photoId: string;
+    };
+    query?: never;
+    url: '/material/photos/{photoId}/favorite';
+};
+
+export type FavoriteMaterialPhotoErrors = {
+    401: ErrorResponseDto;
+    404: ErrorResponseDto;
+};
+
+export type FavoriteMaterialPhotoError = FavoriteMaterialPhotoErrors[keyof FavoriteMaterialPhotoErrors];
+
+export type FavoriteMaterialPhotoResponses = {
+    200: MaterialPhotoFavoriteStateDto;
+};
+
+export type FavoriteMaterialPhotoResponse = FavoriteMaterialPhotoResponses[keyof FavoriteMaterialPhotoResponses];
+
+export type ListNotificationsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        isRead?: boolean;
+        limit?: number;
+        cursor?: string;
+    };
+    url: '/notifications';
+};
+
+export type ListNotificationsErrors = {
+    400: ErrorResponseDto;
+    401: ErrorResponseDto;
+};
+
+export type ListNotificationsError = ListNotificationsErrors[keyof ListNotificationsErrors];
+
+export type ListNotificationsResponses = {
+    200: NotificationPageDto;
+};
+
+export type ListNotificationsResponse = ListNotificationsResponses[keyof ListNotificationsResponses];
+
+export type GetNotificationData = {
+    body?: never;
+    path: {
+        notificationId: string;
+    };
+    query?: never;
+    url: '/notifications/{notificationId}';
+};
+
+export type GetNotificationErrors = {
+    401: ErrorResponseDto;
+    404: ErrorResponseDto;
+};
+
+export type GetNotificationError = GetNotificationErrors[keyof GetNotificationErrors];
+
+export type GetNotificationResponses = {
+    200: NotificationDetailDto;
+};
+
+export type GetNotificationResponse = GetNotificationResponses[keyof GetNotificationResponses];
+
+export type MarkNotificationReadData = {
+    body?: never;
+    path: {
+        notificationId: string;
+    };
+    query?: never;
+    url: '/notifications/{notificationId}/read';
+};
+
+export type MarkNotificationReadErrors = {
+    401: ErrorResponseDto;
+    404: ErrorResponseDto;
+};
+
+export type MarkNotificationReadError = MarkNotificationReadErrors[keyof MarkNotificationReadErrors];
+
+export type MarkNotificationReadResponses = {
+    200: NotificationReadDto;
+};
+
+export type MarkNotificationReadResponse = MarkNotificationReadResponses[keyof MarkNotificationReadResponses];

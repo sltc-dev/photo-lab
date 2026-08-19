@@ -418,6 +418,15 @@
             }
           },
           {
+            "name": "kind",
+            "required": false,
+            "in": "query",
+            "description": "照片类型；不传时返回全部照片",
+            "schema": {
+              "$ref": "#/components/schemas/PhotoKind"
+            }
+          },
+          {
             "name": "cursor",
             "required": false,
             "in": "query",
@@ -1093,6 +1102,15 @@
             }
           },
           {
+            "name": "kind",
+            "required": false,
+            "in": "query",
+            "description": "照片类型；不传时返回全部照片",
+            "schema": {
+              "$ref": "#/components/schemas/PhotoKind"
+            }
+          },
+          {
             "name": "cursor",
             "required": false,
             "in": "query",
@@ -1150,6 +1168,473 @@
         ],
         "tags": [
           "material"
+        ]
+      }
+    },
+    "/material/favorites": {
+      "get": {
+        "operationId": "listFavoritePhotos",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "每页返回的图片数量",
+            "schema": {
+              "default": 24,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "kind",
+            "required": false,
+            "in": "query",
+            "description": "照片类型；不传时返回全部照片",
+            "schema": {
+              "$ref": "#/components/schemas/PhotoKind"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "上一页返回的图片游标",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialPhotoPageDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "material"
+        ]
+      }
+    },
+    "/material/photos/{photoId}/like": {
+      "put": {
+        "operationId": "likeMaterialPhoto",
+        "parameters": [
+          {
+            "name": "photoId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialPhotoLikeStateDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "material"
+        ]
+      },
+      "delete": {
+        "operationId": "unlikeMaterialPhoto",
+        "parameters": [
+          {
+            "name": "photoId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialPhotoLikeStateDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "material"
+        ]
+      }
+    },
+    "/material/photos/{photoId}/favorite": {
+      "put": {
+        "operationId": "favoriteMaterialPhoto",
+        "parameters": [
+          {
+            "name": "photoId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialPhotoFavoriteStateDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "material"
+        ]
+      },
+      "delete": {
+        "operationId": "unfavoriteMaterialPhoto",
+        "parameters": [
+          {
+            "name": "photoId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialPhotoFavoriteStateDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "material"
+        ]
+      }
+    },
+    "/notifications": {
+      "get": {
+        "operationId": "listNotifications",
+        "parameters": [
+          {
+            "name": "isRead",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationPageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/notifications/{notificationId}": {
+      "get": {
+        "operationId": "getNotification",
+        "parameters": [
+          {
+            "name": "notificationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationDetailDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/notifications/{notificationId}/read": {
+      "patch": {
+        "operationId": "markNotificationRead",
+        "parameters": [
+          {
+            "name": "notificationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationReadDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
         ]
       }
     }
@@ -1255,6 +1740,8 @@
           "HTTP_ERROR",
           "INTERNAL_SERVER_ERROR",
           "NOT_FOUND",
+          "NOTIFICATION_NOT_FOUND",
+          "NOTIFICATION_PUBLISH_FORBIDDEN",
           "PHOTO_FILE_REQUIRED",
           "PHOTO_FILE_TOO_LARGE",
           "PHOTO_NOT_FOUND",
@@ -1423,6 +1910,13 @@
           "updatedAt"
         ]
       },
+      "PhotoKind": {
+        "type": "string",
+        "enum": [
+          "ORIGINAL",
+          "EDITED"
+        ]
+      },
       "PhotoStatus": {
         "type": "string",
         "enum": [
@@ -1472,12 +1966,27 @@
             "type": "number",
             "nullable": true
           },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PhotoKind"
+              }
+            ]
+          },
           "status": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/PhotoStatus"
               }
             ]
+          },
+          "likeCount": {
+            "type": "number",
+            "description": "图片收到的点赞总数"
+          },
+          "favoriteCount": {
+            "type": "number",
+            "description": "图片被收藏的总数，仅图片所有者可见"
           },
           "createdAt": {
             "type": "string",
@@ -1498,7 +2007,10 @@
           "sizeBytes",
           "width",
           "height",
+          "kind",
           "status",
+          "likeCount",
+          "favoriteCount",
           "createdAt",
           "updatedAt"
         ]
@@ -1599,12 +2111,31 @@
             "type": "number",
             "nullable": true
           },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PhotoKind"
+              }
+            ]
+          },
           "status": {
             "allOf": [
               {
                 "$ref": "#/components/schemas/PhotoStatus"
               }
             ]
+          },
+          "isLiked": {
+            "type": "boolean",
+            "description": "当前用户是否已点赞"
+          },
+          "likeCount": {
+            "type": "number",
+            "description": "图片收到的点赞总数"
+          },
+          "isFavorited": {
+            "type": "boolean",
+            "description": "当前用户是否已收藏"
           },
           "createdAt": {
             "type": "string",
@@ -1625,7 +2156,11 @@
           "sizeBytes",
           "width",
           "height",
+          "kind",
           "status",
+          "isLiked",
+          "likeCount",
+          "isFavorited",
           "createdAt",
           "updatedAt"
         ]
@@ -1648,6 +2183,205 @@
         "required": [
           "items",
           "nextCursor"
+        ]
+      },
+      "MaterialPhotoLikeStateDto": {
+        "type": "object",
+        "properties": {
+          "photoId": {
+            "type": "string"
+          },
+          "isLiked": {
+            "type": "boolean"
+          },
+          "likeCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "photoId",
+          "isLiked",
+          "likeCount"
+        ]
+      },
+      "MaterialPhotoFavoriteStateDto": {
+        "type": "object",
+        "properties": {
+          "photoId": {
+            "type": "string"
+          },
+          "isFavorited": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "photoId",
+          "isFavorited"
+        ]
+      },
+      "NotificationType": {
+        "type": "string",
+        "enum": [
+          "SYSTEM",
+          "VERSION_UPGRADE"
+        ]
+      },
+      "NotificationLevel": {
+        "type": "string",
+        "enum": [
+          "INFO",
+          "WARNING",
+          "CRITICAL"
+        ]
+      },
+      "NotificationListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotificationType"
+              }
+            ]
+          },
+          "level": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotificationLevel"
+              }
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "isRead": {
+            "type": "boolean"
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "level",
+          "title",
+          "summary",
+          "isRead",
+          "publishedAt"
+        ]
+      },
+      "NotificationPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationListItemDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          },
+          "unreadCount": {
+            "type": "number",
+            "description": "当前用户的未读通知总数"
+          }
+        },
+        "required": [
+          "items",
+          "unreadCount"
+        ]
+      },
+      "NotificationDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotificationType"
+              }
+            ]
+          },
+          "level": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotificationLevel"
+              }
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "isRead": {
+            "type": "boolean"
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "content": {
+            "type": "string",
+            "description": "通知正文，使用纯文本或 Markdown 展示"
+          },
+          "targetVersion": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "level",
+          "title",
+          "summary",
+          "isRead",
+          "publishedAt",
+          "content"
+        ]
+      },
+      "NotificationReadDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "isRead": {
+            "type": "boolean"
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "isRead",
+          "readAt"
         ]
       }
     }

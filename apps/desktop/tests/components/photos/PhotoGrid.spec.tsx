@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import type { ProjectPhoto } from '../../../src/api/photos';
+import type { ProjectPhoto, ProjectPhotoKind } from '../../../src/api/photos';
 import { PhotoGrid } from '../../../src/components/photos/PhotoGrid';
 
 const apiMocks = vi.hoisted(() => ({
@@ -26,8 +26,11 @@ vi.mock('../../../src/api/photos', async (importOriginal) => {
 const photo: ProjectPhoto = {
   createdAt: '2026-07-27T08:00:00.000Z',
   fileName: 'holiday.jpg',
+  favoriteCount: 2,
   height: null,
   id: 'photo-1',
+  kind: 'ORIGINAL',
+  likeCount: 5,
   mimeType: 'image/jpeg',
   originalUrl: 'http://localhost:3000/public/projects/project-1/photos/photo-1--holiday.jpg',
   projectId: 'project-1',
@@ -39,7 +42,7 @@ const photo: ProjectPhoto = {
   width: null,
 };
 
-function renderGrid() {
+function renderGrid(kind: ProjectPhotoKind = 'ORIGINAL') {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -52,7 +55,7 @@ function renderGrid() {
     <MantineProvider>
       <QueryClientProvider client={queryClient}>
         <MemoryRouter>
-          <PhotoGrid projectId="project-1" />
+          <PhotoGrid kind={kind} projectId="project-1" />
         </MemoryRouter>
       </QueryClientProvider>
     </MantineProvider>,
@@ -94,8 +97,8 @@ describe('PhotoGrid', () => {
 
     renderGrid();
 
-    expect(await screen.findByText('这个项目还没有照片')).toBeInTheDocument();
-    expect(apiMocks.getProjectPhotosPage).toHaveBeenCalledWith('project-1', null);
+    expect(await screen.findByText('暂无原图')).toBeInTheDocument();
+    expect(apiMocks.getProjectPhotosPage).toHaveBeenCalledWith('project-1', null, 'ORIGINAL');
   });
 
   it('loads an authenticated thumbnail blob and renders its object URL', async () => {
@@ -110,6 +113,27 @@ describe('PhotoGrid', () => {
     expect(apiMocks.getPhotoThumbnail).toHaveBeenCalledWith('project-1', 'photo-1');
     expect(image).toHaveAttribute('src', 'blob:thumbnail');
     expect(screen.getByText('2 KB')).toBeInTheDocument();
+    expect(screen.getByLabelText('5 人点赞，2 人收藏')).toBeInTheDocument();
+  });
+
+  it('requests and renders the edited photo kind', async () => {
+    const editedPhoto: ProjectPhoto = {
+      ...photo,
+      fileName: 'holiday.edited.webp',
+      id: 'photo-edited',
+      kind: 'EDITED',
+    };
+    apiMocks.getProjectPhotosPage.mockResolvedValue({
+      items: [editedPhoto],
+      nextCursor: null,
+    });
+
+    renderGrid('EDITED');
+
+    expect(
+      await screen.findByRole('button', { name: '查看 holiday.edited.webp 详情' }),
+    ).toBeInTheDocument();
+    expect(apiMocks.getProjectPhotosPage).toHaveBeenCalledWith('project-1', null, 'EDITED');
   });
 
   it('opens and closes the selected photo details', async () => {
@@ -131,6 +155,7 @@ describe('PhotoGrid', () => {
     expect(screen.getByText('1200 × 800')).toBeInTheDocument();
     expect(screen.getByText('文件名')).toBeInTheDocument();
     expect(screen.getByText('上传时间')).toBeInTheDocument();
+    expect(screen.getAllByLabelText('5 人点赞，2 人收藏')).toHaveLength(2);
     expect(
       screen
         .getAllByAltText('holiday.jpg')
@@ -176,7 +201,12 @@ describe('PhotoGrid', () => {
     });
 
     expect(await screen.findByRole('button', { name: '查看 second.jpg 详情' })).toBeInTheDocument();
-    expect(apiMocks.getProjectPhotosPage).toHaveBeenNthCalledWith(2, 'project-1', 'photo-1');
+    expect(apiMocks.getProjectPhotosPage).toHaveBeenNthCalledWith(
+      2,
+      'project-1',
+      'photo-1',
+      'ORIGINAL',
+    );
     expect(screen.queryByLabelText('继续加载照片')).not.toBeInTheDocument();
   });
 });

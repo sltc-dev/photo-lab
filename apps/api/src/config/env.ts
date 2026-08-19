@@ -26,6 +26,10 @@ const envSchema = z
     MINIO_ACCESS_KEY: z.string().optional(),
     MINIO_ENDPOINT: z.string().optional(),
     MINIO_SECRET_KEY: z.string().optional(),
+    NOTIFICATION_PUBLISH_SECRET: z
+      .string()
+      .min(32)
+      .default('dev-notification-publish-secret-change-me'),
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     PHOTO_STORAGE_ROOT: z.string().trim().min(1).default('../../public/photo-lab'),
     PHOTO_UPLOAD_MAX_BYTES: z.coerce
@@ -62,6 +66,14 @@ const envSchema = z
           path: [key],
         });
       }
+    }
+
+    if (env.NOTIFICATION_PUBLISH_SECRET === 'dev-notification-publish-secret-change-me') {
+      context.addIssue({
+        code: 'custom',
+        message: 'must not use the development default in production',
+        path: ['NOTIFICATION_PUBLISH_SECRET'],
+      });
     }
   });
 

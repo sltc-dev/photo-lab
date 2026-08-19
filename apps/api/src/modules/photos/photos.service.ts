@@ -2,7 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { Readable } from 'node:stream';
 import { buffer as consumeBuffer } from 'node:stream/consumers';
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
-import { PhotoStatus, Prisma } from '@prisma/client';
+import { PhotoKind, PhotoStatus, Prisma } from '@prisma/client';
 import { AppException } from '../../common/errors/app.exception';
 import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
@@ -29,10 +29,17 @@ const photoSelect = {
   sizeBytes: true,
   width: true,
   height: true,
+  kind: true,
   originalObjectKey: true,
   status: true,
   createdAt: true,
   updatedAt: true,
+  _count: {
+    select: {
+      favorites: true,
+      likes: true,
+    },
+  },
 } satisfies Prisma.PhotoSelect;
 
 type PhotoRecord = Prisma.PhotoGetPayload<{
@@ -118,6 +125,7 @@ export class PhotosService {
           sizeBytes: validated.sizeBytes,
           width: metadata.width,
           height: metadata.height,
+          kind: PhotoKind.ORIGINAL,
           checksumSha256,
           originalObjectKey,
           status: PhotoStatus.UPLOADED,
@@ -147,6 +155,7 @@ export class PhotosService {
       skip: query.cursor ? 1 : 0,
       take: query.limit + 1,
       where: {
+        ...(query.kind ? { kind: query.kind } : {}),
         projectId,
       },
     });
@@ -371,8 +380,11 @@ export class PhotosService {
       sizeBytes: photo.sizeBytes,
       width: photo.width,
       height: photo.height,
+      kind: photo.kind,
       originalUrl: buildPublicUrl(photo.originalObjectKey),
       status: photo.status,
+      likeCount: photo._count.likes,
+      favoriteCount: photo._count.favorites,
       thumbnailUrl: buildThumbnailApiUrl(photo.projectId, photo.id),
       createdAt: photo.createdAt.toISOString(),
       updatedAt: photo.updatedAt.toISOString(),

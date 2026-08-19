@@ -1,9 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
-import { PhotoStatus } from '@prisma/client';
+import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { PhotoKind, PhotoStatus } from '@prisma/client';
 
 export class ListMaterialPhotosQueryDto {
+  @ApiPropertyOptional({
+    description: '照片类型；不传时返回全部照片',
+    enum: PhotoKind,
+    enumName: 'PhotoKind',
+  })
+  @IsEnum(PhotoKind)
+  @IsOptional()
+  kind?: PhotoKind;
+
   @ApiPropertyOptional({
     description: '上一页返回的图片游标',
     type: String,
@@ -82,10 +91,25 @@ export class MaterialPhotoDto {
   height!: number | null;
 
   @ApiProperty({
+    enum: PhotoKind,
+    enumName: 'PhotoKind',
+  })
+  kind!: PhotoKind;
+
+  @ApiProperty({
     enum: PhotoStatus,
     enumName: 'PhotoStatus',
   })
   status!: PhotoStatus;
+
+  @ApiProperty({ description: '当前用户是否已点赞', type: Boolean })
+  isLiked!: boolean;
+
+  @ApiProperty({ description: '图片收到的点赞总数', type: Number })
+  likeCount!: number;
+
+  @ApiProperty({ description: '当前用户是否已收藏', type: Boolean })
+  isFavorited!: boolean;
 
   @ApiProperty({
     format: 'date-time',
@@ -98,6 +122,25 @@ export class MaterialPhotoDto {
     type: String,
   })
   updatedAt!: string;
+}
+
+export class MaterialPhotoLikeStateDto {
+  @ApiProperty({ type: String })
+  photoId!: string;
+
+  @ApiProperty({ type: Boolean })
+  isLiked!: boolean;
+
+  @ApiProperty({ type: Number })
+  likeCount!: number;
+}
+
+export class MaterialPhotoFavoriteStateDto {
+  @ApiProperty({ type: String })
+  photoId!: string;
+
+  @ApiProperty({ type: Boolean })
+  isFavorited!: boolean;
 }
 
 export class MaterialPhotoPageDto {

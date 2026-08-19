@@ -20,11 +20,13 @@ import {
   Clock3,
   FileImage,
   HardDrive,
+  Heart,
   ImageOff,
   Images,
   Maximize2,
   Pencil,
   RefreshCw,
+  Star,
 } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -32,30 +34,32 @@ import {
   getPhotoThumbnail,
   getProjectPhotosPage,
   photoThumbnailQueryKey,
-  photosQueryKey,
+  projectPhotosByKindQueryKey,
   type ProjectPhoto,
+  type ProjectPhotoKind,
   type ProjectPhotoPage,
 } from '../../api/photos';
 import styles from '../../styles/components/photos/PhotoGrid.module.css';
 
 type PhotoGridProps = {
+  kind: ProjectPhotoKind;
   projectId: string;
 };
 
-export function PhotoGrid({ projectId }: PhotoGridProps) {
+export function PhotoGrid({ kind, projectId }: PhotoGridProps) {
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
   const photosQuery = useInfiniteQuery<
     ProjectPhotoPage,
     Error,
     InfiniteData<ProjectPhotoPage, string | null>,
-    ReturnType<typeof photosQueryKey>,
+    ReturnType<typeof projectPhotosByKindQueryKey>,
     string | null
   >({
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     initialPageParam: null as string | null,
-    queryFn: ({ pageParam }) => getProjectPhotosPage(projectId, pageParam),
-    queryKey: photosQueryKey(projectId),
+    queryFn: ({ pageParam }) => getProjectPhotosPage(projectId, pageParam, kind),
+    queryKey: projectPhotosByKindQueryKey(projectId, kind),
   });
   const { fetchNextPage, hasNextPage, isFetchingNextPage, isFetchNextPageError } = photosQuery;
 
@@ -111,15 +115,19 @@ export function PhotoGrid({ projectId }: PhotoGridProps) {
   const selectedPhoto = photos.find((photo) => photo.id === selectedPhotoId) ?? null;
 
   if (photos.length === 0) {
+    const isEditedKind = kind === 'EDITED';
+
     return (
       <Center className={styles.emptyState}>
         <Stack align="center" gap="sm">
           <div className={styles.emptyIcon}>
             <Images aria-hidden size={24} />
           </div>
-          <Text fw={650}>这个项目还没有照片</Text>
+          <Text fw={650}>{isEditedKind ? '暂无效果图' : '暂无原图'}</Text>
           <Text c="dimmed" size="sm">
-            点击右上角“上传照片”，添加第一张原始图片。
+            {isEditedKind
+              ? '完成照片编辑后，效果图会显示在这里。'
+              : '点击右上角“上传照片”，添加第一张原始图片。'}
           </Text>
         </Stack>
       </Center>
@@ -234,6 +242,7 @@ function PhotoGridItem({ isSelected, onSelect, photo }: PhotoGridItemProps) {
         <Text c="dimmed" size="xs">
           {formatFileSize(photo.sizeBytes)}
         </Text>
+        <PhotoOwnerStats compact photo={photo} />
       </Stack>
       {isSelected ? (
         <span aria-hidden className={styles.selectedMark}>
@@ -287,6 +296,8 @@ function PhotoDetail({ photo }: { photo: ProjectPhoto }) {
         )}
       </AspectRatio>
 
+      <PhotoOwnerStats photo={photo} />
+
       <dl className={styles.metadataList}>
         <Metadata icon={<FileImage size={17} />} label="文件名" value={photo.fileName} />
         <Metadata
@@ -315,6 +326,26 @@ function PhotoDetail({ photo }: { photo: ProjectPhoto }) {
         </Button>
       </Group>
     </div>
+  );
+}
+
+function PhotoOwnerStats({ compact = false, photo }: { compact?: boolean; photo: ProjectPhoto }) {
+  return (
+    <span
+      aria-label={`${photo.likeCount} 人点赞，${photo.favoriteCount} 人收藏`}
+      className={`${styles.ownerStats} ${compact ? styles.compactOwnerStats : ''}`}
+    >
+      <span>
+        <Heart aria-hidden size={compact ? 15 : 19} />
+        {photo.likeCount}
+        {!compact ? <span>点赞</span> : null}
+      </span>
+      <span>
+        <Star aria-hidden size={compact ? 15 : 19} />
+        {photo.favoriteCount}
+        {!compact ? <span>收藏</span> : null}
+      </span>
+    </span>
   );
 }
 
