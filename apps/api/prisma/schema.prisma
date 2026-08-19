@@ -120,6 +120,7 @@ model PhotoFavorite {
   @@index([photoId, createdAt])
 }
 
+
 enum NotificationType {
   SYSTEM
   VERSION_UPGRADE

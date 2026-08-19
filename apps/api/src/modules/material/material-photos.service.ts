@@ -133,10 +133,15 @@ export class MaterialPhotosService {
   }
 
   async likePhoto(photoId: string, currentUserId: string): Promise<MaterialPhotoLikeStateDto> {
+    //先检查图片是否允许操作
     await this.ensureMaterialPhoto(photoId, currentUserId);
+    //
     await this.prisma.photoLike.upsert({
+      // 如果找不到，执行 create，新增点赞
       create: { photoId, userId: currentUserId },
+      // 如果已经存在，执行 update: {}，保持原样
       update: {},
+      //先通过 userId_photoId 查找点赞记录
       where: { userId_photoId: { photoId, userId: currentUserId } },
     });
 
@@ -231,6 +236,7 @@ export class MaterialPhotosService {
     photoId: string,
     currentUserId: string,
   ): Promise<MaterialPhotoLikeStateDto> {
+    // 点赞或取消后查询最新状态和数量，第一次 count 判断当前用户是否点赞；第二次 count 统计图片的总点赞数；
     const [isLiked, likeCount] = await Promise.all([
       this.prisma.photoLike.count({ where: { photoId, userId: currentUserId } }),
       this.prisma.photoLike.count({ where: { photoId } }),

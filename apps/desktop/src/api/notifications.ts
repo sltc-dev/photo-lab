@@ -62,7 +62,7 @@ export async function subscribeNotificationStream(
   if (!response.ok || !response.body) {
     throw new Error(`通知实时连接失败 (${response.status})`);
   }
-
+  //前端一直等待后端发送数据
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';

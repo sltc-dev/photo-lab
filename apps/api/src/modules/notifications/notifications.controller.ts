@@ -58,6 +58,7 @@ export class NotificationsController {
     return this.notificationsService.listNotifications(user.id, query);
   }
 
+  //注册一个 GET 接口；不按照普通 JSON 接口一次性返回；每当产生一条数据，就把数据写入 HTTP 响应；
   @Sse('stream')
   @ApiExcludeEndpoint()
   streamNotifications(): Observable<MessageEvent> {

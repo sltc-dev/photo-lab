@@ -52,8 +52,12 @@ function useNotificationStream(): void {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    //AbortController 用来主动终止 SSE 请求，
+    // controller.signal  取消信号，负责告诉任务“有没有被取消”
+    //controller.abort() 真正发出取消命令
     const controller = new AbortController();
 
+    //定义收到通知后的处理函数
     const handlePublishedNotification = async (notificationId: string) => {
       try {
         await queryClient.invalidateQueries({ queryKey: notificationsQueryKey });
@@ -64,13 +68,15 @@ function useNotificationStream(): void {
           title: detail.title,
         });
       } catch {
-        toast.show({ message: '打开通知中心查看详情', title: '收到一条新通知' });
+        return;
       }
     };
 
     const connect = async () => {
+      //只要没有主动取消，就一直运行
       while (!controller.signal.aborted) {
         try {
+          //建立 SSE 连接
           await subscribeNotificationStream(
             (event) => void handlePublishedNotification(event.notificationId),
             controller.signal,
@@ -84,6 +90,7 @@ function useNotificationStream(): void {
     };
 
     void connect();
+    //组件卸载并执行
     return () => controller.abort();
   }, [queryClient]);
 }
