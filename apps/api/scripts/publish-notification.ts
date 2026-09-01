@@ -1,75 +1,59 @@
+import 'reflect-metadata';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { config as loadEnv } from 'dotenv';
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { NestFactory } from '@nestjs/core';
+import { NotificationLevel, NotificationType } from '@prisma/client';
+import { NotificationCoreModule } from '../src/modules/notifications/notification-core.module';
+import type { PublishNotificationDto } from '../src/modules/notifications/dto/publish-notification.dto';
+import { NotificationsService } from '../src/modules/notifications/notifications.service';
 
-loadEnv({ path: resolve(process.cwd(), '../../.env'), quiet: true });
-loadEnv({ path: resolve(process.cwd(), '.env'), quiet: true });
-
-type NotificationType = 'SYSTEM' | 'VERSION_UPGRADE';
-type NotificationLevel = 'INFO' | 'WARNING' | 'CRITICAL';
-
-type PublishInput = {
-  content: string;
-  expiresAt?: string;
-  level: NotificationLevel;
-  publishedAt?: string;
-  summary: string;
-  targetVersion?: string;
-  title: string;
-  type: NotificationType;
-};
+@Module({
+  imports: [
+    ConfigModule.forRoot({ envFilePath: ['../../.env', '.env'], isGlobal: true }),
+    NotificationCoreModule,
+  ],
+})
+class NotificationCliModule {}
 
 async function main(): Promise<void> {
-  const args = parseArgs(process.argv.slice(2));
-  const secret =
-    process.env.NOTIFICATION_PUBLISH_SECRET ??
-    (process.env.NODE_ENV === 'production'
-      ? undefined
-      : 'dev-notification-publish-secret-change-me');
-  const apiBaseUrl =
-    process.env.NOTIFICATION_API_URL ?? process.env.VITE_API_BASE_URL ?? 'http://localhost:3000';
+  const argv = process.argv.slice(2).filter((argument) => argument !== '--');
 
-  if (!secret) {
-    throw new Error('NOTIFICATION_PUBLISH_SECRET is required.');
+  if (argv.includes('--help') || argv.includes('-h')) {
+    printHelp();
+    return;
   }
 
-  const input = await buildInput(args);
-  const response = await fetch(new URL('/internal/notifications', apiBaseUrl), {
-    body: JSON.stringify(input),
-    headers: {
-      'Content-Type': 'application/json',
-      'x-notification-publish-secret': secret,
-    },
-    method: 'POST',
+  // 参数无效时不启动 Nest，也不创建数据库连接。
+  const input = await buildInput(parseArgs(argv));
+  const app = await NestFactory.createApplicationContext(NotificationCliModule, {
+    logger: ['error'],
   });
 
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`Notification publish failed (${response.status}): ${body}`);
+  try {
+    const service = app.get(NotificationsService);
+    const notification = await service.publishNotification(input);
+
+    console.log(
+      JSON.stringify(
+        {
+          id: notification.id,
+          publishedAt: notification.publishedAt.toISOString(),
+          title: notification.title,
+          type: notification.type,
+        },
+        null,
+        2,
+      ),
+    );
+  } finally {
+    // 触发 Prisma 的关闭钩子，让一次性命令执行后立即退出。
+    await app.close();
   }
-
-  const notification = (await response.json()) as {
-    id: string;
-    publishedAt: string;
-    title: string;
-    type: string;
-  };
-
-  console.log(
-    JSON.stringify(
-      {
-        id: notification.id,
-        publishedAt: notification.publishedAt,
-        title: notification.title,
-        type: notification.type,
-      },
-      null,
-      2,
-    ),
-  );
 }
 
-async function buildInput(args: Map<string, string>): Promise<PublishInput> {
+export async function buildInput(args: Map<string, string>): Promise<PublishNotificationDto> {
   const title = required(args, 'title');
   const summary = required(args, 'summary');
   const contentValue = args.get('content');
@@ -88,22 +72,22 @@ async function buildInput(args: Map<string, string>): Promise<PublishInput> {
     throw new Error('One of --content or --content-file is required.');
   }
 
-  const type = (args.get('type') ?? 'SYSTEM') as NotificationType;
-  const level = (args.get('level') ?? 'INFO') as NotificationLevel;
+  const type = args.get('type') ?? NotificationType.SYSTEM;
+  const level = args.get('level') ?? NotificationLevel.INFO;
 
-  if (!['SYSTEM', 'VERSION_UPGRADE'].includes(type)) {
+  if (!Object.values(NotificationType).includes(type as NotificationType)) {
     throw new Error('--type must be SYSTEM or VERSION_UPGRADE.');
   }
-  if (!['INFO', 'WARNING', 'CRITICAL'].includes(level)) {
+  if (!Object.values(NotificationLevel).includes(level as NotificationLevel)) {
     throw new Error('--level must be INFO, WARNING, or CRITICAL.');
   }
 
-  const input: PublishInput = {
+  const input: PublishNotificationDto = {
     content: content.trim(),
-    level,
+    level: level as NotificationLevel,
     summary,
     title,
-    type,
+    type: type as NotificationType,
   };
 
   const expiresAt = args.get('expires-at');
@@ -116,13 +100,12 @@ async function buildInput(args: Map<string, string>): Promise<PublishInput> {
   return input;
 }
 
-function parseArgs(argv: string[]): Map<string, string> {
+export function parseArgs(argv: string[]): Map<string, string> {
   const result = new Map<string, string>();
-  const values = argv.filter((argument) => argument !== '--');
 
-  for (let index = 0; index < values.length; index += 2) {
-    const key = values[index];
-    const value = values[index + 1];
+  for (let index = 0; index < argv.length; index += 2) {
+    const key = argv[index];
+    const value = argv[index + 1];
 
     if (!key?.startsWith('--') || value === undefined || value.startsWith('--')) {
       throw new Error(`Invalid argument near ${key ?? '<end>'}. Expected --name value.`);
@@ -144,7 +127,29 @@ function required(args: Map<string, string>, name: string): string {
   return value;
 }
 
-main().catch((error: unknown) => {
+function printHelp(): void {
+  console.log(`Publish a Photo Lab notification directly through NestJS.
+
+Usage:
+  pnpm notification:publish -- --title <text> --summary <text> --content <text> [options]
+
+Required:
+  --title <text>            Notification title
+  --summary <text>          Short list summary
+  --content <text>          Notification body
+  --content-file <path>     Read the body from a file instead of --content
+
+Options:
+  --type <value>            SYSTEM (default) or VERSION_UPGRADE
+  --level <value>           INFO (default), WARNING, or CRITICAL
+  --target-version <value>  Version associated with an upgrade notification
+  --published-at <ISO8601>  Publication time (default: now)
+  --expires-at <ISO8601>    Expiration time
+  -h, --help                Show this help
+`);
+}
+
+void main().catch((error: unknown) => {
   console.error(error instanceof Error ? error.message : String(error));
   process.exitCode = 1;
 });

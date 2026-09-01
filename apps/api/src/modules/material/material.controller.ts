@@ -1,5 +1,28 @@
-import { Controller, Delete, Get, HttpStatus, Param, Put, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Put,
+  Query,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOkResponse,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { PhotoKind } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { MaterialUserService } from './material-users.service';
@@ -15,6 +38,10 @@ import {
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequestUser } from '../../common/types/authenticated-request';
 import { ProjectDto } from '../projects/dto/project.dto';
+import { CreateMaterialCommentDto, MaterialCommentDto } from './dto/material-comment.dto';
+import { MaterialStickerDto } from './dto/material-sticker.dto';
+import { MaterialStickersService } from './material-stickers.service';
+import type { UploadedPhotoFile } from '../photos/photo-upload.validator';
 
 //swagger装饰器，影响接口文档
 @ApiTags('material')
@@ -27,7 +54,42 @@ export class MaterialController {
   constructor(
     private readonly materialUserService: MaterialUserService,
     private readonly materialPhotosService: MaterialPhotosService,
+    private readonly materialStickersService: MaterialStickersService,
   ) {}
+
+  @Get('stickers')
+  @ApiOkResponse({ isArray: true, type: MaterialStickerDto })
+  listStickers(@CurrentUser() currentUser: RequestUser): Promise<MaterialStickerDto[]> {
+    return this.materialStickersService.list(currentUser.id);
+  }
+
+  @Post('stickers')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: { file: { type: 'string', format: 'binary' } },
+    },
+  })
+  @ApiOkResponse({ type: MaterialStickerDto })
+  uploadSticker(
+    @CurrentUser() currentUser: RequestUser,
+    @UploadedFile() file?: UploadedPhotoFile,
+  ): Promise<MaterialStickerDto> {
+    return this.materialStickersService.upload(currentUser.id, file);
+  }
+
+  @Delete('stickers/:stickerId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiParam({ name: 'stickerId', type: String })
+  deleteSticker(
+    @CurrentUser() currentUser: RequestUser,
+    @Param('stickerId') stickerId: string,
+  ): Promise<void> {
+    return this.materialStickersService.remove(currentUser.id, stickerId);
+  }
 
   @Get('users')
   @ApiOkResponse({
@@ -171,5 +233,40 @@ export class MaterialController {
     @Param('photoId') photoId: string,
   ): Promise<MaterialPhotoFavoriteStateDto> {
     return this.materialPhotosService.unfavoritePhoto(photoId, currentUser.id);
+  }
+
+  @Get('photos/:photoId/comments')
+  @ApiParam({ name: 'photoId', type: String })
+  @ApiOkResponse({ isArray: true, type: MaterialCommentDto })
+  @ApiErrorResponses(HttpStatus.UNAUTHORIZED, HttpStatus.NOT_FOUND)
+  listMaterialPhotoComments(
+    @CurrentUser() currentUser: RequestUser,
+    @Param('photoId') photoId: string,
+  ): Promise<MaterialCommentDto[]> {
+    return this.materialPhotosService.listComments(photoId, currentUser.id);
+  }
+
+  @Post('photos/:photoId/comments')
+  @ApiParam({ name: 'photoId', type: String })
+  @ApiBody({ type: CreateMaterialCommentDto })
+  @ApiOkResponse({ type: MaterialCommentDto })
+  @ApiErrorResponses(HttpStatus.BAD_REQUEST, HttpStatus.UNAUTHORIZED, HttpStatus.NOT_FOUND)
+  createMaterialPhotoComment(
+    @CurrentUser() currentUser: RequestUser,
+    @Param('photoId') photoId: string,
+    @Body() dto: CreateMaterialCommentDto,
+  ): Promise<MaterialCommentDto> {
+    return this.materialPhotosService.createComment(photoId, currentUser.id, dto);
+  }
+
+  @Delete('comments/:commentId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiParam({ name: 'commentId', type: String })
+  @ApiErrorResponses(HttpStatus.UNAUTHORIZED, HttpStatus.NOT_FOUND)
+  deleteMaterialPhotoComment(
+    @CurrentUser() currentUser: RequestUser,
+    @Param('commentId') commentId: string,
+  ): Promise<void> {
+    return this.materialPhotosService.deleteComment(commentId, currentUser.id);
   }
 }

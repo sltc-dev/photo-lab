@@ -94,8 +94,20 @@
   display: flex;
   gap: 10px;
   line-height: 1.5;
-  margin-top: auto;
+  margin-top: 10px;
   padding: 14px;
+}
+
+.contactButton {
+  color: var(--pl-muted);
+  margin-top: auto;
+  min-height: 42px;
+  padding-inline: 12px;
+}
+
+.contactButton:hover {
+  background: var(--pl-accent-soft);
+  color: var(--pl-accent-strong);
 }
 
 .navHint svg {

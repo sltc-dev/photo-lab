@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { AppException } from '../../../common/errors/app.exception';
 import type { PrismaService } from '../../../prisma/prisma.service';
 import type { ListNotificationsQueryDto } from '../dto/list-notifications-query.dto';
-import type { NotificationStreamService } from '../notification-stream.service';
+import type { NotificationEventPublisher } from '../notification-event-publisher.service';
 import { NotificationsService } from '../notifications.service';
 
 const notificationRecord = {
@@ -31,7 +31,7 @@ function createHarness() {
     notification: { count, create, findFirst, findMany },
     notificationReceipt: { upsert },
   } as unknown as PrismaService;
-  const stream = { publish } as unknown as NotificationStreamService;
+  const eventPublisher = { publish } as unknown as NotificationEventPublisher;
 
   return {
     count,
@@ -39,7 +39,7 @@ function createHarness() {
     findFirst,
     findMany,
     publish,
-    service: new NotificationsService(prisma, stream),
+    service: new NotificationsService(prisma, eventPublisher),
     upsert,
   };
 }
@@ -69,6 +69,15 @@ describe('NotificationsService', () => {
       expect.objectContaining({
         orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
         take: 21,
+        where: expect.objectContaining({
+          AND: expect.arrayContaining([
+            expect.objectContaining({
+              AND: expect.arrayContaining([
+                { OR: [{ recipientUserId: null }, { recipientUserId: 'user-1' }] },
+              ]),
+            }),
+          ]),
+        }),
       }),
     );
     expect(harness.count).toHaveBeenCalledOnce();

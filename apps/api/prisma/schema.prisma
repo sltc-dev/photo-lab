@@ -22,7 +22,30 @@ model User {
   projects             Project[]
   photoLikes           PhotoLike[]
   photoFavorites       PhotoFavorite[]
+  photoComments        PhotoComment[]
+  stickers             UserSticker[]
   notificationReceipts NotificationReceipt[]
+  feedbacks            Feedback[]
+  notifications        Notification[]
+}
+
+enum FeedbackCategory {
+  BUG
+  FEATURE
+  OTHER
+}
+
+model Feedback {
+  id          String           @id @default(cuid())
+  referenceId String           @unique
+  userId      String
+  category    FeedbackCategory
+  message     String           @db.VarChar(2000)
+  createdAt   DateTime         @default(now())
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
 }
 
 model RefreshToken {
@@ -86,11 +109,14 @@ model Photo {
   processingError     String?
   processingStartedAt DateTime?
   nextAttemptAt       DateTime        @default(now())
+  likeCount           Int             @default(0)
+  favoriteCount       Int             @default(0)
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
   project             Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
   likes               PhotoLike[]
   favorites           PhotoFavorite[]
+  comments            PhotoComment[]
 
   @@index([projectId, createdAt])
   @@index([projectId, kind, createdAt])
@@ -120,6 +146,31 @@ model PhotoFavorite {
   @@index([photoId, createdAt])
 }
 
+model PhotoComment {
+  id         String   @id @default(cuid())
+  photoId    String
+  userId     String
+  content    String?  @db.VarChar(500)
+  stickerKey String?  @db.VarChar(64)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  photo      Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([photoId, createdAt, id])
+  @@index([userId])
+}
+
+model UserSticker {
+  id        String    @id @default(cuid())
+  userId    String
+  objectKey String    @unique
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
 
 enum NotificationType {
   SYSTEM
@@ -133,21 +184,26 @@ enum NotificationLevel {
 }
 
 model Notification {
-  id            String                @id @default(cuid())
-  type          NotificationType      @default(SYSTEM)
-  level         NotificationLevel     @default(INFO)
-  title         String
-  summary       String
-  content       String
-  targetVersion String?
-  publishedAt   DateTime              @default(now())
-  expiresAt     DateTime?
-  createdAt     DateTime              @default(now())
-  updatedAt     DateTime              @updatedAt
-  receipts      NotificationReceipt[]
+  id              String                @id @default(cuid())
+  type            NotificationType      @default(SYSTEM)
+  level           NotificationLevel     @default(INFO)
+  title           String
+  summary         String
+  content         String
+  targetVersion   String?
+  publishedAt     DateTime              @default(now())
+  expiresAt       DateTime?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  // null 表示面向所有用户的全体通知；有用户 ID 时表示仅该用户可见的个人通知。
+  recipientUserId String?
+  recipient       User?                 @relation(fields: [recipientUserId], references: [id], onDelete: Cascade)
+  // 每位用户的已读状态单独保存在 NotificationReceipt 中，不影响其他用户。
+  receipts        NotificationReceipt[]
 
   @@index([publishedAt, id])
   @@index([expiresAt])
+  @@index([recipientUserId, publishedAt, id])
 }
 
 model NotificationReceipt {

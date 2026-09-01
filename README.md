@@ -17,19 +17,18 @@ permissions are not part of the current system.
 
 Copy `.env.example` to `.env` for local development and replace the example secrets.
 
-| Variable                      | Purpose                                                              |
-| ----------------------------- | -------------------------------------------------------------------- |
-| `DATABASE_URL`                | Prisma PostgreSQL connection string                                  |
-| `JWT_ACCESS_SECRET`           | Secret for short-lived access tokens; minimum 16 characters          |
-| `JWT_REFRESH_SECRET`          | Secret mixed into stored refresh-token hashes; minimum 16 characters |
-| `ACCESS_TOKEN_TTL`            | Access-token lifetime, default `15m`, maximum `24h`                  |
-| `REFRESH_TOKEN_TTL`           | Refresh-token lifetime, default `30d`, maximum `366d`                |
-| `CORS_ORIGINS`                | Comma-separated allowed renderer origins; required in production     |
-| `THROTTLE_LIMIT`              | Default request limit per rate-limit window                          |
-| `THROTTLE_TTL_MS`             | Default rate-limit window in milliseconds                            |
-| `VITE_API_BASE_URL`           | Desktop build-time API base URL                                      |
-| `VITE_ENABLE_QUERY_DEVTOOLS`  | Enables TanStack Query Devtools in local builds                      |
-| `NOTIFICATION_PUBLISH_SECRET` | Protects the internal command-line notification publish endpoint     |
+| Variable                     | Purpose                                                              |
+| ---------------------------- | -------------------------------------------------------------------- |
+| `DATABASE_URL`               | Prisma PostgreSQL connection string                                  |
+| `JWT_ACCESS_SECRET`          | Secret for short-lived access tokens; minimum 16 characters          |
+| `JWT_REFRESH_SECRET`         | Secret mixed into stored refresh-token hashes; minimum 16 characters |
+| `ACCESS_TOKEN_TTL`           | Access-token lifetime, default `15m`, maximum `24h`                  |
+| `REFRESH_TOKEN_TTL`          | Refresh-token lifetime, default `30d`, maximum `366d`                |
+| `CORS_ORIGINS`               | Comma-separated allowed renderer origins; required in production     |
+| `THROTTLE_LIMIT`             | Default request limit per rate-limit window                          |
+| `THROTTLE_TTL_MS`            | Default rate-limit window in milliseconds                            |
+| `VITE_API_BASE_URL`          | Desktop build-time API base URL                                      |
+| `VITE_ENABLE_QUERY_DEVTOOLS` | Enables TanStack Query Devtools in local builds                      |
 
 ## Local Development
 
@@ -80,7 +79,10 @@ Use `pnpm db:migrate:deploy` rather than `migrate dev` in production or shared t
 
 ## Publishing Notifications
 
-With the API running, publish a system or version-upgrade notification from the command line:
+Publish a system or version-upgrade notification through the official `@nestjs/cli`. PostgreSQL must
+be available, but the HTTP API does not need to be running. Nest CLI compiles and starts the dedicated
+notification entry file, which creates a minimal application context, resolves `NotificationsService`,
+writes the notification, and then closes the database connection.
 
 - Types: `SYSTEM`, `VERSION_UPGRADE`
 - Levels: `INFO`, `WARNING`, `CRITICAL`
@@ -106,8 +108,10 @@ pnpm notification:publish -- \
 ```
 
 Use `--content-file ./release-notes/0.2.0.md` instead of `--content` for longer details. Optional
-`--published-at` and `--expires-at` values use ISO 8601 timestamps. The command calls the running API
-so the persisted notification and the real-time SSE event are emitted together.
+`--published-at` and `--expires-at` values use ISO 8601 timestamps. Run
+`pnpm notification:publish -- --help` for the complete command reference. After persistence, the CLI
+publishes an event through Redis; the running API subscribes to that event and forwards it to online
+desktop clients over SSE. Periodic refresh remains as a fallback for temporarily disconnected clients.
 
 ## Project Structure
 

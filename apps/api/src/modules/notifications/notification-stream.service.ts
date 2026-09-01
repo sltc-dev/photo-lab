@@ -1,17 +1,17 @@
-import { Injectable, type MessageEvent } from '@nestjs/common';
+import { Injectable, Logger, type MessageEvent } from '@nestjs/common';
 import { interval, map, merge, Observable, Subject } from 'rxjs';
-
-export type NotificationPublishedEvent = {
-  notificationId: string;
-  publishedAt: string;
-};
+import type { NotificationPublishedEvent } from './notification-event';
 
 @Injectable()
 export class NotificationStreamService {
+  private readonly logger = new Logger(NotificationStreamService.name);
   //Subject 可以简单理解为一个事件广播器：SSE 连接订阅它；发布通知时向它写入事件；它将事件推送给所有当前订阅者。
   private readonly publishedEvents = new Subject<NotificationPublishedEvent>();
 
   publish(event: NotificationPublishedEvent): void {
+    this.logger.log(
+      `event=notification_sse_publish notificationId=${event.notificationId} hasSubscribers=${this.publishedEvents.observed}`,
+    );
     this.publishedEvents.next(event);
   }
   //返回一个持续产生事件的 RxJS 数据流，NestJS 会订阅这个数据流，并把每次产生的数据通过 SSE 推送给前端。

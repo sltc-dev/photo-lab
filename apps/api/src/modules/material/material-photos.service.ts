@@ -11,6 +11,11 @@ import {
 import { AppException } from '../../common/errors/app.exception';
 import { buildPublicUrl } from '../storage/storage-url.util';
 import { ProjectDto } from '../projects/dto/project.dto';
+import {
+  CreateMaterialCommentDto,
+  MATERIAL_STICKER_KEYS,
+  MaterialCommentDto,
+} from './dto/material-comment.dto';
 
 const materialProjectSelect = {
   id: true,
@@ -61,8 +66,9 @@ const materialPhotoSelect = (currentUserId: string) =>
       select: { userId: true },
       where: { userId: currentUserId },
     },
+    likeCount: true,
     _count: {
-      select: { likes: true },
+      select: { comments: true },
     },
   }) satisfies Prisma.PhotoSelect;
 
@@ -136,25 +142,47 @@ export class MaterialPhotosService {
     //先检查图片是否允许操作
     await this.ensureMaterialPhoto(photoId, currentUserId);
     //
-    await this.prisma.photoLike.upsert({
-      // 如果找不到，执行 create，新增点赞
-      create: { photoId, userId: currentUserId },
-      // 如果已经存在，执行 update: {}，保持原样
-      update: {},
-      //先通过 userId_photoId 查找点赞记录
-      where: { userId_photoId: { photoId, userId: currentUserId } },
-    });
+    return this.prisma.$transaction(async (tx) => {
+      const result = await tx.photoLike.createMany({
+        data: { photoId, userId: currentUserId },
+        skipDuplicates: true,
+      });
+      const photo =
+        result.count > 0
+          ? await tx.photo.update({
+              data: { likeCount: { increment: 1 } },
+              select: { likeCount: true },
+              where: { id: photoId },
+            })
+          : await tx.photo.findUniqueOrThrow({
+              select: { likeCount: true },
+              where: { id: photoId },
+            });
 
-    return this.getLikeState(photoId, currentUserId);
+      return { photoId, isLiked: true, likeCount: photo.likeCount };
+    });
   }
 
   async unlikePhoto(photoId: string, currentUserId: string): Promise<MaterialPhotoLikeStateDto> {
     await this.ensureMaterialPhoto(photoId, currentUserId);
-    await this.prisma.photoLike.deleteMany({
-      where: { photoId, userId: currentUserId },
-    });
+    return this.prisma.$transaction(async (tx) => {
+      const result = await tx.photoLike.deleteMany({
+        where: { photoId, userId: currentUserId },
+      });
+      const photo =
+        result.count > 0
+          ? await tx.photo.update({
+              data: { likeCount: { decrement: 1 } },
+              select: { likeCount: true },
+              where: { id: photoId },
+            })
+          : await tx.photo.findUniqueOrThrow({
+              select: { likeCount: true },
+              where: { id: photoId },
+            });
 
-    return this.getLikeState(photoId, currentUserId);
+      return { photoId, isLiked: false, likeCount: photo.likeCount };
+    });
   }
 
   async favoritePhoto(
@@ -162,13 +190,20 @@ export class MaterialPhotosService {
     currentUserId: string,
   ): Promise<MaterialPhotoFavoriteStateDto> {
     await this.ensureMaterialPhoto(photoId, currentUserId);
-    await this.prisma.photoFavorite.upsert({
-      create: { photoId, userId: currentUserId },
-      update: {},
-      where: { userId_photoId: { photoId, userId: currentUserId } },
-    });
+    return this.prisma.$transaction(async (tx) => {
+      const result = await tx.photoFavorite.createMany({
+        data: { photoId, userId: currentUserId },
+        skipDuplicates: true,
+      });
+      if (result.count > 0) {
+        await tx.photo.update({
+          data: { favoriteCount: { increment: 1 } },
+          where: { id: photoId },
+        });
+      }
 
-    return { photoId, isFavorited: true };
+      return { photoId, isFavorited: true };
+    });
   }
 
   async unfavoritePhoto(
@@ -176,11 +211,120 @@ export class MaterialPhotosService {
     currentUserId: string,
   ): Promise<MaterialPhotoFavoriteStateDto> {
     await this.ensureMaterialPhoto(photoId, currentUserId);
-    await this.prisma.photoFavorite.deleteMany({
-      where: { photoId, userId: currentUserId },
+    return this.prisma.$transaction(async (tx) => {
+      const result = await tx.photoFavorite.deleteMany({
+        where: { photoId, userId: currentUserId },
+      });
+      if (result.count > 0) {
+        await tx.photo.update({
+          data: { favoriteCount: { decrement: 1 } },
+          where: { id: photoId },
+        });
+      }
+
+      return { photoId, isFavorited: false };
+    });
+  }
+
+  async listComments(photoId: string, currentUserId: string): Promise<MaterialCommentDto[]> {
+    await this.ensureMaterialPhoto(photoId, currentUserId);
+    const comments = await this.prisma.photoComment.findMany({
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      select: {
+        id: true,
+        photoId: true,
+        userId: true,
+        content: true,
+        stickerKey: true,
+        createdAt: true,
+        user: { select: { id: true, username: true } },
+        photo: { select: { project: { select: { userId: true } } } },
+      },
+      where: { photoId },
     });
 
-    return { photoId, isFavorited: false };
+    const customIds = comments
+      .map((comment) => comment.stickerKey)
+      .filter((key): key is string =>
+        Boolean(key && !MATERIAL_STICKER_KEYS.includes(key as never)),
+      );
+    const stickers = await this.prisma.userSticker.findMany({ where: { id: { in: customIds } } });
+    const stickerUrls = new Map(stickers.map((item) => [item.id, buildPublicUrl(item.objectKey)]));
+    return comments.map((comment) => ({
+      id: comment.id,
+      photoId: comment.photoId,
+      author: { id: comment.user.id, userName: comment.user.username },
+      content: comment.content,
+      stickerKey: comment.stickerKey ?? null,
+      stickerUrl: comment.stickerKey ? (stickerUrls.get(comment.stickerKey) ?? null) : null,
+      canDelete: comment.userId === currentUserId || comment.photo.project.userId === currentUserId,
+      createdAt: comment.createdAt.toISOString(),
+    }));
+  }
+
+  async createComment(
+    photoId: string,
+    currentUserId: string,
+    dto: CreateMaterialCommentDto,
+  ): Promise<MaterialCommentDto> {
+    await this.ensureMaterialPhoto(photoId, currentUserId);
+    const hasContent = Boolean(dto.content);
+    const hasSticker = Boolean(dto.stickerKey);
+    if (hasContent === hasSticker) {
+      throw new AppException(HttpStatus.BAD_REQUEST, 'BAD_REQUEST', '请选择文字或表情包发送');
+    }
+    if (dto.stickerKey && !MATERIAL_STICKER_KEYS.includes(dto.stickerKey as never)) {
+      const customSticker = await this.prisma.userSticker.findFirst({
+        where: { deletedAt: null, id: dto.stickerKey, userId: currentUserId },
+      });
+      if (!customSticker)
+        throw new AppException(HttpStatus.BAD_REQUEST, 'BAD_REQUEST', '表情包不存在');
+    }
+    const comment = await this.prisma.photoComment.create({
+      data: {
+        content: dto.content ?? null,
+        photoId,
+        stickerKey: dto.stickerKey ?? null,
+        userId: currentUserId,
+      },
+      select: {
+        id: true,
+        photoId: true,
+        userId: true,
+        content: true,
+        stickerKey: true,
+        createdAt: true,
+        user: { select: { id: true, username: true } },
+      },
+    });
+
+    return {
+      id: comment.id,
+      photoId: comment.photoId,
+      author: { id: comment.user.id, userName: comment.user.username },
+      content: comment.content,
+      stickerKey: comment.stickerKey,
+      stickerUrl:
+        dto.stickerKey && !MATERIAL_STICKER_KEYS.includes(dto.stickerKey as never)
+          ? buildPublicUrl(`stickers/${currentUserId}/${dto.stickerKey}.webp`)
+          : null,
+      canDelete: true,
+      createdAt: comment.createdAt.toISOString(),
+    };
+  }
+
+  async deleteComment(commentId: string, currentUserId: string): Promise<void> {
+    const comment = await this.prisma.photoComment.findFirst({
+      select: { photo: { select: { project: { select: { userId: true } } } }, userId: true },
+      where: { id: commentId },
+    });
+    if (
+      !comment ||
+      (comment.userId !== currentUserId && comment.photo.project.userId !== currentUserId)
+    ) {
+      throw new AppException(HttpStatus.NOT_FOUND, 'COMMENT_NOT_FOUND', '评论不存在');
+    }
+    await this.prisma.photoComment.delete({ where: { id: commentId } });
   }
 
   private async listPhotos(
@@ -232,19 +376,6 @@ export class MaterialPhotosService {
     }
   }
 
-  private async getLikeState(
-    photoId: string,
-    currentUserId: string,
-  ): Promise<MaterialPhotoLikeStateDto> {
-    // 点赞或取消后查询最新状态和数量，第一次 count 判断当前用户是否点赞；第二次 count 统计图片的总点赞数；
-    const [isLiked, likeCount] = await Promise.all([
-      this.prisma.photoLike.count({ where: { photoId, userId: currentUserId } }),
-      this.prisma.photoLike.count({ where: { photoId } }),
-    ]);
-
-    return { photoId, isLiked: isLiked > 0, likeCount };
-  }
-
   private toProjectDto(project: MaterialProjectRecord): ProjectDto {
     return {
       id: project.id,
@@ -270,8 +401,9 @@ export class MaterialPhotosService {
       kind: photo.kind,
       status: photo.status,
       isLiked: photo.likes.length > 0,
-      likeCount: photo._count.likes,
+      likeCount: photo.likeCount,
       isFavorited: photo.favorites.length > 0,
+      commentCount: photo._count.comments,
       createdAt: photo.createdAt.toISOString(),
       updatedAt: photo.updatedAt.toISOString(),
     };

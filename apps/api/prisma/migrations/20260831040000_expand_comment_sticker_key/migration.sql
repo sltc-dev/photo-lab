@@ -1,0 +1,2 @@
+ALTER TABLE "PhotoComment"
+ALTER COLUMN "stickerKey" TYPE VARCHAR(64);

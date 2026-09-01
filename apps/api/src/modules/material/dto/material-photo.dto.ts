@@ -111,6 +111,9 @@ export class MaterialPhotoDto {
   @ApiProperty({ description: '当前用户是否已收藏', type: Boolean })
   isFavorited!: boolean;
 
+  @ApiProperty({ description: '图片收到的评论总数', type: Number })
+  commentCount!: number;
+
   @ApiProperty({
     format: 'date-time',
     type: String,
