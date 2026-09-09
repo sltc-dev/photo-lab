@@ -51,8 +51,13 @@ export class MaterialStickersService {
   }
 
   async remove(userId: string, stickerId: string): Promise<void> {
-    const sticker = await this.prisma.userSticker.findFirst({ where: { deletedAt: null, id: stickerId, userId } });
+    const sticker = await this.prisma.userSticker.findFirst({
+      where: { deletedAt: null, id: stickerId, userId },
+    });
     if (!sticker) return;
-    await this.prisma.userSticker.update({ data: { deletedAt: new Date() }, where: { id: sticker.id } });
+    await this.prisma.userSticker.update({
+      data: { deletedAt: new Date() },
+      where: { id: sticker.id },
+    });
   }
 }
