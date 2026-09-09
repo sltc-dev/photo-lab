@@ -296,6 +296,19 @@ export type NotificationReadDto = {
     readAt: string;
 };
 
+export type FeedbackCategory = 'BUG' | 'FEATURE' | 'OTHER';
+
+export type CreateFeedbackDto = {
+    category: FeedbackCategory;
+    message: string;
+};
+
+export type FeedbackDto = {
+    category: FeedbackCategory;
+    createdAt: string;
+    referenceId: string;
+};
+
 export type RegisterData = {
     body: RegisterDto;
     path?: never;
@@ -1063,3 +1076,23 @@ export type MarkNotificationReadResponses = {
 };
 
 export type MarkNotificationReadResponse = MarkNotificationReadResponses[keyof MarkNotificationReadResponses];
+
+export type CreateData = {
+    body: CreateFeedbackDto;
+    path?: never;
+    query?: never;
+    url: '/feedback';
+};
+
+export type CreateErrors = {
+    400: ErrorResponseDto;
+    401: ErrorResponseDto;
+};
+
+export type CreateError = CreateErrors[keyof CreateErrors];
+
+export type CreateResponses = {
+    201: FeedbackDto;
+};
+
+export type CreateResponse = CreateResponses[keyof CreateResponses];
