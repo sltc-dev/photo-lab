@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { AppException } from '../../common/errors/app.exception';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -10,7 +10,7 @@ import type {
   NotificationReadDto,
 } from './dto/notification.dto';
 import type { PublishNotificationDto } from './dto/publish-notification.dto';
-import { NotificationStreamService } from './notification-stream.service';
+import { NotificationEventPublisher } from './notification-event-publisher.service';
 
 const notificationSelect = {
   id: true,
@@ -42,8 +42,10 @@ type NotificationListRecord = Prisma.NotificationGetPayload<{
 @Injectable()
 export class NotificationsService {
   constructor(
+    @Inject(PrismaService)
     private readonly prisma: PrismaService,
-    private readonly streamService: NotificationStreamService,
+    @Inject(NotificationEventPublisher)
+    private readonly eventPublisher: NotificationEventPublisher,
   ) {}
 
   async listNotifications(
@@ -51,7 +53,7 @@ export class NotificationsService {
     query: ListNotificationsQueryDto,
   ): Promise<NotificationPageDto> {
     const now = new Date();
-    const visibilityWhere = this.getVisibilityWhere(now);
+    const visibilityWhere = this.getVisibilityWhere(now, userId);
     const readWhere =
       query.isRead === undefined
         ? {}
@@ -91,7 +93,7 @@ export class NotificationsService {
     const notification = await this.prisma.notification.findFirst({
       select: notificationListSelect(userId),
       where: {
-        AND: [{ id: notificationId }, this.getVisibilityWhere(new Date())],
+        AND: [{ id: notificationId }, this.getVisibilityWhere(new Date(), userId)],
       },
     });
 
@@ -107,7 +109,7 @@ export class NotificationsService {
   }
 
   async markNotificationRead(userId: string, notificationId: string): Promise<NotificationReadDto> {
-    await this.ensureVisibleNotification(notificationId);
+    await this.ensureVisibleNotification(userId, notificationId);
     const receipt = await this.prisma.notificationReceipt.upsert({
       create: { notificationId, userId },
       select: { readAt: true },
@@ -150,7 +152,7 @@ export class NotificationsService {
       select: notificationSelect,
     });
 
-    this.streamService.publish({
+    await this.eventPublisher.publish({
       notificationId: notification.id,
       publishedAt: notification.publishedAt.toISOString(),
     });
@@ -158,11 +160,11 @@ export class NotificationsService {
     return notification;
   }
 
-  private async ensureVisibleNotification(notificationId: string): Promise<void> {
+  private async ensureVisibleNotification(userId: string, notificationId: string): Promise<void> {
     const notification = await this.prisma.notification.findFirst({
       select: { id: true },
       where: {
-        AND: [{ id: notificationId }, this.getVisibilityWhere(new Date())],
+        AND: [{ id: notificationId }, this.getVisibilityWhere(new Date(), userId)],
       },
     });
 
@@ -171,10 +173,13 @@ export class NotificationsService {
     }
   }
 
-  private getVisibilityWhere(now: Date): Prisma.NotificationWhereInput {
+  private getVisibilityWhere(now: Date, userId: string): Prisma.NotificationWhereInput {
     return {
-      publishedAt: { lte: now },
-      OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+      AND: [
+        { publishedAt: { lte: now } },
+        { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
+        { OR: [{ recipientUserId: null }, { recipientUserId: userId }] },
+      ],
     };
   }
 

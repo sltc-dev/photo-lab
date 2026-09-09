@@ -1,0 +1,1 @@
+ALTER TABLE "UserSticker" ADD COLUMN "deletedAt" TIMESTAMP(3);

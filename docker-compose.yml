@@ -51,8 +51,7 @@ services:
       context: .
       dockerfile: apps/api/Dockerfile
     env_file:
-      - path: .env
-        required: false
+      - .env
     environment:
       ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-15m}
       DATABASE_URL: postgresql://photo_lab:photo_lab@postgres:5432/photo_lab?schema=public
@@ -62,7 +61,6 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-photo_lab_minio}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-photo_lab_minio_secret}
       NODE_ENV: development
-      NOTIFICATION_PUBLISH_SECRET: ${NOTIFICATION_PUBLISH_SECRET:-dev-notification-publish-secret-change-me}
       PHOTO_STORAGE_ROOT: /public/photo-lab
       PHOTO_UPLOAD_MAX_BYTES: ${PHOTO_UPLOAD_MAX_BYTES:-26214400}
       PORT: ${PORT:-3000}

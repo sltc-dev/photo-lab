@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "openapi": "tsx scripts/generate-openapi.ts",
     "photos:backfill-dimensions": "tsx scripts/backfill-photo-dimensions.ts",
-    "notifications:publish": "tsx scripts/publish-notification.ts",
+    "notifications:publish": "nest start --entryFile scripts/publish-notification",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run --config vitest.config.ts",
     "prisma": "prisma"
@@ -28,6 +28,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "helmet": "^8.2.0",
+    "redis": "^6.2.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "sharp": "^0.34.5",

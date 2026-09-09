@@ -13,12 +13,22 @@ import {
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { useMutation } from '@tanstack/react-query';
-import { Image, Images, LibraryBig, LogOut, Star, User, type LucideIcon } from 'lucide-react';
+import {
+  Image,
+  Images,
+  LibraryBig,
+  LogOut,
+  MessageCircleQuestion,
+  Star,
+  User,
+  type LucideIcon,
+} from 'lucide-react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { getApiErrorMessage } from '../../api/http';
 import { terminateSession } from '../../api/session';
 import { useAuthStore } from '../../stores/auth.store';
 import { NotificationCenter } from '../notifications/NotificationCenter';
+import { ContactAdminModal } from '../feedback/ContactAdminModal';
 import styles from '../../styles/components/layout/AppLayout.module.css';
 
 export function AppLayout() {
@@ -26,6 +36,7 @@ export function AppLayout() {
   const location = useLocation();
   const [isNavigationOpen, { close: closeNavigation, toggle: toggleNavigation }] =
     useDisclosure(false);
+  const [isContactOpen, { close: closeContact, open: openContact }] = useDisclosure(false);
   const logoutMutation = useMutation({
     mutationFn: terminateSession,
     onError: async (error) => {
@@ -115,6 +126,16 @@ export function AppLayout() {
           ))}
         </Stack>
 
+        <Button
+          className={styles.contactButton}
+          justify="flex-start"
+          leftSection={<MessageCircleQuestion aria-hidden size={18} />}
+          onClick={openContact}
+          variant="subtle"
+        >
+          联系系统管理员
+        </Button>
+
         <Box className={styles.navHint}>
           <Images aria-hidden size={17} />
           <Text size="xs">按项目整理照片，保持素材清晰有序。</Text>
@@ -124,6 +145,8 @@ export function AppLayout() {
       <AppShell.Main className={styles.main}>
         <Outlet />
       </AppShell.Main>
+
+      <ContactAdminModal onClose={closeContact} opened={isContactOpen} />
     </AppShell>
   );
 }

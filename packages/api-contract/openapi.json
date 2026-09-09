@@ -987,6 +987,106 @@
         ]
       }
     },
+    "/material/stickers": {
+      "get": {
+        "operationId": "listStickers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MaterialStickerDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "material"
+        ]
+      },
+      "post": {
+        "operationId": "uploadSticker",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialStickerDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "material"
+        ]
+      }
+    },
+    "/material/stickers/{stickerId}": {
+      "delete": {
+        "operationId": "deleteSticker",
+        "parameters": [
+          {
+            "name": "stickerId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "material"
+        ]
+      }
+    },
     "/material/users": {
       "get": {
         "operationId": "listUsers",
@@ -1454,6 +1554,182 @@
         ]
       }
     },
+    "/material/photos/{photoId}/comments": {
+      "get": {
+        "operationId": "listMaterialPhotoComments",
+        "parameters": [
+          {
+            "name": "photoId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MaterialCommentDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "material"
+        ]
+      },
+      "post": {
+        "operationId": "createMaterialPhotoComment",
+        "parameters": [
+          {
+            "name": "photoId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMaterialCommentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialCommentDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "material"
+        ]
+      }
+    },
+    "/material/comments/{commentId}": {
+      "delete": {
+        "operationId": "deleteMaterialPhotoComment",
+        "parameters": [
+          {
+            "name": "commentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "material"
+        ]
+      }
+    },
     "/notifications": {
       "get": {
         "operationId": "listNotifications",
@@ -1637,6 +1913,62 @@
           "notifications"
         ]
       }
+    },
+    "/feedback": {
+      "post": {
+        "operationId": "create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFeedbackDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "feedback"
+        ]
+      }
     }
   },
   "info": {
@@ -1737,11 +2069,11 @@
           "AUTH_REFRESH_TOKEN_INVALID",
           "AUTH_TOKEN_EXPIRED",
           "BAD_REQUEST",
+          "COMMENT_NOT_FOUND",
           "HTTP_ERROR",
           "INTERNAL_SERVER_ERROR",
           "NOT_FOUND",
           "NOTIFICATION_NOT_FOUND",
-          "NOTIFICATION_PUBLISH_FORBIDDEN",
           "PHOTO_FILE_REQUIRED",
           "PHOTO_FILE_TOO_LARGE",
           "PHOTO_NOT_FOUND",
@@ -2048,6 +2380,26 @@
           "editState"
         ]
       },
+      "MaterialStickerDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "createdAt"
+        ]
+      },
       "MaterialUserDto": {
         "type": "object",
         "properties": {
@@ -2137,6 +2489,10 @@
             "type": "boolean",
             "description": "当前用户是否已收藏"
           },
+          "commentCount": {
+            "type": "number",
+            "description": "图片收到的评论总数"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -2161,6 +2517,7 @@
           "isLiked",
           "likeCount",
           "isFavorited",
+          "commentCount",
           "createdAt",
           "updatedAt"
         ]
@@ -2218,6 +2575,79 @@
           "photoId",
           "isFavorited"
         ]
+      },
+      "MaterialCommentAuthorDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "userName"
+        ]
+      },
+      "MaterialCommentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "photoId": {
+            "type": "string"
+          },
+          "author": {
+            "$ref": "#/components/schemas/MaterialCommentAuthorDto"
+          },
+          "content": {
+            "type": "string",
+            "description": "评论内容，可能包含 Unicode 表情"
+          },
+          "stickerKey": {
+            "type": "string",
+            "nullable": true
+          },
+          "stickerUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "canDelete": {
+            "type": "boolean",
+            "description": "当前用户是否可删除此评论"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "photoId",
+          "author",
+          "content",
+          "stickerKey",
+          "stickerUrl",
+          "canDelete",
+          "createdAt"
+        ]
+      },
+      "CreateMaterialCommentDto": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "评论内容，支持 Unicode 表情",
+            "maxLength": 500
+          },
+          "stickerKey": {
+            "type": "string",
+            "description": "内置表情 key 或自定义表情 ID"
+          }
+        }
       },
       "NotificationType": {
         "type": "string",
@@ -2382,6 +2812,60 @@
           "id",
           "isRead",
           "readAt"
+        ]
+      },
+      "FeedbackCategory": {
+        "type": "string",
+        "enum": [
+          "BUG",
+          "FEATURE",
+          "OTHER"
+        ]
+      },
+      "CreateFeedbackDto": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FeedbackCategory"
+              }
+            ]
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1
+          }
+        },
+        "required": [
+          "category",
+          "message"
+        ]
+      },
+      "FeedbackDto": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FeedbackCategory"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "referenceId": {
+            "type": "string",
+            "example": "PL-A1B2C3D4E5F6"
+          }
+        },
+        "required": [
+          "category",
+          "createdAt",
+          "referenceId"
         ]
       }
     }

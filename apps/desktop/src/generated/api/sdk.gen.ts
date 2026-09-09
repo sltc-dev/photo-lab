@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateProjectData, CreateProjectErrors, CreateProjectResponses, FavoriteMaterialPhotoData, FavoriteMaterialPhotoErrors, FavoriteMaterialPhotoResponses, GetEditedPhotoStateData, GetEditedPhotoStateErrors, GetEditedPhotoStateResponses, GetNotificationData, GetNotificationErrors, GetNotificationResponses, GetOriginalPhotoData, GetOriginalPhotoErrors, GetOriginalPhotoResponses, GetProjectData, GetProjectErrors, GetProjectResponses, GetThumbnailPhotoData, GetThumbnailPhotoErrors, GetThumbnailPhotoResponses, HealthData, HealthResponses, LikeMaterialPhotoData, LikeMaterialPhotoErrors, LikeMaterialPhotoResponses, ListFavoritePhotosData, ListFavoritePhotosErrors, ListFavoritePhotosResponses, ListNotificationsData, ListNotificationsErrors, ListNotificationsResponses, ListPhotosData, ListPhotosErrors, ListPhotosResponses, ListProjectPhotosData, ListProjectPhotosErrors, ListProjectPhotosResponses, ListProjectsData, ListProjectsErrors, ListProjectsResponses, ListUserProjectsData, ListUserProjectsErrors, ListUserProjectsResponses, ListUsersData, ListUsersErrors, ListUsersResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, MarkNotificationReadData, MarkNotificationReadErrors, MarkNotificationReadResponses, MeData, MeErrors, MeResponses, RefreshData, RefreshErrors, RefreshResponses, RegisterData, RegisterErrors, RegisterResponses, SaveEditedPhotoData, SaveEditedPhotoErrors, SaveEditedPhotoResponses, UnfavoriteMaterialPhotoData, UnfavoriteMaterialPhotoErrors, UnfavoriteMaterialPhotoResponses, UnlikeMaterialPhotoData, UnlikeMaterialPhotoErrors, UnlikeMaterialPhotoResponses, UploadPhotoData, UploadPhotoErrors, UploadPhotoResponses } from './types.gen';
+import type { CreateData, CreateErrors, CreateMaterialPhotoCommentData, CreateMaterialPhotoCommentErrors, CreateMaterialPhotoCommentResponses, CreateProjectData, CreateProjectErrors, CreateProjectResponses, CreateResponses, DeleteMaterialPhotoCommentData, DeleteMaterialPhotoCommentErrors, DeleteStickerData, DeleteStickerResponses, FavoriteMaterialPhotoData, FavoriteMaterialPhotoErrors, FavoriteMaterialPhotoResponses, GetEditedPhotoStateData, GetEditedPhotoStateErrors, GetEditedPhotoStateResponses, GetNotificationData, GetNotificationErrors, GetNotificationResponses, GetOriginalPhotoData, GetOriginalPhotoErrors, GetOriginalPhotoResponses, GetProjectData, GetProjectErrors, GetProjectResponses, GetThumbnailPhotoData, GetThumbnailPhotoErrors, GetThumbnailPhotoResponses, HealthData, HealthResponses, LikeMaterialPhotoData, LikeMaterialPhotoErrors, LikeMaterialPhotoResponses, ListFavoritePhotosData, ListFavoritePhotosErrors, ListFavoritePhotosResponses, ListMaterialPhotoCommentsData, ListMaterialPhotoCommentsErrors, ListMaterialPhotoCommentsResponses, ListNotificationsData, ListNotificationsErrors, ListNotificationsResponses, ListPhotosData, ListPhotosErrors, ListPhotosResponses, ListProjectPhotosData, ListProjectPhotosErrors, ListProjectPhotosResponses, ListProjectsData, ListProjectsErrors, ListProjectsResponses, ListStickersData, ListStickersResponses, ListUserProjectsData, ListUserProjectsErrors, ListUserProjectsResponses, ListUsersData, ListUsersErrors, ListUsersResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, MarkNotificationReadData, MarkNotificationReadErrors, MarkNotificationReadResponses, MeData, MeErrors, MeResponses, RefreshData, RefreshErrors, RefreshResponses, RegisterData, RegisterErrors, RegisterResponses, SaveEditedPhotoData, SaveEditedPhotoErrors, SaveEditedPhotoResponses, UnfavoriteMaterialPhotoData, UnfavoriteMaterialPhotoErrors, UnfavoriteMaterialPhotoResponses, UnlikeMaterialPhotoData, UnlikeMaterialPhotoErrors, UnlikeMaterialPhotoResponses, UploadPhotoData, UploadPhotoErrors, UploadPhotoResponses, UploadStickerData, UploadStickerResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -130,6 +130,29 @@ export const saveEditedPhoto = <ThrowOnError extends boolean = false>(options: O
     }
 });
 
+export const listStickers = <ThrowOnError extends boolean = false>(options?: Options<ListStickersData, ThrowOnError>): RequestResult<ListStickersResponses, unknown, ThrowOnError> => (options?.client ?? client).get<ListStickersResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/material/stickers',
+    ...options
+});
+
+export const uploadSticker = <ThrowOnError extends boolean = false>(options: Options<UploadStickerData, ThrowOnError>): RequestResult<UploadStickerResponses, unknown, ThrowOnError> => (options.client ?? client).post<UploadStickerResponses, unknown, ThrowOnError>({
+    ...formDataBodySerializer,
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/material/stickers',
+    ...options,
+    headers: {
+        'Content-Type': null,
+        ...options.headers
+    }
+});
+
+export const deleteSticker = <ThrowOnError extends boolean = false>(options: Options<DeleteStickerData, ThrowOnError>): RequestResult<DeleteStickerResponses, unknown, ThrowOnError> => (options.client ?? client).delete<DeleteStickerResponses, unknown, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/material/stickers/{stickerId}',
+    ...options
+});
+
 export const listUsers = <ThrowOnError extends boolean = false>(options?: Options<ListUsersData, ThrowOnError>): RequestResult<ListUsersResponses, ListUsersErrors, ThrowOnError> => (options?.client ?? client).get<ListUsersResponses, ListUsersErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/material/users',
@@ -178,6 +201,28 @@ export const favoriteMaterialPhoto = <ThrowOnError extends boolean = false>(opti
     ...options
 });
 
+export const listMaterialPhotoComments = <ThrowOnError extends boolean = false>(options: Options<ListMaterialPhotoCommentsData, ThrowOnError>): RequestResult<ListMaterialPhotoCommentsResponses, ListMaterialPhotoCommentsErrors, ThrowOnError> => (options.client ?? client).get<ListMaterialPhotoCommentsResponses, ListMaterialPhotoCommentsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/material/photos/{photoId}/comments',
+    ...options
+});
+
+export const createMaterialPhotoComment = <ThrowOnError extends boolean = false>(options: Options<CreateMaterialPhotoCommentData, ThrowOnError>): RequestResult<CreateMaterialPhotoCommentResponses, CreateMaterialPhotoCommentErrors, ThrowOnError> => (options.client ?? client).post<CreateMaterialPhotoCommentResponses, CreateMaterialPhotoCommentErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/material/photos/{photoId}/comments',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const deleteMaterialPhotoComment = <ThrowOnError extends boolean = false>(options: Options<DeleteMaterialPhotoCommentData, ThrowOnError>): RequestResult<unknown, DeleteMaterialPhotoCommentErrors, ThrowOnError> => (options.client ?? client).delete<unknown, DeleteMaterialPhotoCommentErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/material/comments/{commentId}',
+    ...options
+});
+
 export const listNotifications = <ThrowOnError extends boolean = false>(options?: Options<ListNotificationsData, ThrowOnError>): RequestResult<ListNotificationsResponses, ListNotificationsErrors, ThrowOnError> => (options?.client ?? client).get<ListNotificationsResponses, ListNotificationsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/notifications',
@@ -194,4 +239,14 @@ export const markNotificationRead = <ThrowOnError extends boolean = false>(optio
     security: [{ scheme: 'bearer', type: 'http' }],
     url: '/notifications/{notificationId}/read',
     ...options
+});
+
+export const create = <ThrowOnError extends boolean = false>(options: Options<CreateData, ThrowOnError>): RequestResult<CreateResponses, CreateErrors, ThrowOnError> => (options.client ?? client).post<CreateResponses, CreateErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/feedback',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
 });

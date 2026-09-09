@@ -132,6 +132,16 @@
   padding-left: 2px;
 }
 
+.commentCount {
+  align-items: center;
+  color: var(--pl-muted);
+  display: flex;
+  font-size: 9px;
+  font-weight: 600;
+  gap: 2px;
+  padding: 0 6px 0 2px;
+}
+
 .overlayReactionBar .reactionButton:hover:not(:disabled),
 .overlayReactionBar .likedReaction,
 .overlayReactionBar .favoritedReaction {
@@ -280,6 +290,219 @@
   border-radius: 8px;
   margin: 20px 0 0;
   overflow: hidden;
+}
+
+.commentsSection {
+  border-top: 1px solid var(--pl-line);
+  margin-top: 20px;
+  padding-top: 18px;
+}
+
+.commentsTitle {
+  align-items: center;
+  display: flex;
+  gap: 7px;
+  margin-bottom: 12px;
+}
+
+.commentsTitle > span {
+  color: var(--pl-muted);
+  font-size: 12px;
+}
+
+.commentComposer {
+  background: var(--pl-bg-subtle);
+  border: 1px solid var(--pl-line);
+  border-radius: 8px;
+  margin-bottom: 14px;
+  padding: 9px;
+}
+
+.emojiRow {
+  align-items: center;
+  display: flex;
+  gap: 2px;
+  margin-top: 7px;
+}
+
+.emojiRow > button:not(:last-child) {
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  height: 27px;
+  padding: 0;
+  width: 27px;
+}
+
+.emojiRow > button:not(:last-child):hover {
+  background: var(--pl-bg-raised);
+}
+
+.emojiRow > button:last-child {
+  margin-left: auto;
+}
+
+.commentList {
+  display: grid;
+  gap: 8px;
+}
+
+.stickerPicker {
+  border-bottom: 1px solid var(--pl-line);
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+}
+
+.stickerGrid {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(6, 1fr);
+  margin-top: 7px;
+}
+
+.stickerGrid button {
+  aspect-ratio: 1;
+  background: var(--pl-bg-subtle);
+  border: 1px solid var(--pl-line);
+  border-radius: 8px;
+  cursor: pointer;
+  overflow: hidden;
+  padding: 3px;
+}
+
+.stickerGrid button:hover:not(:disabled) {
+  border-color: var(--pl-accent);
+  transform: translateY(-1px);
+}
+
+.stickerGrid img {
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.stickerGrid .customStickerButton {
+  aspect-ratio: 1;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0;
+  width: 100%;
+}
+
+.stickerGrid .builtInStickerButton {
+  aspect-ratio: 1;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+  width: 100%;
+}
+
+.customStickerButton img {
+  border-radius: 7px;
+}
+
+.stickerItem {
+  aspect-ratio: 1;
+  min-width: 0;
+  position: relative;
+  width: 100%;
+}
+
+.stickerGrid .deleteStickerButton {
+  align-items: center;
+  background: rgb(23 32 51 / 78%);
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  height: 24px;
+  justify-content: center;
+  opacity: 0;
+  padding: 0;
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  transition: opacity 140ms ease;
+  width: 24px;
+}
+
+.stickerItem:hover .deleteStickerButton,
+.stickerItem:focus-within .deleteStickerButton {
+  opacity: 1;
+}
+
+.addStickerButton {
+  color: var(--pl-muted);
+  font-size: 25px;
+  font-weight: 300;
+}
+
+.sticker {
+  background-repeat: no-repeat;
+  background-size: 300% 200%;
+  border-radius: 6px;
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.sentSticker {
+  height: 112px;
+  margin-top: 7px;
+  width: 112px;
+}
+
+.customSentSticker {
+  border-radius: 10px;
+  height: 112px;
+  margin-top: 7px;
+  object-fit: cover;
+  width: 112px;
+}
+
+.commentItem {
+  border-bottom: 1px solid var(--pl-line);
+  padding: 4px 1px 11px;
+}
+
+.commentMeta {
+  align-items: center;
+  display: flex;
+  gap: 7px;
+}
+
+.commentMeta strong {
+  font-size: 12px;
+}
+
+.commentMeta time {
+  color: var(--pl-faint);
+  font-size: 10px;
+}
+
+.commentMeta button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--pl-faint);
+  cursor: pointer;
+  display: flex;
+  margin-left: auto;
+  padding: 3px;
+}
+
+.commentMeta button:hover {
+  color: #c92a2a;
+}
+
+.commentContent {
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .metadataRow {

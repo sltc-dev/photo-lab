@@ -24,7 +24,7 @@ export type AuthSessionDto = {
     user: CurrentUserDto;
 };
 
-export type ErrorCode = 'AUTH_INVALID_CREDENTIALS' | 'AUTH_REFRESH_TOKEN_INVALID' | 'AUTH_TOKEN_EXPIRED' | 'BAD_REQUEST' | 'HTTP_ERROR' | 'INTERNAL_SERVER_ERROR' | 'NOT_FOUND' | 'NOTIFICATION_NOT_FOUND' | 'NOTIFICATION_PUBLISH_FORBIDDEN' | 'PHOTO_FILE_REQUIRED' | 'PHOTO_FILE_TOO_LARGE' | 'PHOTO_NOT_FOUND' | 'PHOTO_STORAGE_FAILED' | 'PHOTO_UNSUPPORTED_TYPE' | 'PROJECT_NOT_FOUND' | 'RATE_LIMIT_EXCEEDED' | 'USER_EMAIL_ALREADY_EXISTS' | 'USER_NOT_FOUND' | 'VALIDATION_FAILED';
+export type ErrorCode = 'AUTH_INVALID_CREDENTIALS' | 'AUTH_REFRESH_TOKEN_INVALID' | 'AUTH_TOKEN_EXPIRED' | 'BAD_REQUEST' | 'COMMENT_NOT_FOUND' | 'HTTP_ERROR' | 'INTERNAL_SERVER_ERROR' | 'NOT_FOUND' | 'NOTIFICATION_NOT_FOUND' | 'PHOTO_FILE_REQUIRED' | 'PHOTO_FILE_TOO_LARGE' | 'PHOTO_NOT_FOUND' | 'PHOTO_STORAGE_FAILED' | 'PHOTO_UNSUPPORTED_TYPE' | 'PROJECT_NOT_FOUND' | 'RATE_LIMIT_EXCEEDED' | 'USER_EMAIL_ALREADY_EXISTS' | 'USER_NOT_FOUND' | 'VALIDATION_FAILED';
 
 export type ErrorBodyDto = {
     code: ErrorCode;
@@ -130,6 +130,12 @@ export type PhotoEditStateDto = {
     } | null;
 };
 
+export type MaterialStickerDto = {
+    id: string;
+    url: string;
+    createdAt: string;
+};
+
 export type MaterialUserDto = {
     /**
      * 用户id
@@ -184,6 +190,10 @@ export type MaterialPhotoDto = {
      * 当前用户是否已收藏
      */
     isFavorited: boolean;
+    /**
+     * 图片收到的评论总数
+     */
+    commentCount: number;
     createdAt: string;
     updatedAt: string;
 };
@@ -205,6 +215,39 @@ export type MaterialPhotoLikeStateDto = {
 export type MaterialPhotoFavoriteStateDto = {
     photoId: string;
     isFavorited: boolean;
+};
+
+export type MaterialCommentAuthorDto = {
+    id: string;
+    userName: string;
+};
+
+export type MaterialCommentDto = {
+    id: string;
+    photoId: string;
+    author: MaterialCommentAuthorDto;
+    /**
+     * 评论内容，可能包含 Unicode 表情
+     */
+    content: string;
+    stickerKey: string | null;
+    stickerUrl: string | null;
+    /**
+     * 当前用户是否可删除此评论
+     */
+    canDelete: boolean;
+    createdAt: string;
+};
+
+export type CreateMaterialCommentDto = {
+    /**
+     * 评论内容，支持 Unicode 表情
+     */
+    content?: string;
+    /**
+     * 内置表情 key 或自定义表情 ID
+     */
+    stickerKey?: string;
 };
 
 export type NotificationType = 'SYSTEM' | 'VERSION_UPGRADE';
@@ -251,6 +294,19 @@ export type NotificationReadDto = {
     id: string;
     isRead: boolean;
     readAt: string;
+};
+
+export type FeedbackCategory = 'BUG' | 'FEATURE' | 'OTHER';
+
+export type CreateFeedbackDto = {
+    category: FeedbackCategory;
+    message: string;
+};
+
+export type FeedbackDto = {
+    category: FeedbackCategory;
+    createdAt: string;
+    referenceId: string;
 };
 
 export type RegisterData = {
@@ -644,6 +700,49 @@ export type SaveEditedPhotoResponses = {
 
 export type SaveEditedPhotoResponse = SaveEditedPhotoResponses[keyof SaveEditedPhotoResponses];
 
+export type ListStickersData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/material/stickers';
+};
+
+export type ListStickersResponses = {
+    200: Array<MaterialStickerDto>;
+};
+
+export type ListStickersResponse = ListStickersResponses[keyof ListStickersResponses];
+
+export type UploadStickerData = {
+    body: {
+        file: Blob | File;
+    };
+    path?: never;
+    query?: never;
+    url: '/material/stickers';
+};
+
+export type UploadStickerResponses = {
+    200: MaterialStickerDto;
+};
+
+export type UploadStickerResponse = UploadStickerResponses[keyof UploadStickerResponses];
+
+export type DeleteStickerData = {
+    body?: never;
+    path: {
+        stickerId: string;
+    };
+    query?: never;
+    url: '/material/stickers/{stickerId}';
+};
+
+export type DeleteStickerResponses = {
+    204: void;
+};
+
+export type DeleteStickerResponse = DeleteStickerResponses[keyof DeleteStickerResponses];
+
 export type ListUsersData = {
     body?: never;
     path?: never;
@@ -849,6 +948,67 @@ export type FavoriteMaterialPhotoResponses = {
 
 export type FavoriteMaterialPhotoResponse = FavoriteMaterialPhotoResponses[keyof FavoriteMaterialPhotoResponses];
 
+export type ListMaterialPhotoCommentsData = {
+    body?: never;
+    path: {
+        photoId: string;
+    };
+    query?: never;
+    url: '/material/photos/{photoId}/comments';
+};
+
+export type ListMaterialPhotoCommentsErrors = {
+    401: ErrorResponseDto;
+    404: ErrorResponseDto;
+};
+
+export type ListMaterialPhotoCommentsError = ListMaterialPhotoCommentsErrors[keyof ListMaterialPhotoCommentsErrors];
+
+export type ListMaterialPhotoCommentsResponses = {
+    200: Array<MaterialCommentDto>;
+};
+
+export type ListMaterialPhotoCommentsResponse = ListMaterialPhotoCommentsResponses[keyof ListMaterialPhotoCommentsResponses];
+
+export type CreateMaterialPhotoCommentData = {
+    body: CreateMaterialCommentDto;
+    path: {
+        photoId: string;
+    };
+    query?: never;
+    url: '/material/photos/{photoId}/comments';
+};
+
+export type CreateMaterialPhotoCommentErrors = {
+    400: ErrorResponseDto;
+    401: ErrorResponseDto;
+    404: ErrorResponseDto;
+};
+
+export type CreateMaterialPhotoCommentError = CreateMaterialPhotoCommentErrors[keyof CreateMaterialPhotoCommentErrors];
+
+export type CreateMaterialPhotoCommentResponses = {
+    200: MaterialCommentDto;
+};
+
+export type CreateMaterialPhotoCommentResponse = CreateMaterialPhotoCommentResponses[keyof CreateMaterialPhotoCommentResponses];
+
+export type DeleteMaterialPhotoCommentData = {
+    body?: never;
+    path: {
+        commentId: string;
+    };
+    query?: never;
+    url: '/material/comments/{commentId}';
+};
+
+export type DeleteMaterialPhotoCommentErrors = {
+    401: ErrorResponseDto;
+    404: ErrorResponseDto;
+};
+
+export type DeleteMaterialPhotoCommentError = DeleteMaterialPhotoCommentErrors[keyof DeleteMaterialPhotoCommentErrors];
+
 export type ListNotificationsData = {
     body?: never;
     path?: never;
@@ -916,3 +1076,23 @@ export type MarkNotificationReadResponses = {
 };
 
 export type MarkNotificationReadResponse = MarkNotificationReadResponses[keyof MarkNotificationReadResponses];
+
+export type CreateData = {
+    body: CreateFeedbackDto;
+    path?: never;
+    query?: never;
+    url: '/feedback';
+};
+
+export type CreateErrors = {
+    400: ErrorResponseDto;
+    401: ErrorResponseDto;
+};
+
+export type CreateError = CreateErrors[keyof CreateErrors];
+
+export type CreateResponses = {
+    201: FeedbackDto;
+};
+
+export type CreateResponse = CreateResponses[keyof CreateResponses];

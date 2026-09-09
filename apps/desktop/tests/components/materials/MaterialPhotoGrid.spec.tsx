@@ -6,6 +6,7 @@ import type { MaterialPhoto, MaterialPhotoKind } from '../../../src/api/material
 import { MaterialPhotoGrid } from '../../../src/components/materials/MaterialPhotoGrid';
 
 const apiMocks = vi.hoisted(() => ({
+  getMaterialPhotoComments: vi.fn(),
   getMaterialProjectPhotosPage: vi.fn(),
   setMaterialPhotoFavorite: vi.fn(),
   setMaterialPhotoLike: vi.fn(),
@@ -16,6 +17,7 @@ vi.mock('../../../src/api/materials', async (importOriginal) => {
 
   return {
     ...original,
+    getMaterialPhotoComments: apiMocks.getMaterialPhotoComments,
     getMaterialProjectPhotosPage: apiMocks.getMaterialProjectPhotosPage,
     setMaterialPhotoFavorite: apiMocks.setMaterialPhotoFavorite,
     setMaterialPhotoLike: apiMocks.setMaterialPhotoLike,
@@ -23,6 +25,7 @@ vi.mock('../../../src/api/materials', async (importOriginal) => {
 });
 
 const editedPhoto: MaterialPhoto = {
+  commentCount: 0,
   createdAt: '2026-08-17T08:00:00.000Z',
   fileName: 'holiday.edited.webp',
   height: 800,
@@ -61,6 +64,8 @@ function renderGrid(kind: MaterialPhotoKind) {
 
 describe('MaterialPhotoGrid', () => {
   beforeEach(() => {
+    apiMocks.getMaterialPhotoComments.mockReset();
+    apiMocks.getMaterialPhotoComments.mockResolvedValue([]);
     apiMocks.getMaterialProjectPhotosPage.mockReset();
     apiMocks.setMaterialPhotoFavorite.mockReset();
     apiMocks.setMaterialPhotoLike.mockReset();

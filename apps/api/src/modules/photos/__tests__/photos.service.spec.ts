@@ -22,10 +22,8 @@ const uploadedFile: UploadedPhotoFile = {
 };
 
 const photoRecord = {
-  _count: {
-    favorites: 2,
-    likes: 5,
-  },
+  favoriteCount: 2,
+  likeCount: 5,
   createdAt: new Date('2026-07-27T08:00:00.000Z'),
   fileName: 'holiday.jpg',
   height: 800,
