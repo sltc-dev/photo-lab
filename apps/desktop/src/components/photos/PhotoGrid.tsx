@@ -13,9 +13,11 @@ import {
   Stack,
   Text,
 } from '@mantine/core';
-import { type InfiniteData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { notifications } from '@mantine/notifications';
+import { type InfiniteData, useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query';
 import {
   AlertCircle,
+  Bluetooth,
   Check,
   Clock3,
   FileImage,
@@ -30,6 +32,11 @@ import {
 } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  getBluetoothMethodLabel,
+  sendProjectPhotoByBluetooth,
+} from '../../api/bluetooth-transfer';
+import { getApiErrorMessage } from '../../api/http';
 import {
   getPhotoThumbnail,
   getProjectPhotosPage,
@@ -275,6 +282,30 @@ function useObjectUrl(blob: Blob | undefined): string | null {
 
 function PhotoDetail({ photo }: { photo: ProjectPhoto }) {
   const [originalFailed, setOriginalFailed] = useState(false);
+  // 将当前这张应用图片的信息发送出去
+  const sendBluetoothMutation = useMutation({
+    mutationFn: () =>
+      sendProjectPhotoByBluetooth({
+        fileName: photo.fileName,
+        mimeType: photo.mimeType,
+        originalUrl: photo.originalUrl,
+        sizeBytes: photo.sizeBytes,
+      }),
+    onError: async (error) => {
+      notifications.show({
+        color: 'red',
+        message: await getApiErrorMessage(error),
+        title: '蓝牙发送未完成',
+      });
+    },
+    onSuccess: (result) => {
+      notifications.show({
+        color: 'green',
+        message: `已打开${getBluetoothMethodLabel(result.method)}`,
+        title: '已打开蓝牙发送',
+      });
+    },
+  });
 
   return (
     <div>
@@ -323,6 +354,14 @@ function PhotoDetail({ photo }: { photo: ProjectPhoto }) {
           to={`/projects/${photo.projectId}/photos/${photo.id}/edit`}
         >
           编辑照片
+        </Button>
+        <Button
+          leftSection={<Bluetooth aria-hidden size={16} />}
+          loading={sendBluetoothMutation.isPending}
+          onClick={() => sendBluetoothMutation.mutate()}
+          variant="light"
+        >
+          蓝牙发送
         </Button>
       </Group>
     </div>

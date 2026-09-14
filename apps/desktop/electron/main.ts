@@ -2,6 +2,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { BrowserWindow, app } from 'electron';
 import { registerAuthIpc } from './ipc/auth.ipc';
+import { registerBluetoothTransferIpc } from './ipc/bluetooth-transfer.ipc';
 import { TokenStore } from './token-store';
 
 const DEFAULT_API_BASE_URL = 'http://localhost:3000';
@@ -72,6 +73,8 @@ void app.whenReady().then(() => {
   // TokenStore 和认证 IPC 属于主进程单例，同一应用窗口共享一份会话。
   const tokenStore = new TokenStore();
   registerAuthIpc(tokenStore);
+  // 在主进程中注册蓝牙相关IPC，让页面可以请求主进程处理蓝牙发送
+  registerBluetoothTransferIpc();
   createWindow();
 
   app.on('activate', () => {
