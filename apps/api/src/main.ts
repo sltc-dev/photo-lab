@@ -73,6 +73,12 @@ async function bootstrap(): Promise<void> {
         return;
       }
 
+      // 部分移动浏览器通过普通表单上传文件时会发送 Origin: null，本地面对面快传需要兼容它。
+      if (nodeEnv !== 'production' && origin === 'null') {
+        callback(null, true);
+        return;
+      }
+
       callback(new Error(`CORS origin denied: ${origin}`));
     },
   });

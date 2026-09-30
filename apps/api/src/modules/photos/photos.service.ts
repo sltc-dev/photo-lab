@@ -50,6 +50,13 @@ const photoOriginalSelect = {
   sizeBytes: true,
 } satisfies Prisma.PhotoSelect;
 
+const photoDeleteSelect = {
+  id: true,
+  originalObjectKey: true,
+  previewObjectKey: true,
+  projectId: true,
+} satisfies Prisma.PhotoSelect;
+
 export type PhotoOriginal = {
   fileName: string;
   mimeType: string;
@@ -253,6 +260,41 @@ export class PhotosService {
       sizeBytes: thumbnailBuffer.byteLength,
       stream: Readable.from(thumbnailBuffer),
     };
+  }
+
+  async deletePhoto(userId: string, projectId: string, photoId: string): Promise<void> {
+    const photo = await this.prisma.photo.findFirst({
+      select: photoDeleteSelect,
+      where: {
+        id: photoId,
+        project: {
+          userId,
+        },
+        projectId,
+      },
+    });
+
+    if (!photo) {
+      throw new AppException(HttpStatus.NOT_FOUND, 'PHOTO_NOT_FOUND', '照片不存在');
+    }
+
+    await this.prisma.photo.delete({
+      where: {
+        id: photo.id,
+      },
+    });
+
+    const thumbnailObjectKey = buildThumbnailCacheObjectKey(
+      photo.projectId,
+      photo.id,
+      photo.originalObjectKey,
+    );
+
+    await this.removeStoredObjects([
+      photo.originalObjectKey,
+      ...(photo.previewObjectKey ? [photo.previewObjectKey] : []),
+      thumbnailObjectKey,
+    ]);
   }
 
   private async getFreshCachedThumbnail(

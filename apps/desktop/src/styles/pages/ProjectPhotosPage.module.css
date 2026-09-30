@@ -46,6 +46,16 @@
   background: #202b40;
 }
 
+.quickTransferButton {
+  min-height: 42px;
+  padding-left: 22px;
+  padding-right: 22px;
+}
+
+.actionGroup {
+  justify-content: flex-end;
+}
+
 .gallerySection {
   display: flex;
   flex: 1;
@@ -129,6 +139,14 @@
 
   .uploadButton {
     width: 100%;
+  }
+
+  .actionGroup {
+    width: 100%;
+  }
+
+  .actionGroup > button {
+    flex: 1 1 180px;
   }
 
   .galleryHeader {

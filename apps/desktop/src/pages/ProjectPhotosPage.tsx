@@ -1,14 +1,16 @@
 import { Alert, Box, Button, Group, Skeleton, Stack, Tabs, Text, Title } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertCircle, ArrowLeft } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Smartphone } from 'lucide-react';
 import { useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { getApiErrorMessage } from '../api/http';
-import { photosQueryKey, uploadProjectPhoto } from '../api/photos';
+import { photosQueryKey, uploadProjectPhoto, type ProjectPhoto } from '../api/photos';
 import { getProjectById, getProjects, projectQueryKey, projectsQueryKey } from '../api/projects';
 import { PhotoGrid } from '../components/photos/PhotoGrid';
 import { PhotoUploadButton } from '../components/photos/PhotoUploadButton';
+import { QuickTransferModal } from '../components/transfer/QuickTransferModal';
 import styles from '../styles/pages/ProjectPhotosPage.module.css';
 
 export function ProjectPhotosPage() {
@@ -29,6 +31,8 @@ type ProjectPhotosContentProps = {
 
 function ProjectPhotosContent({ projectId, queryClient }: ProjectPhotosContentProps) {
   const [activePhotoTab, setActivePhotoTab] = useState<'edited' | 'original'>('original');
+  const [isQuickTransferOpen, { close: closeQuickTransfer, open: openQuickTransfer }] =
+    useDisclosure(false);
   const projectQuery = useQuery({
     queryFn: () => getProjectById(projectId),
     queryKey: projectQueryKey(projectId),
@@ -75,6 +79,30 @@ function ProjectPhotosContent({ projectId, queryClient }: ProjectPhotosContentPr
       });
     },
   });
+  const handlePhotoDeleted = (photo: ProjectPhoto) => {
+    queryClient.setQueryData(
+      projectQueryKey(photo.projectId),
+      (project: Awaited<ReturnType<typeof getProjectById>> | undefined) =>
+        project
+          ? {
+              ...project,
+              photoCount: Math.max(0, project.photoCount - 1),
+            }
+          : project,
+    );
+    queryClient.setQueryData<Awaited<ReturnType<typeof getProjects>>>(
+      projectsQueryKey,
+      (projects = []) =>
+        projects.map((project) =>
+          project.id === photo.projectId
+            ? {
+                ...project,
+                photoCount: Math.max(0, project.photoCount - 1),
+              }
+            : project,
+        ),
+    );
+  };
 
   if (projectQuery.isLoading) {
     return (
@@ -127,23 +155,33 @@ function ProjectPhotosContent({ projectId, queryClient }: ProjectPhotosContentPr
               {project.photoCount} 张照片
             </Text>
           </Box>
-          <PhotoUploadButton
-            className={styles.uploadButton}
-            isUploading={uploadMutation.isPending}
-            onSelectFile={(file) =>
-              uploadMutation.mutate({
-                file,
-                projectId,
-              })
-            }
-            onValidationError={(message) =>
-              notifications.show({
-                color: 'yellow',
-                message,
-                title: '无法上传这张照片',
-              })
-            }
-          />
+          <Group className={styles.actionGroup} gap="sm">
+            <Button
+              className={styles.quickTransferButton}
+              leftSection={<Smartphone aria-hidden size={18} />}
+              onClick={openQuickTransfer}
+              variant="light"
+            >
+              面对面快传
+            </Button>
+            <PhotoUploadButton
+              className={styles.uploadButton}
+              isUploading={uploadMutation.isPending}
+              onSelectFile={(file) =>
+                uploadMutation.mutate({
+                  file,
+                  projectId,
+                })
+              }
+              onValidationError={(message) =>
+                notifications.show({
+                  color: 'yellow',
+                  message,
+                  title: '无法上传这张照片',
+                })
+              }
+            />
+          </Group>
         </Group>
       </Box>
 
@@ -168,13 +206,18 @@ function ProjectPhotosContent({ projectId, queryClient }: ProjectPhotosContentPr
             </Text>
           </Group>
           <Tabs.Panel value="original">
-            <PhotoGrid kind="ORIGINAL" projectId={projectId} />
+            <PhotoGrid kind="ORIGINAL" onPhotoDeleted={handlePhotoDeleted} projectId={projectId} />
           </Tabs.Panel>
           <Tabs.Panel value="edited">
-            <PhotoGrid kind="EDITED" projectId={projectId} />
+            <PhotoGrid kind="EDITED" onPhotoDeleted={handlePhotoDeleted} projectId={projectId} />
           </Tabs.Panel>
         </Tabs>
       </section>
+      <QuickTransferModal
+        onClose={closeQuickTransfer}
+        opened={isQuickTransferOpen}
+        projectId={projectId}
+      />
     </Stack>
   );
 }

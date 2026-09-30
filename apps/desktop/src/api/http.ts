@@ -39,6 +39,16 @@ export function fetchWithAuth(input: RequestInfo | URL, init?: RequestInit): Pro
   return authFetch(input, init);
 }
 
+export async function getResponseError(response: Response): Promise<Error> {
+  const payload = await response.json().catch(() => null);
+
+  if (isApiErrorBody(payload)) {
+    return new Error(payload.error.message);
+  }
+
+  return new Error(`请求失败：${response.status}`);
+}
+
 export async function getApiErrorMessage(error: unknown): Promise<string> {
   if (isApiErrorBody(error)) {
     return error.error.message;

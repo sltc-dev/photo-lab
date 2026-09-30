@@ -5,6 +5,10 @@ import {
   bluetoothTransferIpcChannels,
   type DesktopBluetoothTransferApi,
 } from './ipc/bluetooth-transfer.channels';
+import {
+  networkStatusIpcChannels,
+  type DesktopNetworkStatusApi,
+} from './ipc/network-status.channels';
 
 const authApi: DesktopAuthApi = {
   // invoke 是“请求-响应”式 IPC：React await 后会收到主进程的结果或异常。
@@ -30,7 +34,16 @@ const bluetoothTransferApi: DesktopBluetoothTransferApi = {
     ) as ReturnType<DesktopBluetoothTransferApi['sendProjectPhoto']>,
 };
 
+const networkStatusApi: DesktopNetworkStatusApi = {
+  getStatus: () =>
+    // 向主进程发送一个ipc请求
+    ipcRenderer.invoke(
+      networkStatusIpcChannels.getStatus,
+    ) as ReturnType<DesktopNetworkStatusApi['getStatus']>,
+};
+
 // 如果 preload 想给 React 提供一个安全能力
 // 就需要把一个经过包装的安全对象放到 window 上
 contextBridge.exposeInMainWorld('auth', authApi);
 contextBridge.exposeInMainWorld('bluetoothTransfer', bluetoothTransferApi);
+contextBridge.exposeInMainWorld('networkStatus', networkStatusApi);

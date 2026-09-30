@@ -13,6 +13,7 @@ import { PhotosModule } from './modules/photos/photos.module';
 import { MaterialModule } from './modules/material/material.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { FeedbackModule } from './modules/feedback/feedback.module';
+import { QuickTransferModule } from './modules/quick-transfer/quick-transfer.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { FeedbackModule } from './modules/feedback/feedback.module';
     MaterialModule,
     NotificationsModule,
     FeedbackModule,
+    QuickTransferModule,
   ],
   providers: [
     // APP_FILTER 会让统一错误格式应用到所有 Controller。

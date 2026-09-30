@@ -14,7 +14,13 @@ import {
   Text,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { type InfiniteData, useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query';
+import {
+  type InfiniteData,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import {
   AlertCircle,
   Bluetooth,
@@ -29,17 +35,17 @@ import {
   Pencil,
   RefreshCw,
   Star,
+  Trash2,
 } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  getBluetoothMethodLabel,
-  sendProjectPhotoByBluetooth,
-} from '../../api/bluetooth-transfer';
+import { getBluetoothMethodLabel, sendProjectPhotoByBluetooth } from '../../api/bluetooth-transfer';
 import { getApiErrorMessage } from '../../api/http';
 import {
+  deleteProjectPhoto,
   getPhotoThumbnail,
   getProjectPhotosPage,
+  photosQueryKey,
   photoThumbnailQueryKey,
   projectPhotosByKindQueryKey,
   type ProjectPhoto,
@@ -50,10 +56,12 @@ import styles from '../../styles/components/photos/PhotoGrid.module.css';
 
 type PhotoGridProps = {
   kind: ProjectPhotoKind;
+  onPhotoDeleted?: (photo: ProjectPhoto) => void;
   projectId: string;
 };
 
-export function PhotoGrid({ kind, projectId }: PhotoGridProps) {
+export function PhotoGrid({ kind, onPhotoDeleted, projectId }: PhotoGridProps) {
+  const queryClient = useQueryClient();
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
   const photosQuery = useInfiniteQuery<
@@ -195,7 +203,17 @@ export function PhotoGrid({ kind, projectId }: PhotoGridProps) {
         size={400}
         title="照片详情"
       >
-        {selectedPhoto ? <PhotoDetail key={selectedPhoto.id} photo={selectedPhoto} /> : null}
+        {selectedPhoto ? (
+          <PhotoDetail
+            key={selectedPhoto.id}
+            onDeleted={() => {
+              setSelectedPhotoId(null);
+              onPhotoDeleted?.(selectedPhoto);
+              void queryClient.invalidateQueries({ queryKey: photosQueryKey(projectId) });
+            }}
+            photo={selectedPhoto}
+          />
+        ) : null}
       </Drawer>
     </>
   );
@@ -280,7 +298,7 @@ function useObjectUrl(blob: Blob | undefined): string | null {
   return url;
 }
 
-function PhotoDetail({ photo }: { photo: ProjectPhoto }) {
+function PhotoDetail({ onDeleted, photo }: { onDeleted: () => void; photo: ProjectPhoto }) {
   const [originalFailed, setOriginalFailed] = useState(false);
   // 将当前这张应用图片的信息发送出去
   const sendBluetoothMutation = useMutation({
@@ -306,6 +324,36 @@ function PhotoDetail({ photo }: { photo: ProjectPhoto }) {
       });
     },
   });
+  const deletePhotoMutation = useMutation({
+    mutationFn: () =>
+      deleteProjectPhoto({
+        photoId: photo.id,
+        projectId: photo.projectId,
+      }),
+    onError: async (error) => {
+      notifications.show({
+        color: 'red',
+        message: await getApiErrorMessage(error),
+        title: '照片删除失败',
+      });
+    },
+    onSuccess: () => {
+      notifications.show({
+        color: 'green',
+        message: '照片已从当前项目中删除',
+        title: '删除成功',
+      });
+      onDeleted();
+    },
+  });
+
+  const handleDeletePhoto = () => {
+    if (!window.confirm('确认删除这张照片吗？删除后无法在应用内恢复。')) {
+      return;
+    }
+
+    deletePhotoMutation.mutate();
+  };
 
   return (
     <div>
@@ -347,8 +395,9 @@ function PhotoDetail({ photo }: { photo: ProjectPhoto }) {
           value={formatDateTime(photo.createdAt)}
         />
       </dl>
-      <Group mt="lg">
+      <div className={styles.detailActionGroup}>
         <Button
+          className={styles.detailActionButton}
           component={Link}
           leftSection={<Pencil aria-hidden size={16} />}
           to={`/projects/${photo.projectId}/photos/${photo.id}/edit`}
@@ -356,6 +405,7 @@ function PhotoDetail({ photo }: { photo: ProjectPhoto }) {
           编辑照片
         </Button>
         <Button
+          className={styles.detailActionButton}
           leftSection={<Bluetooth aria-hidden size={16} />}
           loading={sendBluetoothMutation.isPending}
           onClick={() => sendBluetoothMutation.mutate()}
@@ -363,7 +413,17 @@ function PhotoDetail({ photo }: { photo: ProjectPhoto }) {
         >
           蓝牙发送
         </Button>
-      </Group>
+        <Button
+          className={styles.detailActionButton}
+          color="red"
+          leftSection={<Trash2 aria-hidden size={16} />}
+          loading={deletePhotoMutation.isPending}
+          onClick={handleDeletePhoto}
+          variant="light"
+        >
+          删除照片
+        </Button>
+      </div>
     </div>
   );
 }

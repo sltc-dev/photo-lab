@@ -285,6 +285,25 @@
   height: 100%;
 }
 
+.detailActionGroup {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 18px;
+  width: 100%;
+}
+
+.detailActionButton {
+  min-width: 0;
+  padding-left: 10px;
+  padding-right: 10px;
+  width: 100%;
+}
+
+.detailActionButton :global(.mantine-Button-label) {
+  white-space: nowrap;
+}
+
 .metadataList {
   border: 1px solid var(--pl-line);
   border-radius: 8px;

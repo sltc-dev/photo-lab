@@ -3,6 +3,7 @@ import { pathToFileURL } from 'node:url';
 import { BrowserWindow, app } from 'electron';
 import { registerAuthIpc } from './ipc/auth.ipc';
 import { registerBluetoothTransferIpc } from './ipc/bluetooth-transfer.ipc';
+import { registerNetworkStatusIpc } from './ipc/network-status.ipc';
 import { TokenStore } from './token-store';
 
 const DEFAULT_API_BASE_URL = 'http://localhost:3000';
@@ -75,6 +76,8 @@ void app.whenReady().then(() => {
   registerAuthIpc(tokenStore);
   // 在主进程中注册蓝牙相关IPC，让页面可以请求主进程处理蓝牙发送
   registerBluetoothTransferIpc();
+  // 在主进程中注册网络检测相关IPC
+  registerNetworkStatusIpc();
   createWindow();
 
   app.on('activate', () => {

@@ -36,5 +36,6 @@ import { PhotosService } from './photos.service';
     PhotoThumbnailGenerator,
     PhotoUploadValidator,
   ],
+  exports: [PhotosService],
 })
 export class PhotosModule {}

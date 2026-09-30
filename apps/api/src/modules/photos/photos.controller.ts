@@ -1,5 +1,6 @@
 import {
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -192,5 +193,21 @@ export class PhotosController {
     @UploadedFile() file: UploadedPhotoFile | undefined,
   ): Promise<PhotoDto> {
     return this.photosService.uploadPhoto(user.id, projectId, file);
+  }
+
+  @Delete(':photoId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiParam({
+    description: '照片 ID',
+    name: 'photoId',
+    type: String,
+  })
+  @ApiErrorResponses(HttpStatus.UNAUTHORIZED, HttpStatus.NOT_FOUND)
+  deletePhoto(
+    @CurrentUser() user: RequestUser,
+    @Param('projectId') projectId: string,
+    @Param('photoId') photoId: string,
+  ): Promise<void> {
+    return this.photosService.deletePhoto(user.id, projectId, photoId);
   }
 }

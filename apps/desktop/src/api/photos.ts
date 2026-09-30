@@ -9,7 +9,7 @@ import {
   type PhotoKind,
   type PhotoPageDto,
 } from '../generated/api';
-import { resolveApiUrl } from './http';
+import { fetchWithAuth, getResponseError, resolveApiUrl } from './http';
 
 export const PROJECT_PHOTOS_PAGE_SIZE = 12;
 
@@ -138,6 +138,24 @@ export async function saveProjectPhotoEdit(input: {
     },
     throwOnError: true,
   });
+}
+
+export async function deleteProjectPhoto(input: {
+  photoId: string;
+  projectId: string;
+}): Promise<void> {
+  const response = await fetchWithAuth(
+    resolveApiUrl(
+      `/projects/${encodeURIComponent(input.projectId)}/photos/${encodeURIComponent(input.photoId)}`,
+    ),
+    {
+      method: 'DELETE',
+    },
+  );
+
+  if (!response.ok) {
+    throw await getResponseError(response);
+  }
 }
 
 function sanitizeEditState(
