@@ -18,6 +18,7 @@ const developmentSecrets = new Set(['dev-access-secret-change-me', 'dev-refresh-
 
 const envSchema = z
   .object({
+    AMAP_WEB_SERVICE_KEY: z.string().trim().optional(),
     ACCESS_TOKEN_TTL: durationSchema(24 * 60 * 60 * 1000).default('15m'),
     CORS_ORIGINS: z.string().optional(),
     DATABASE_URL: z.string().min(1),

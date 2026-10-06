@@ -1,0 +1,137 @@
+.page {
+  margin: 0 auto;
+  max-width: 1100px;
+  min-width: 0;
+  width: 100%;
+}
+
+.pageHeading {
+  padding: 4px 2px;
+}
+
+.pageTitle {
+  color: var(--pl-text);
+  font-size: 28px;
+  margin-top: 3px;
+}
+
+.sectionTitle {
+  color: var(--pl-text);
+  font-size: 17px;
+}
+
+.locationCard,
+.listSection {
+  background: var(--pl-bg-raised);
+  border: 1px solid var(--pl-line);
+  border-radius: 10px;
+}
+
+.locationIcon,
+.emptyIcon {
+  align-items: center;
+  background: var(--pl-accent-soft);
+  border-radius: 8px;
+  color: var(--pl-accent-strong);
+  display: flex;
+  flex: 0 0 auto;
+  height: 40px;
+  justify-content: center;
+  width: 40px;
+}
+
+.locationControls {
+  border-top: 1px solid var(--pl-line);
+  padding-top: 16px;
+}
+
+.listSection {
+  padding: 20px;
+  min-width: 0;
+}
+
+.listHeading {
+  margin-bottom: 16px;
+}
+
+.tabsList :global(.mantine-Tabs-tab) {
+  min-height: 44px;
+  padding-inline: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--pl-muted);
+}
+
+.tabsList :global(.mantine-Tabs-tab[data-active]) {
+  color: var(--pl-accent-strong);
+}
+
+.personRow {
+  background: var(--pl-bg-raised);
+  border: 1px solid var(--pl-line);
+  border-radius: 8px;
+}
+
+.emptyPanel {
+  min-height: 200px;
+  padding: 24px;
+}
+
+.emptyIcon {
+  background: var(--pl-bg-subtle);
+  border: 1px solid var(--pl-line);
+  height: 48px;
+  width: 48px;
+  margin-bottom: 4px;
+}
+
+.primaryButton {
+  background: var(--pl-text);
+  border: 1px solid var(--pl-text);
+  min-height: 40px;
+}
+
+.primaryButton:hover {
+  background: #202b40;
+}
+
+@media (max-width: 48em) {
+  .pageTitle {
+    font-size: 24px;
+  }
+
+  .listSection {
+    padding: 16px;
+  }
+
+  .tabsList :global(.mantine-Tabs-tab) {
+    flex: 1 0 40%;
+    padding-inline: 8px;
+  }
+}
+
+.refreshButton {
+  width: 128px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.refreshButton:active {
+  transform: none;
+}
+
+.refreshSpinning {
+  animation: refresh-spin 0.8s linear infinite;
+}
+
+@keyframes refresh-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .refreshSpinning {
+    animation: none;
+  }
+}

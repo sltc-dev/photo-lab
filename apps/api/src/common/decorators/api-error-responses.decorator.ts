@@ -7,10 +7,14 @@ import {
   ApiPayloadTooLargeResponse,
   ApiUnauthorizedResponse,
   ApiUnsupportedMediaTypeResponse,
+  ApiForbiddenResponse,
+  ApiTooManyRequestsResponse,
 } from '@nestjs/swagger';
 import { ErrorResponseDto } from '../dto/error-response.dto';
 
 type ErrorStatus =
+  | HttpStatus.FORBIDDEN
+  | HttpStatus.TOO_MANY_REQUESTS
   | HttpStatus.BAD_REQUEST
   | HttpStatus.CONFLICT
   | HttpStatus.INTERNAL_SERVER_ERROR
@@ -25,6 +29,10 @@ export function ApiErrorResponses(...statuses: ErrorStatus[]): MethodDecorator &
     const options = { type: ErrorResponseDto };
 
     switch (status) {
+      case HttpStatus.FORBIDDEN:
+        return ApiForbiddenResponse(options);
+      case HttpStatus.TOO_MANY_REQUESTS:
+        return ApiTooManyRequestsResponse(options);
       case HttpStatus.BAD_REQUEST:
         return ApiBadRequestResponse(options);
       case HttpStatus.CONFLICT:

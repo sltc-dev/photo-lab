@@ -9,6 +9,17 @@ import { useAuthStore } from '../../src/stores/auth.store';
 describe('http', () => {
   configureApiClient();
 
+  it('preserves the backend business message for rate limit errors', async () => {
+    await expect(
+      getApiErrorMessage({
+        error: {
+          code: 'RATE_LIMIT_EXCEEDED',
+          message: '请在 30 秒后重试。',
+        },
+      }),
+    ).resolves.toBe('请在 30 秒后重试。');
+  });
+
   afterEach(() => {
     queryClient.clear();
     useAuthStore.getState().clearSession();

@@ -1,0 +1,2058 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>附近好友 · 数据库与实现图解</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 78px;
+      }
+      body {
+        margin: 0;
+        background: #f3f6fb;
+        color: #19273c;
+        font:
+          15px/1.65 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          'PingFang SC',
+          'Microsoft YaHei',
+          sans-serif;
+      }
+      main {
+        max-width: 1180px;
+        margin: auto;
+        padding: 34px 26px 70px;
+      }
+      header {
+        background: #14243d;
+        color: #fff;
+        border-radius: 20px;
+        padding: 36px 40px;
+      }
+      header .kicker {
+        color: #9bc1ff;
+        letter-spacing: 0.15em;
+        font-size: 12px;
+      }
+      h1 {
+        font-size: 36px;
+        line-height: 1.25;
+        margin: 12px 0;
+      }
+      header p {
+        color: #c3cfe0;
+        margin: 0;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-top: 26px;
+      }
+      .stat {
+        border: 1px solid #40516d;
+        border-radius: 12px;
+        padding: 12px 18px;
+      }
+      .stat strong {
+        display: block;
+        font-size: 25px;
+      }
+      .stat small {
+        color: #c3cfe0;
+      }
+      nav {
+        position: sticky;
+        top: 0;
+        background: #f3f6fbf5;
+        backdrop-filter: blur(10px);
+        padding: 14px 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        z-index: 3;
+      }
+      nav a {
+        padding: 5px 12px;
+        border: 1px solid #d5dfed;
+        background: #fff;
+        border-radius: 7px;
+        color: #385379;
+        text-decoration: none;
+        font-size: 13px;
+      }
+      nav a:hover {
+        background: #eaf1fd;
+      }
+      section {
+        background: white;
+        border: 1px solid #dce4ef;
+        border-radius: 16px;
+        padding: 28px;
+        margin-top: 20px;
+      }
+      .section-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      .section-head > span {
+        font-size: 14px;
+        color: #2c69c8;
+        background: #edf3ff;
+        border-radius: 8px;
+        padding: 6px 10px;
+      }
+      h2 {
+        font-size: 23px;
+        margin: 0;
+      }
+      h3 {
+        font-size: 17px;
+        margin: 24px 0 12px;
+      }
+      p {
+        margin: 10px 0;
+      }
+      .muted,
+      small {
+        color: #697b92;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .card {
+        padding: 18px;
+        border: 1px solid #dce4ef;
+        border-radius: 12px;
+        background: #fafcff;
+      }
+      .card h3 {
+        margin-top: 0;
+      }
+      .tag {
+        display: inline-block;
+        border-radius: 5px;
+        padding: 2px 8px;
+        background: #eaf1fd;
+        color: #245eac;
+        font-size: 12px;
+        margin: 0 6px 6px 0;
+      }
+      .note {
+        padding: 12px 16px;
+        background: #f0f6ff;
+        border-left: 3px solid #4c83d8;
+        border-radius: 4px;
+        margin: 16px 0;
+      }
+      .warn {
+        background: #fff7e9;
+        border-color: #dfa441;
+      }
+      .flow {
+        display: flex;
+        align-items: stretch;
+        gap: 9px;
+        overflow-x: auto;
+        padding: 8px 0 16px;
+      }
+      .node {
+        flex: 1;
+        min-width: 142px;
+        border: 1px solid #cad9ed;
+        border-radius: 10px;
+        padding: 15px 12px;
+        text-align: center;
+        background: #f5f9ff;
+      }
+      .node b {
+        display: block;
+      }
+      .node small {
+        display: block;
+        font-size: 12px;
+        margin-top: 5px;
+      }
+      .arrow {
+        align-self: center;
+        color: #5374a0;
+        font-size: 23px;
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 14px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 11px 13px;
+        border-bottom: 1px solid #e4eaf2;
+        vertical-align: top;
+      }
+      th {
+        background: #edf3fb;
+        color: #3b5577;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      tr:last-child td {
+        border-bottom: 0;
+      }
+      td:first-child {
+        font-weight: 600;
+      }
+      code {
+        font:
+          12px/1.5 ui-monospace,
+          SFMono-Regular,
+          Consolas,
+          monospace;
+        background: #edf2f8;
+        color: #2b506e;
+        border-radius: 4px;
+        padding: 2px 4px;
+        overflow-wrap: anywhere;
+      }
+      pre {
+        background: #16263f;
+        color: #dce8fb;
+        border-radius: 12px;
+        padding: 18px;
+        overflow: auto;
+        font:
+          13px/1.85 ui-monospace,
+          monospace;
+      }
+      figure {
+        margin: 0;
+      }
+      .diagram {
+        overflow-x: auto;
+        background: #f8faff;
+        border-radius: 12px;
+        border: 1px solid #e3eaf4;
+        padding: 14px;
+      }
+      .diagram svg {
+        display: block;
+        width: 100%;
+        min-width: 750px;
+        height: auto;
+      }
+      .entity {
+        font-size: 16px;
+        font-weight: 650;
+        fill: #244f89;
+      }
+      .field {
+        font-size: 12px;
+        fill: #43566f;
+      }
+      .edge {
+        font-size: 12px;
+        fill: #526b8b;
+        paint-order: stroke;
+        stroke: #f8faff;
+        stroke-width: 5px;
+        stroke-linejoin: round;
+      }
+      figcaption {
+        font-size: 12px;
+        color: #718198;
+        margin-top: 9px;
+      }
+      .states {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+      }
+      .state {
+        padding: 16px;
+        border-radius: 10px;
+        border: 1px solid #dce4ef;
+        background: #fafcff;
+      }
+      .state.good {
+        background: #ecf9f3;
+        border-color: #b8decd;
+      }
+      .state b,
+      .state small {
+        display: block;
+      }
+      .state code {
+        display: inline-block;
+        margin: 6px 0;
+      }
+      .file {
+        color: #2765ac;
+        text-decoration: none;
+        word-break: break-word;
+      }
+      .foot {
+        font-size: 12px;
+        color: #708197;
+        margin-top: 25px;
+        text-align: center;
+      }
+      details {
+        margin-top: 14px;
+      }
+      summary {
+        cursor: pointer;
+        color: #2c63a7;
+        font-weight: 600;
+      }
+      .steps {
+        counter-reset: step;
+      }
+      .step {
+        display: flex;
+        gap: 14px;
+        margin: 12px 0;
+      }
+      .step:before {
+        counter-increment: step;
+        content: counter(step);
+        background: #eaf1fd;
+        color: #2c69c8;
+        border-radius: 50%;
+        width: 28px;
+        height: 28px;
+        text-align: center;
+        flex-shrink: 0;
+      }
+      .step b {
+        display: block;
+      }
+      .step small {
+        display: block;
+      }
+      @media (max-width: 700px) {
+        main {
+          padding: 16px 12px;
+        }
+        header {
+          padding: 25px;
+        }
+        h1 {
+          font-size: 28px;
+        }
+        section {
+          padding: 18px;
+        }
+        .stats,
+        .grid,
+        .states {
+          grid-template-columns: 1fr 1fr;
+        }
+        nav {
+          position: static;
+        }
+        .flow {
+          flex-direction: column;
+        }
+        .arrow {
+          transform: rotate(90deg);
+        }
+        h2 {
+          font-size: 20px;
+        }
+      }
+      @media print {
+        body {
+          background: #fff;
+          font-size: 11px;
+        }
+        main {
+          max-width: none;
+          padding: 0;
+        }
+        nav {
+          display: none;
+        }
+        header {
+          print-color-adjust: exact;
+          padding: 22px;
+        }
+        h1 {
+          font-size: 28px;
+        }
+        section {
+          padding: 18px;
+          margin-top: 14px;
+          break-inside: auto;
+        }
+        .card,
+        figure,
+        .flow,
+        tr,
+        .states,
+        pre {
+          break-inside: avoid;
+        }
+        h2,
+        h3 {
+          break-after: avoid;
+        }
+        .diagram svg {
+          min-width: 0;
+        }
+        a {
+          color: inherit;
+        }
+        table {
+          font-size: 11px;
+        }
+        * {
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+      }
+      /* 定位权限流程（lp-*） */
+      .lp-page {
+        --c: #2f6fde;
+      }
+      .lp-preload {
+        --c: #8a4fd8;
+      }
+      .lp-mainp {
+        --c: #d9731c;
+      }
+      .lp-macos {
+        --c: #1f9d63;
+      }
+      .lp-api {
+        --c: #0f8b9c;
+      }
+      .lp-tag {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--c);
+        background: color-mix(in srgb, var(--c) 12%, white);
+        border-radius: 999px;
+        padding: 1px 10px;
+      }
+      .lp-diagram {
+        border: 1px solid #dce4ef;
+        border-radius: 12px;
+        padding: 14px 14px 6px;
+        overflow-x: auto;
+      }
+      .lp-lanes,
+      .lp-row {
+        display: grid;
+        grid-template-columns: 40px repeat(5, minmax(110px, 1fr));
+        min-width: 640px;
+      }
+      .lp-lanes {
+        padding-bottom: 8px;
+        border-bottom: 1px solid #e3e9f2;
+      }
+      .lp-lanes div {
+        text-align: center;
+        font-weight: 600;
+        font-size: 13px;
+      }
+      .lp-row {
+        position: relative;
+        min-height: 56px;
+        align-items: center;
+      }
+      .lp-row[data-link] {
+        cursor: pointer;
+      }
+      .lp-row[data-link]:hover {
+        background: rgba(47, 111, 222, 0.06);
+        border-radius: 8px;
+      }
+      .lp-rows {
+        position: relative;
+      }
+      .lp-guides {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        grid-template-columns: 40px repeat(5, minmax(110px, 1fr));
+        min-width: 640px;
+        pointer-events: none;
+      }
+      .lp-guides i {
+        background: linear-gradient(#e3e9f2, #e3e9f2) center / 1px 100% no-repeat;
+      }
+      .lp-num {
+        font-weight: 700;
+        color: #8a99b0;
+        text-align: center;
+        font-size: 13px;
+      }
+      .lp-arrow {
+        position: relative;
+        height: 2px;
+        background: var(--c);
+      }
+      .lp-arrow::after {
+        content: '';
+        position: absolute;
+        top: -5px;
+        border: 6px solid transparent;
+      }
+      .lp-arrow.lp-right::after {
+        right: -6px;
+        border-left: 8px solid var(--c);
+      }
+      .lp-arrow.lp-left::after {
+        left: -6px;
+        border-right: 8px solid var(--c);
+      }
+      .lp-arrow.lp-dashed {
+        background: repeating-linear-gradient(to right, var(--c) 0 6px, transparent 6px 11px);
+      }
+      .lp-label {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: 6px;
+        white-space: nowrap;
+        font-size: 12.5px;
+        background: #fff;
+        padding: 0 6px;
+        border-radius: 4px;
+      }
+      .lp-self {
+        justify-self: center;
+        font-size: 12.5px;
+        border: 1.5px solid var(--c);
+        background: color-mix(in srgb, var(--c) 8%, white);
+        border-radius: 10px;
+        padding: 3px 10px;
+        text-align: center;
+        max-width: 96%;
+      }
+      .lp-new {
+        font-size: 11px;
+        font-weight: 700;
+        color: #fff;
+        background: #e0452f;
+        border-radius: 999px;
+        padding: 0 7px;
+        margin-left: 4px;
+      }
+      .lp-step {
+        border: 1px solid #dce4ef;
+        border-left: 6px solid var(--c);
+        border-radius: 12px;
+        padding: 16px 18px;
+        margin: 14px 0;
+      }
+      .lp-step-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .lp-step-head b {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: var(--c);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-size: 13px;
+      }
+      .lp-step h4 {
+        margin: 0;
+        font-size: 16px;
+      }
+      .lp-step p {
+        margin: 8px 0;
+        font-size: 14px;
+      }
+      .lp-step .lp-why {
+        color: #55657d;
+      }
+      .lp-path {
+        font:
+          12px ui-monospace,
+          monospace;
+        color: #6a7a92;
+        margin: 10px 0 4px;
+      }
+      .lp-code {
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid #1f2c42;
+      }
+      .lp-line {
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+      }
+      .lp-line pre {
+        margin: 0;
+        border-radius: 0;
+        padding: 2px 14px;
+        font-size: 12.5px;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+      .lp-line div {
+        padding: 2px 14px;
+        background: #f7f9fc;
+        font-size: 13px;
+        color: #33445e;
+        border-left: 1px solid #e3e9f2;
+      }
+      .lp-line.lp-hl pre {
+        background: #243556;
+      }
+      .lp-line.lp-hl div {
+        background: #fff6e0;
+      }
+      @media (max-width: 860px) {
+        .lp-line {
+          grid-template-columns: 1fr;
+        }
+      }
+      .cap-map {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+        align-items: stretch;
+        gap: 10px 8px;
+        margin: 8px 0 4px;
+      }
+      .cap {
+        border: 1px solid #cad9ed;
+        border-top: 4px solid #4c83d8;
+        border-radius: 10px;
+        padding: 14px 14px 12px;
+        background: #f5f9ff;
+      }
+      .cap-3,
+      .cap-4 {
+        border-top-color: #1f9d63;
+        background: #f3fbf6;
+      }
+      .cap b {
+        display: block;
+        font-size: 16px;
+      }
+      .cap p {
+        margin: 6px 0 10px;
+        font-size: 13px;
+        color: #44556e;
+      }
+      .cap-tag {
+        display: inline-block;
+        font-size: 12px;
+        border-radius: 999px;
+        padding: 1px 9px;
+        margin: 0 4px 4px 0;
+        background: #e6edf7;
+        color: #33507a;
+      }
+      .cap-switch {
+        background: #fff1dc;
+        color: #9a5a00;
+      }
+      .cap-arrow {
+        align-self: center;
+        color: #5374a0;
+        font-size: 22px;
+      }
+      .cap-notify {
+        grid-column: 5 / 8;
+        position: relative;
+        border: 1px dashed #8fc5a7;
+        border-radius: 10px;
+        padding: 8px 14px;
+        font-size: 13px;
+        color: #2f6b4b;
+        background: #fbfefc;
+      }
+      .cap-notify b {
+        margin-right: 8px;
+      }
+      .cap-notify::before,
+      .cap-notify::after {
+        content: '';
+        position: absolute;
+        top: -11px;
+        height: 10px;
+        border-left: 1px dashed #8fc5a7;
+      }
+      .cap-notify::before {
+        left: 18%;
+      }
+      .cap-notify::after {
+        right: 18%;
+      }
+      @media (max-width: 860px) {
+        .cap-map {
+          grid-template-columns: 1fr;
+        }
+        .cap-arrow {
+          justify-self: center;
+          transform: rotate(90deg);
+        }
+        .cap-notify {
+          grid-column: auto;
+        }
+        .cap-notify::before,
+        .cap-notify::after {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="kicker">PHOTO LAB / IMPLEMENTATION GUIDE</div>
+        <h1>附近好友 · 数据库与实现图解</h1>
+        <p>浏览器定位 → 附近发现 → 申请好友 → 建立关系</p>
+        <div class="stats">
+          <div class="stat"><strong>1,000 米</strong><small>附近搜索范围</small></div>
+          <div class="stat"><strong>6 小时</strong><small>位置有效期</small></div>
+          <div class="stat"><strong>60 秒</strong><small>自动定位周期</small></div>
+          <div class="stat"><strong>高德</strong><small>后端地址解析</small></div>
+        </div>
+      </header>
+      <nav aria-label="文档目录">
+        <a href="#s1">01 功能与架构</a><a href="#s2">02 数据库设计</a><a href="#s3">03 定位与地址</a
+        ><a href="#s4">04 附近搜索</a><a href="#s5">05 好友申请与关系</a
+        ><a href="#s6">06 接口与配置</a><a href="#s7">07 启动与联调</a
+        ><a href="#s8">08 代码结构与实现</a>
+      </nav>
+      <section id="s1">
+        <div class="section-head">
+          <span>01</span>
+          <h2>功能与架构</h2>
+        </div>
+        <div class="cap-map">
+          <div class="cap cap-1">
+            <b>我的位置</b>
+            <p>经纬度、采集时间、同步状态，自动显示地址</p>
+            <span class="cap-tag cap-switch">开关：开启定位</span>
+            <span class="cap-tag">UserLocation</span>
+          </div>
+          <span class="cap-arrow" aria-hidden="true">→</span>
+          <div class="cap cap-2">
+            <b>附近的人</b>
+            <p>有效位置 · 1000 米内 · 精度 ≤ 200 米</p>
+            <span class="cap-tag cap-switch">开关：允许被发现</span>
+          </div>
+          <span class="cap-arrow" aria-hidden="true">→</span>
+          <div class="cap cap-3">
+            <b>好友申请</b>
+            <p>发送 / 同意 / 拒绝 / 撤回 / 过期</p>
+            <span class="cap-tag">FriendRequest · 申请过程</span>
+          </div>
+          <span class="cap-arrow" aria-hidden="true">→</span>
+          <div class="cap cap-4">
+            <b>我的好友</b>
+            <p>申请通过后建立关系，支持删除</p>
+            <span class="cap-tag">Friendship · 好友关系</span>
+          </div>
+          <div class="cap-notify"><b>通知</b>新申请、申请通过 · 复用现有通知与事件推送</div>
+        </div>
+      </section>
+      <section id="s2">
+        <div class="section-head">
+          <span>02</span>
+          <h2>数据库设计</h2>
+        </div>
+        <figure class="diagram">
+          <svg viewBox="0 -34 1000 504" role="img" aria-labelledby="er-title">
+            <title id="er-title">
+              用户、定位设置、当前位置、好友申请、好友关系和通知的数据库关系图
+            </title>
+            <defs>
+              <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8" fill="#6980a2" />
+              </marker>
+            </defs>
+            <path
+              d="M250 95 H375"
+              fill="none"
+              stroke="#6980a2"
+              stroke-width="2"
+              marker-end="url(#arrow)"
+            />
+            <text x="278" y="83" class="edge">1 → 0..1</text>
+            <path
+              d="M130 25 V-4 H870 V25"
+              fill="none"
+              stroke="#6980a2"
+              stroke-width="2"
+              marker-end="url(#arrow)"
+            />
+            <text x="470" y="-12" class="edge">1 → 0..1</text>
+            <path
+              d="M130 150 V255"
+              fill="none"
+              stroke="#6980a2"
+              stroke-width="2"
+              marker-end="url(#arrow)"
+            />
+            <text x="145" y="210" class="edge">发起 / 接收：1 → N</text>
+            <path
+              d="M250 330 H375"
+              fill="none"
+              stroke="#6980a2"
+              stroke-width="2"
+              marker-end="url(#arrow)"
+            />
+            <text x="258" y="318" class="edge">通过后 0..1</text>
+            <path
+              d="M130 435 V455 H870 V435"
+              fill="none"
+              stroke="#6980a2"
+              stroke-width="2"
+              marker-end="url(#arrow)"
+            />
+            <text x="430" y="452" class="edge">申请事件 → 生成通知</text>
+            <g>
+              <rect x="10" y="25" width="240" height="125" rx="12" fill="white" stroke="#c7d5e8" />
+              <rect x="11" y="26" width="238" height="38" rx="11" fill="#eaf1fd" />
+              <text x="26" y="51" class="entity">User · 用户</text>
+              <text x="26" y="87" class="field">id PK</text>
+              <text x="26" y="109" class="field">email / username</text>
+            </g>
+            <g>
+              <rect x="375" y="25" width="250" height="125" rx="12" fill="white" stroke="#c7d5e8" />
+              <rect x="376" y="26" width="248" height="38" rx="11" fill="#eaf1fd" />
+              <text x="391" y="51" class="entity">UserLocationSetting</text>
+              <text x="391" y="87" class="field">userId PK / FK → User</text>
+              <text x="391" y="109" class="field">locationEnabled / discoverable</text>
+            </g>
+            <g>
+              <rect x="750" y="25" width="240" height="145" rx="12" fill="white" stroke="#c7d5e8" />
+              <rect x="751" y="26" width="238" height="38" rx="11" fill="#eaf1fd" />
+              <text x="766" y="51" class="entity">UserLocation</text>
+              <text x="766" y="87" class="field">userId PK / FK → User</text>
+              <text x="766" y="109" class="field">latitude / longitude / accuracy</text>
+              <text x="766" y="131" class="field">position / capturedAt / expiresAt</text>
+            </g>
+            <g>
+              <rect x="10" y="255" width="240" height="180" rx="12" fill="white" stroke="#c7d5e8" />
+              <rect x="11" y="256" width="238" height="38" rx="11" fill="#eaf1fd" />
+              <text x="26" y="281" class="entity">FriendRequest · 申请</text>
+              <text x="26" y="317" class="field">id PK</text>
+              <text x="26" y="339" class="field">requesterId / recipientId → User</text>
+              <text x="26" y="361" class="field">LEAST / GREATEST 唯一索引</text>
+              <text x="26" y="383" class="field">status</text>
+              <text x="26" y="405" class="field">requestedAt / expiresAt / resolvedAt</text>
+            </g>
+            <g>
+              <rect
+                x="375"
+                y="255"
+                width="250"
+                height="180"
+                rx="12"
+                fill="white"
+                stroke="#c7d5e8"
+              />
+              <rect x="376" y="256" width="248" height="38" rx="11" fill="#eaf1fd" />
+              <text x="391" y="281" class="entity">Friendship · 关系</text>
+              <text x="391" y="317" class="field">id PK</text>
+              <text x="391" y="339" class="field">userLowId / userHighId → User</text>
+              <text x="391" y="361" class="field">sourceRequestId UNIQUE → 申请</text>
+              <text x="391" y="383" class="field">createdAt / removedAt</text>
+            </g>
+            <g>
+              <rect
+                x="750"
+                y="255"
+                width="240"
+                height="180"
+                rx="12"
+                fill="white"
+                stroke="#c7d5e8"
+              />
+              <rect x="751" y="256" width="238" height="38" rx="11" fill="#eaf1fd" />
+              <text x="766" y="281" class="entity">Notification · 通知</text>
+              <text x="766" y="317" class="field">现有表扩展</text>
+              <text x="766" y="339" class="field">content 保存通知正文</text>
+              <text x="766" y="361" class="field">FRIEND_REQUEST</text>
+              <text x="766" y="383" class="field">FRIEND_ACCEPTED</text>
+            </g>
+          </svg>
+          <figcaption>
+            每位用户最多一条设置、一条当前位置。通知正文描述申请事件；好友关系通过 sourceRequestId
+            关联已通过的申请。
+          </figcaption>
+        </figure>
+        <h3>新增表结构与字段字典</h3>
+        <p class="muted">
+          本次新增 4 张表，复用通知表并扩展通知类型。以下为迁移后的实际字段；时间类型统一为
+          TIMESTAMP(3)。
+        </p>
+        <div>
+          <a class="tag" href="#db-location-setting">UserLocationSetting</a
+          ><a class="tag" href="#db-location">UserLocation</a
+          ><a class="tag" href="#db-request">FriendRequest</a
+          ><a class="tag" href="#db-friendship">Friendship</a
+          ><a class="tag" href="#db-notification">Notification</a>
+        </div>
+        <h3 id="db-location-setting">UserLocationSetting · 定位设置</h3>
+        <p class="muted">每位用户一条，保存定位开关与被发现设置。</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>字段</th>
+                <th>数据库类型</th>
+                <th>可空</th>
+                <th>默认值 / 约束</th>
+                <th>字段说明</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>userId</code></td>
+                <td>TEXT</td>
+                <td>否</td>
+                <td>主键；外键 → User.id</td>
+                <td>所属用户；删除用户时级联删除</td>
+              </tr>
+              <tr>
+                <td><code>locationEnabled</code></td>
+                <td>BOOLEAN</td>
+                <td>否</td>
+                <td>false</td>
+                <td>是否开启定位</td>
+              </tr>
+              <tr>
+                <td><code>discoverable</code></td>
+                <td>BOOLEAN</td>
+                <td>否</td>
+                <td>false</td>
+                <td>是否允许附近的人发现自己；为 true 时必须开启定位</td>
+              </tr>
+              <tr>
+                <td><code>createdAt</code></td>
+                <td>TIMESTAMP(3)</td>
+                <td>否</td>
+                <td>数据库当前时间</td>
+                <td>设置创建时间</td>
+              </tr>
+              <tr>
+                <td><code>updatedAt</code></td>
+                <td>TIMESTAMP(3)</td>
+                <td>否</td>
+                <td>Prisma 自动维护</td>
+                <td>最近设置更新时间</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <h3 id="db-location">UserLocation · 当前位置</h3>
+        <p class="muted">每位用户最多一条，覆盖更新；不保存地址文字和历史轨迹。</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>字段</th>
+                <th>数据库类型</th>
+                <th>可空</th>
+                <th>默认值 / 约束</th>
+                <th>字段说明</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>userId</code></td>
+                <td>TEXT</td>
+                <td>否</td>
+                <td>主键；外键 → User.id</td>
+                <td>所属用户；删除用户时级联删除</td>
+              </tr>
+              <tr>
+                <td><code>latitude</code></td>
+                <td>DOUBLE PRECISION</td>
+                <td>否</td>
+                <td>−90 ～ 90</td>
+                <td>纬度，单位为度</td>
+              </tr>
+              <tr>
+                <td><code>longitude</code></td>
+                <td>DOUBLE PRECISION</td>
+                <td>否</td>
+                <td>−180 ～ 180</td>
+                <td>经度，单位为度</td>
+              </tr>
+              <tr>
+                <td><code>accuracyMeters</code></td>
+                <td>DOUBLE PRECISION</td>
+                <td>否</td>
+                <td>&gt; 0 且 ≤ 100000</td>
+                <td>系统返回的定位精度，单位为米；附近搜索另按配置筛选</td>
+              </tr>
+              <tr>
+                <td><code>position</code></td>
+                <td>geography(Point,4326)</td>
+                <td>生成列</td>
+                <td>经纬度自动生成；GiST 索引</td>
+                <td>PostGIS 空间点，用于按米计算距离；无需客户端写入</td>
+              </tr>
+              <tr>
+                <td><code>capturedAt</code></td>
+                <td>TIMESTAMP(3)</td>
+                <td>否</td>
+                <td>客户端采集时间</td>
+                <td>本次坐标的采集时间</td>
+              </tr>
+              <tr>
+                <td><code>receivedAt</code></td>
+                <td>TIMESTAMP(3)</td>
+                <td>否</td>
+                <td>数据库当前时间；上报时更新</td>
+                <td>服务端接收本次位置的时间</td>
+              </tr>
+              <tr>
+                <td><code>expiresAt</code></td>
+                <td>TIMESTAMP(3)</td>
+                <td>否</td>
+                <td>capturedAt + 位置有效期</td>
+                <td>位置失效时间，默认采集后 6 小时</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <h3 id="db-request">FriendRequest · 好友申请</h3>
+        <p class="muted">保存双方申请及处理历史；申请表不再存 userLowId / userHighId。</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>字段</th>
+                <th>数据库类型</th>
+                <th>可空</th>
+                <th>默认值 / 约束</th>
+                <th>字段说明</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>id</code></td>
+                <td>TEXT</td>
+                <td>否</td>
+                <td>主键；Prisma 生成 CUID</td>
+                <td>申请记录 ID</td>
+              </tr>
+              <tr>
+                <td><code>requesterId</code></td>
+                <td>TEXT</td>
+                <td>否</td>
+                <td>外键 → User.id</td>
+                <td>发起申请的用户；删除用户时级联删除</td>
+              </tr>
+              <tr>
+                <td><code>recipientId</code></td>
+                <td>TEXT</td>
+                <td>否</td>
+                <td>外键 → User.id；不能等于 requesterId</td>
+                <td>接收申请的用户；删除用户时级联删除</td>
+              </tr>
+              <tr>
+                <td><code>status</code></td>
+                <td>FriendRequestStatus</td>
+                <td>否</td>
+                <td>PENDING</td>
+                <td>申请状态，见下方枚举表</td>
+              </tr>
+              <tr>
+                <td><code>requestedAt</code></td>
+                <td>TIMESTAMP(3)</td>
+                <td>否</td>
+                <td>数据库当前时间；创建时写入</td>
+                <td>发起申请的时间，用于排序</td>
+              </tr>
+              <tr>
+                <td><code>expiresAt</code></td>
+                <td>TIMESTAMP(3)</td>
+                <td>否</td>
+                <td>必须晚于 requestedAt</td>
+                <td>申请有效期截止时间，默认发起后 7 天</td>
+              </tr>
+              <tr>
+                <td><code>resolvedAt</code></td>
+                <td>TIMESTAMP(3)</td>
+                <td>是</td>
+                <td>PENDING 时为 NULL；其他状态非空</td>
+                <td>处理时间；拒绝后以此计算默认 24 小时冷静期；落库过期时记录 expiresAt</td>
+              </tr>
+              <tr>
+                <td><code>updatedAt</code></td>
+                <td>TIMESTAMP(3)</td>
+                <td>否</td>
+                <td>Prisma 自动维护</td>
+                <td>申请记录最近更新时间</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>好友申请状态 · FriendRequestStatus</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>值</th>
+                <th>含义 / 行为</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>PENDING</code></td>
+                <td>待处理；未过期时接收人可同意或拒绝，发起人可撤回</td>
+              </tr>
+              <tr>
+                <td><code>ACCEPTED</code></td>
+                <td>已通过，生成好友关系；后续删除好友不改变该申请状态</td>
+              </tr>
+              <tr>
+                <td><code>REJECTED</code></td>
+                <td>已拒绝；当前时间早于 resolvedAt + 冷静期时，不可再次申请</td>
+              </tr>
+              <tr>
+                <td><code>CANCELLED</code></td>
+                <td>发起人已撤回，无冷静期</td>
+              </tr>
+              <tr>
+                <td><code>EXPIRED</code></td>
+                <td>已过期，无冷静期；超时的 PENDING 记录在查询时也按过期展示</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note">
+          申请是否可发送、冷静期截止时间由后端计算，不另设数据库字段。双向去重使用 requesterId /
+          recipientId 的 LEAST / GREATEST 表达式部分唯一索引，仅约束 PENDING 记录。
+        </div>
+        <h3 id="db-friendship">Friendship · 好友关系</h3>
+        <p class="muted">一条记录代表双向好友；删除好友仅写 removedAt，保留历史。</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>字段</th>
+                <th>数据库类型</th>
+                <th>可空</th>
+                <th>默认值 / 约束</th>
+                <th>字段说明</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>id</code></td>
+                <td>TEXT</td>
+                <td>否</td>
+                <td>主键；Prisma 生成 CUID</td>
+                <td>好友关系 ID</td>
+              </tr>
+              <tr>
+                <td><code>userLowId</code></td>
+                <td>TEXT</td>
+                <td>否</td>
+                <td>外键 → User.id；C 排序规则下小于 userHighId</td>
+                <td>双方 ID 中较小的一方；删除用户时级联删除</td>
+              </tr>
+              <tr>
+                <td><code>userHighId</code></td>
+                <td>TEXT</td>
+                <td>否</td>
+                <td>外键 → User.id</td>
+                <td>双方 ID 中较大的一方；删除用户时级联删除</td>
+              </tr>
+              <tr>
+                <td><code>sourceRequestId</code></td>
+                <td>TEXT</td>
+                <td>否</td>
+                <td>唯一；外键 → FriendRequest.id</td>
+                <td>产生关系的已通过申请；删除申请时级联删除关系</td>
+              </tr>
+              <tr>
+                <td><code>createdAt</code></td>
+                <td>TIMESTAMP(3)</td>
+                <td>否</td>
+                <td>数据库当前时间；通过时写入</td>
+                <td>建立好友关系的时间</td>
+              </tr>
+              <tr>
+                <td><code>removedAt</code></td>
+                <td>TIMESTAMP(3)</td>
+                <td>是</td>
+                <td>NULL；非空时不能早于 createdAt</td>
+                <td>NULL 表示有效好友；非空表示已删除的时间</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <h3 id="db-notification">Notification · 复用现有表</h3>
+        <p class="muted">
+          不新增业务关联字段；content 保存通知正文，type
+          决定跳转到收到的申请或好友列表。新增通知类型见下表。
+        </p>
+        <h3>通知类型 · NotificationType（本次新增）</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>值</th>
+                <th>含义 / 行为</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>FRIEND_REQUEST</code></td>
+                <td>收到新好友申请</td>
+              </tr>
+              <tr>
+                <td><code>FRIEND_ACCEPTED</code></td>
+                <td>自己发出的申请已通过</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section id="s3">
+        <div class="section-head">
+          <span>03</span>
+          <h2>定位与地址</h2>
+        </div>
+        <h3>经纬度、精度与 position 的关系</h3>
+        <div class="grid">
+          <div class="card">
+            <svg
+              viewBox="0 0 540 280"
+              role="img"
+              aria-labelledby="coordinate-accuracy-title"
+              style="width: 100%; height: auto"
+            >
+              <title id="coordinate-accuracy-title">
+                经纬度确定中心点，accuracyMeters 表示估计误差范围
+              </title>
+              <rect x="1" y="1" width="538" height="278" rx="16" fill="#f4f8ff" />
+              <path
+                d="M40 90H500M40 160H500M40 230H500M130 45V250M260 45V250M390 45V250"
+                stroke="#dbe5f3"
+              />
+              <circle
+                cx="230"
+                cy="145"
+                r="80"
+                fill="#dceaff"
+                stroke="#3978cf"
+                stroke-dasharray="7 5"
+                stroke-width="2"
+              />
+              <circle cx="230" cy="145" r="7" fill="#245db4" />
+              <path d="M230 145H310" stroke="#245db4" stroke-width="2" />
+              <text x="247" y="133" font-size="15" fill="#245db4">40 米</text>
+              <path d="M230 145L330 72H482" fill="none" stroke="#245db4" />
+              <text x="332" y="61" font-size="17" fill="#1c304d">经纬度：定位中心点</text>
+              <text x="64" y="254" font-size="16" fill="#1c304d">
+                accuracyMeters = 40：估计误差半径
+              </text>
+            </svg>
+            <small>示意图。真实位置可能偏离中心点；精度数值越小，估计范围越小。</small>
+          </div>
+          <div class="card">
+            <h3>同一个地点，两种表示</h3>
+            <div class="flow">
+              <div class="node"><b>经度 + 纬度</b><small>116.4 + 39.9</small></div>
+              <span class="arrow" aria-hidden="true">→</span>
+              <div class="node"><b>数据库自动生成</b><small>position 空间点</small></div>
+            </div>
+            <pre><code>ST_SetSRID(
+  ST_MakePoint(longitude, latitude),
+  4326
+)::geography</code></pre>
+            <small>经度在前、纬度在后。4326 标识 WGS 84 坐标系；geography 用于地表距离计算。</small>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>字段</th>
+                <th>回答的问题</th>
+                <th>本项目作用</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>latitude / longitude</td>
+                <td>定位点在哪里？</td>
+                <td>浏览器返回；上传并保存两个坐标数值。</td>
+              </tr>
+              <tr>
+                <td>accuracyMeters</td>
+                <td>这个点大约有多准？</td>
+                <td>取自 coords.accuracy；附近搜索要求 ≤ 200 米。</td>
+              </tr>
+              <tr>
+                <td>position</td>
+                <td>数据库如何计算距离？</td>
+                <td>由经纬度生成空间点；用于 ST_Distance、ST_DWithin 与空间索引。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="flow">
+          <div class="node"><b>精度检查</b><small>accuracyMeters ≤ 200 米</small></div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="node"><b>两个 position</b><small>自己与候选人的空间点</small></div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="node"><b>计算距离</b><small>范围 ≤ 1000 米</small></div>
+        </div>
+        <small
+          >40 米精度与“离好友 40 米”含义不同：前者是定位误差估计，后者是两个定位点之间的距离。
+          <a href="https://developer.mozilla.org/en-US/docs/Web/API/GeolocationCoordinates/accuracy"
+            >精度定义</a
+          >
+          ·
+          <a href="https://postgis.net/docs/ST_MakePoint.html">空间点定义</a>
+        </small>
+
+        <h3 id="location-permission">定位流程：先拿权限，再要位置</h3>
+        <p>
+          页面每次采集前先调用 <code>requestAccess()</code>：macOS 上 Chromium
+          不会自己申请系统定位授权（未授权时会一直等到 15 秒超时），所以由主进程通过 koffi 调用
+          CoreLocation 弹出系统授权框，并通过代理回调拿到用户的选择。拿到"允许"后，页面才调用
+          <code>navigator.geolocation</code> 获取经纬度，再上传坐标、解析地址。
+        </p>
+        <div class="lp-diagram">
+          <div class="lp-lanes">
+            <div></div>
+            <div class="lp-page" style="color: var(--c)">页面</div>
+            <div class="lp-preload" style="color: var(--c)">preload</div>
+            <div class="lp-mainp" style="color: var(--c)">主进程</div>
+            <div class="lp-macos" style="color: var(--c)">macOS</div>
+            <div class="lp-api" style="color: var(--c)">后端</div>
+          </div>
+          <div class="lp-rows" id="lp-rows"></div>
+        </div>
+        <ul>
+          <li>
+            <b>点不允许：</b>第 5 步返回 false，页面显示「定位权限未开启…」，不再调用定位接口。
+          </li>
+          <li><b>之前已允许 / 已拒绝：</b>第 4 步不弹窗，直接返回结果。</li>
+          <li><b>Windows：</b>第 4、5 步直接返回 true，由系统定位设置决定能否定位。</li>
+          <li><b>地址解析失败：</b>只影响第 9 步，坐标已同步，界面显示「暂时无法解析」。</li>
+        </ul>
+        <h3 id="lp-code">定位权限代码讲解</h3>
+        <p>
+          按流程图第 2～6
+          步逐行讲解（点击流程图中的这几步可跳到对应位置）：左边是代码节选，右边是这一行在做什么。
+        </p>
+        <div id="lp-steps"></div>
+      </section>
+      <section id="s4">
+        <div class="section-head">
+          <span>04</span>
+          <h2>附近搜索</h2>
+        </div>
+        <div class="flow">
+          <div class="node"><b>检查自己</b><small>开启定位 · 已上传 · 未过期</small></div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="node"><b>空间过滤</b><small>ST_DWithin ≤ 1,000 米</small></div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="node"><b>筛选候选人</b><small>开启定位且允许被发现</small></div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="node"><b>双方质量检查</b><small>6 小时内 · 精度 ≤ 200 米</small></div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="node"><b>整理响应</b><small>按距离排序</small></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>检查项</th>
+                <th>规则</th>
+                <th>结果</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>自己</td>
+                <td>未开启 / 无位置 / 过期 / 精度不合格</td>
+                <td>拒绝搜索并返回对应错误码</td>
+              </tr>
+              <tr>
+                <td>其他用户</td>
+                <td>排除自己；允许被发现；位置与精度合格</td>
+                <td>进入距离筛选</td>
+              </tr>
+              <tr>
+                <td>空间距离</td>
+                <td>PostGIS geography，单位米</td>
+                <td>按真实距离 + userId 排序</td>
+              </tr>
+              <tr>
+                <td>返回信息</td>
+                <td>用户 ID、用户名、关系/申请状态、距离档位</td>
+                <td>不返回对方经纬度</td>
+              </tr>
+              <tr>
+                <td>距离展示</td>
+                <td>按 50 米向上取整</td>
+                <td>例如 121 米 → 150 米</td>
+              </tr>
+              <tr>
+                <td>发送申请前</td>
+                <td>服务端再次检查目标是否仍在附近</td>
+                <td>避免使用过时列表直接发起申请</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 id="distance-calculation">两组经纬度如何计算距离</h3>
+        <p>
+          输入 A 点（经度 lon₁，纬度 lat₁）与 B 点（经度 lon₂，纬度 lat₂），求两点之间的地表最短距离
+          d，单位为米。
+        </p>
+        <h3>计算方式：WGS 84 椭球测地线</h3>
+        <p>
+          项目通过 PostGIS 的 geography 类型在 WGS 84 椭球面上计算距离，业务代码不自行实现距离公式。
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>项目计算项</th>
+                <th>方式</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>地球模型</td>
+                <td>
+                  WGS 84 椭球：赤道半径 a = 6,378,137 米，扁率 f = 1 /
+                  298.257223563；考虑赤道与极地方向的曲率差异
+                </td>
+              </tr>
+              <tr>
+                <td>计算问题</td>
+                <td>已知两点经纬度，求椭球表面的最短测地线长度，即测地线反解问题</td>
+              </tr>
+              <tr>
+                <td>数据库入口</td>
+                <td>
+                  <code>ST_Distance(pointA, pointB)</code>；两个参数均为
+                  geography，默认按椭球计算，返回米
+                </td>
+              </tr>
+              <tr>
+                <td>坐标转换</td>
+                <td>
+                  <code>ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)::geography</code
+                  >；先经度，后纬度
+                </td>
+              </tr>
+              <tr>
+                <td>范围判断</td>
+                <td>
+                  <code>ST_DWithin(pointA, pointB, radiusMeters)</code>；默认筛选 1,000
+                  米内用户，排序使用未取整的计算距离
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted">
+          实现依据：<a href="https://www.postgis.net/docs/manual-dev/en/ST_Distance.html"
+            >PostGIS 距离计算</a
+          >、<a href="https://geographiclib.sourceforge.io/html/python/geodesics.html"
+            >椭球测地线反解</a
+          >。
+        </p>
+        <div class="note">
+          计算只使用双方经纬度；地址名称和定位精度不参与距离公式。定位精度用于筛选坐标质量，距离结果表示地表距离。
+        </div>
+      </section>
+      <section id="s5">
+        <div class="section-head">
+          <span>05</span>
+          <h2>好友申请与关系</h2>
+        </div>
+        <div class="flow">
+          <div class="node"><b>A 发出申请</b><small>幂等键 + 附近资格</small></div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="node"><b>PENDING</b><small>仅记录申请，未成为好友</small></div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="node"><b>B 同意申请</b><small>同一事务更新申请和关系</small></div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="node">
+            <b>ACCEPTED + Friendship</b><small>通知 A；双方好友列表可见</small>
+          </div>
+        </div>
+        <h3>申请状态转换</h3>
+        <div class="states">
+          <div class="state good">
+            <b>接收人同意</b><code>PENDING → ACCEPTED</code><small>创建好友关系</small>
+          </div>
+          <div class="state">
+            <b>接收人拒绝</b><code>PENDING → REJECTED</code><small>不创建关系</small>
+          </div>
+          <div class="state">
+            <b>发起人撤回</b><code>PENDING → CANCELLED</code><small>不创建关系</small>
+          </div>
+          <div class="state">
+            <b>超过 7 天</b><code>PENDING → EXPIRED</code><small>查询即时判定；定时任务落库</small>
+          </div>
+        </div>
+        <h3>交易边界与业务规则</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>场景</th>
+                <th>规则</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>双方同时申请</td>
+                <td>复用同一条待处理申请；不会自动互相通过</td>
+              </tr>
+              <tr>
+                <td>重复点击 / 网络重试</td>
+                <td>双方已有待处理申请时直接返回该申请，不重复创建</td>
+              </tr>
+              <tr>
+                <td>同意申请</td>
+                <td>校验接收人和有效期；事务内更新状态、建立关系、写通知</td>
+              </tr>
+              <tr>
+                <td>通知推送</td>
+                <td>事务提交后发布事件；推送失败不回滚申请结果</td>
+              </tr>
+              <tr>
+                <td>删除好友</td>
+                <td>任一方可删除；设置 removedAt；原申请仍为 ACCEPTED</td>
+              </tr>
+              <tr>
+                <td>再次申请</td>
+                <td>仅拒绝申请后，双方冷却 24 小时；撤回、过期、删除好友不触发冷却</td>
+              </tr>
+              <tr>
+                <td>过期维护</td>
+                <td>每 60 秒更新过期申请</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section id="s6">
+        <div class="section-head">
+          <span>06</span>
+          <h2>接口与配置</h2>
+        </div>
+        <p>
+          <span class="tag">全部接口需 JWT</span><span class="tag">前端使用生成的 API 客户端</span
+          ><span class="tag">错误体统一 error.code / message / details</span>
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>方法</th>
+                <th>路径</th>
+                <th>用途</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>GET</td>
+                <td><code>/locations/config</code></td>
+                <td>读取统一配置</td>
+              </tr>
+              <tr>
+                <td>GET / PATCH</td>
+                <td><code>/locations/settings</code></td>
+                <td>读取 / 修改定位与可发现设置</td>
+              </tr>
+              <tr>
+                <td>GET / PUT / DELETE</td>
+                <td><code>/locations/me</code></td>
+                <td>读取 / 上报 / 删除自己的位置</td>
+              </tr>
+              <tr>
+                <td>POST</td>
+                <td><code>/locations/address</code></td>
+                <td>提交 latitude、longitude；后端调用高德并返回 label</td>
+              </tr>
+              <tr>
+                <td>GET</td>
+                <td><code>/locations/nearby</code></td>
+                <td>查询附近用户</td>
+              </tr>
+              <tr>
+                <td>POST</td>
+                <td><code>/friends/requests</code></td>
+                <td>发送申请：recipientUserId</td>
+              </tr>
+              <tr>
+                <td>GET</td>
+                <td><code>/friends/requests</code></td>
+                <td>incoming / outgoing；可按状态筛选</td>
+              </tr>
+              <tr>
+                <td>POST</td>
+                <td><code>/friends/requests/:requestId/accept</code></td>
+                <td>接收人同意</td>
+              </tr>
+              <tr>
+                <td>POST</td>
+                <td><code>/friends/requests/:requestId/reject</code></td>
+                <td>接收人拒绝</td>
+              </tr>
+              <tr>
+                <td>POST</td>
+                <td><code>/friends/requests/:requestId/cancel</code></td>
+                <td>发起人撤回</td>
+              </tr>
+              <tr>
+                <td>GET</td>
+                <td><code>/friends</code></td>
+                <td>返回完整好友列表</td>
+              </tr>
+              <tr>
+                <td>DELETE</td>
+                <td><code>/friends/:relationshipId</code></td>
+                <td>软删除好友关系</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>代码配置对象 · 不使用业务环境变量</h3>
+        <p><code>apps/api/src/config/nearby-friends.config.ts</code></p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>配置路径</th>
+                <th>当前值</th>
+                <th>作用</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>location.ttlMs</code></td>
+                <td>6 小时</td>
+                <td>查询位置有效期</td>
+              </tr>
+              <tr>
+                <td><code>location.refreshIntervalMs</code></td>
+                <td>60 秒</td>
+                <td>前端定位周期</td>
+              </tr>
+              <tr>
+                <td><code>location.maxClockSkewMs</code></td>
+                <td>30 秒</td>
+                <td>容许设备时钟领先</td>
+              </tr>
+              <tr>
+                <td><code>nearby.radiusMeters</code></td>
+                <td>1,000 米</td>
+                <td>搜索半径</td>
+              </tr>
+              <tr>
+                <td><code>nearby.maxAccuracyMeters</code></td>
+                <td>200 米</td>
+                <td>双方精度阈值</td>
+              </tr>
+              <tr>
+                <td><code>nearby.distanceBucketMeters</code></td>
+                <td>50 米</td>
+                <td>距离档位</td>
+              </tr>
+              <tr>
+                <td><code>friendRequest.ttlMs / cooldownMs</code></td>
+                <td>7 天 / 24 小时</td>
+                <td>申请有效期 / 拒绝后冷却期</td>
+              </tr>
+              <tr>
+                <td><code>list.refetchIntervalMs</code></td>
+                <td>30 秒</td>
+                <td>列表自动刷新</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section id="s7">
+        <div class="section-head">
+          <span>07</span>
+          <h2>启动与联调</h2>
+        </div>
+        <div class="grid">
+          <div class="card">
+            <h3>首次准备</h3>
+            <pre>
+pnpm install
+docker compose -f docker-compose.yml \
+  -f compose.postgis.yml up -d postgres redis minio
+pnpm db:migrate:deploy
+pnpm db:generate</pre>
+            <small>现有数据库需具备 PostGIS；迁移会创建扩展、表、索引与约束。</small>
+          </div>
+          <div class="card">
+            <h3>分别运行两个服务</h3>
+            <pre>
+# 终端一
+pnpm dev:api
+
+# 终端二
+pnpm dev:desktop</pre>
+            <small>桌面端默认端口 5173；后端 3000。桌面端不会自动启动 API。</small>
+          </div>
+        </div>
+        <h3>同一电脑双账号联调</h3>
+        <pre>
+# 在项目根目录另开终端，复用已启动的前端服务
+env -u ELECTRON_RUN_AS_NODE \
+  ELECTRON_RENDERER_URL=http://localhost:5173 \
+  pnpm --filter desktop exec electron .</pre>
+        <div class="flow">
+          <div class="node"><b>两个窗口分别登录</b><small>账号 A / 账号 B</small></div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="node"><b>双方开启定位与发现</b><small>坐标已同步 · 精度合格</small></div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="node"><b>A 找到 B 并申请</b><small>收到 / 发出列表核对</small></div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="node"><b>B 同意，双方检查</b><small>好友列表 + 通知</small></div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="node"><b>删除与异常验证</b><small>冷却 · 过期 · 权限 · 限流</small></div>
+        </div>
+      </section>
+      <section id="s8">
+        <div class="section-head">
+          <span>08</span>
+          <h2>代码结构与实现说明</h2>
+        </div>
+        <h3>目录结构</h3>
+        <pre>
+apps/desktop/
+├── electron/
+│   ├── main.ts                       窗口启动，注册定位权限处理
+│   ├── preload.ts                    向页面暴露 requestAccess / revokeAccess
+│   ├── system-location.ts            macOS 系统定位授权：koffi 调用 CoreLocation
+│   ├── ipc/location.channels.ts      定位 IPC 名称与类型
+│   └── ipc/location.ipc.ts           requestAccess 处理与 geolocation 同步权限检查
+└── src/
+    ├── pages/FriendsPage.tsx          开关、附近列表、申请与好友操作
+    ├── components/friends/
+    │   ├── LocationProvider.tsx       采集调度、上传、状态和生命周期
+    │   └── CurrentLocationAddress.tsx 地址查询、内存缓存与回退展示
+    └── api/
+        ├── browser-position.ts        新增：包装 navigator.geolocation
+        ├── location-address.ts        调整：通过后端解析地址
+        └── friends.ts                 调用生成的好友与定位 API
+
+apps/api/src/
+├── config/
+│   ├── nearby-friends.config.ts      采集、搜索、申请的统一业务配置
+│   └── env.ts                        新增 AMAP_WEB_SERVICE_KEY 配置项
+└── modules/
+    ├── locations/
+    │   ├── locations.controller.ts   HTTP 路由、鉴权、DTO 与限流
+    │   ├── locations.service.ts      设置、位置存储和附近空间查询
+    │   ├── location-address.service.ts 新增：调用高德转换坐标与解析地址
+    │   ├── friend-request-maintenance.service.ts 过期申请状态更新
+    │   ├── dto/location.dto.ts       新增地址请求和响应 DTO
+    │   └── locations.module.ts       注册并注入地址解析服务
+    └── friends/
+        ├── friends.controller.ts     申请、处理申请、好友列表与删除路由
+        └── friends.service.ts        幂等、事务、授权、关系与通知
+
+apps/api/prisma/                      数据模型、迁移与空间索引
+packages/api-contract/openapi.json    生成的前后端 API 契约</pre>
+      </section>
+      <footer class="foot">Photo Lab · 附近好友功能实现 · 更新于 2026-10-14</footer>
+    </main>
+    <script>
+      // 定位权限流程图与代码讲解的数据。
+      const LANES = ['page', 'preload', 'mainp', 'macos', 'api'];
+      const LANE_NAMES = {
+        page: '页面',
+        preload: 'preload',
+        mainp: '主进程',
+        macos: 'macOS',
+        api: '后端',
+      };
+
+      const ROWS = [
+        { id: 'a', step: 1, from: 0, to: 0, text: '用户打开开关，开始一次采集' },
+        { id: 'b', step: 2, from: 0, to: 2, text: 'requestAccess() 经 preload：先拿权限' },
+        { id: 'c', step: 3, from: 2, to: 2, text: '校验来源，记下开关已开' },
+        { id: 'd', step: 4, from: 2, to: 3, text: '查授权状态，未决定就申请', isNew: true },
+        { id: 'e', step: 4, from: 3, to: 3, text: '弹出系统授权框，用户选择' },
+        {
+          id: 'f',
+          step: 5,
+          from: 3,
+          to: 2,
+          text: '代理回调：授权状态变了',
+          dashed: true,
+          isNew: true,
+        },
+        { id: 'g', step: 5, from: 2, to: 0, text: '返回 granted：true / false', dashed: true },
+        { id: 'h', step: 6, from: 0, to: 2, text: 'getCurrentPosition → Chromium 同步检查权限' },
+        {
+          id: 'i',
+          step: 7,
+          from: 3,
+          to: 0,
+          text: 'Chromium 从 CoreLocation 拿到经纬度',
+          dashed: true,
+        },
+        { id: 'j', step: 8, from: 0, to: 4, text: 'PUT /locations/me 上传坐标' },
+        { id: 'k', step: 9, from: 0, to: 4, text: 'POST /locations/address 解析地址' },
+      ];
+
+      const STEPS = [
+        {
+          n: 2,
+          lane: 'page',
+          isNew: true,
+          title: '先拿权限，再定位（capture 的主线）',
+          what: '每次采集都按顺序做两件事：先 await requestAccess() 拿到系统授权结果；是 true 才去定位。',
+          why: '权限和定位分成两步写，读代码时一眼能看出弹窗发生在哪里；被拒绝时也不用等定位失败再猜原因。',
+          file: 'apps/desktop/src/components/friends/LocationProvider.tsx:89 · electron/preload.ts:21',
+          code: [
+            [
+              'const granted = await window.locationControl.requestAccess();',
+              '① 先拿权限：需要时弹窗，等用户选完才返回',
+              true,
+            ],
+            ['if (!valid()) return;', '等待期间用户关了开关 / 退出登录 → 放弃这次'],
+            ['if (!granted) {', '系统没授权'],
+            ['  permissionDenied.current = true;', '暂停自动重试，等用户手动刷新'],
+            ['  setError(PERMISSION_DENIED_MESSAGE);', '显示「定位权限未开启…」'],
+            ['  return;', '不再去定位'],
+            ['}', ''],
+            [
+              'const position = await getBrowserPosition(controller.signal);',
+              '② 再定位：调用 navigator.geolocation.getCurrentPosition',
+              true,
+            ],
+            ['', ''],
+            [
+              'requestAccess: () => ipcRenderer.invoke(locationIpcChannels.requestAccess),',
+              '【preload】把调用转成 IPC 消息 location:request-access',
+            ],
+          ],
+        },
+        {
+          n: 3,
+          lane: 'mainp',
+          title: '主进程收到 requestAccess',
+          what: '确认消息来自我们自己的主窗口，记下"开关已开"，然后调用 ensureSystemLocationAccess() 申请系统授权，把结果原样返回给页面。',
+          why: '只有可信的主窗口才能打开定位；关闭开关、页面跳转、窗口销毁都会把开关重新置为关。',
+          file: 'apps/desktop/electron/ipc/location.ipc.ts:30',
+          code: [
+            [
+              'ipcMain.handle(locationIpcChannels.requestAccess, (event) => {',
+              '收到页面的 requestAccess',
+            ],
+            ['  assertTrustedSender(event);', '不是我们的主窗口发来的 → 抛错'],
+            ['  enabled = true;', '记下：应用层允许定位'],
+            [
+              '  return ensureSystemLocationAccess();',
+              '申请系统授权；返回值就是页面拿到的 granted',
+              true,
+            ],
+            ['});', ''],
+          ],
+        },
+        {
+          n: 4,
+          lane: 'macos',
+          isNew: true,
+          title: '唤起系统弹窗',
+          what: '先查系统授权状态。已允许 / 已拒绝就直接返回；未决定就调用 requestWhenInUseAuthorization 弹出系统授权框，然后等待用户选择（最多 120 秒）。',
+          why: 'Chromium 不会自己弹系统授权框，只会干等；所以必须由主进程主动申请。Windows 不需要这一步，直接返回 true。',
+          file: 'apps/desktop/electron/system-location.ts:26',
+          code: [
+            ["if (platform !== 'darwin') return true;", '不是 macOS：交给系统自己处理'],
+            ['const manager = load();', '拿到 CoreLocation 的定位管理器（koffi，见第 5 步）'],
+            [
+              'const status = manager.getStatus();',
+              '查当前授权状态：0 未决定 1 受限 2 拒绝 3/4 允许',
+            ],
+            [
+              'if (status !== NotDetermined) return isAuthorized(status);',
+              '已经决定过：不弹窗，直接返回',
+            ],
+            [
+              'timer = setTimeout(() => resolve(manager.getStatus()), PROMPT_TIMEOUT_MS);',
+              '兜底：120 秒都没选，按当时的状态（未决定 = 不允许）返回',
+            ],
+            [
+              'return isAuthorized(await Promise.race([manager.requestWhenInUse(), timeout]));',
+              '弹窗并等待用户选择（第 5 步通知结果）',
+              true,
+            ],
+          ],
+        },
+        {
+          n: 5,
+          lane: 'mainp',
+          isNew: true,
+          title: '等用户选择：系统回调，不轮询',
+          what: 'requestWhenInUse() 先把 Promise 的 resolve 存起来，再唤起弹窗。用户选完后，macOS 调用代理对象的 locationManagerDidChangeAuthorization:，回调里把新状态交给等待中的 Promise。',
+          why: '这个代理对象是用 koffi 在运行时创建的 Objective-C 类，它唯一的方法就是我们注册的 JS 函数。回调由 Electron 主线程的消息循环分发。',
+          file: 'apps/desktop/electron/system-location.ts:70 · koffi 部分',
+          code: [
+            ["const objc = koffi.load('/usr/lib/libobjc.A.dylib');", '加载 Objective-C 运行时'],
+            [
+              "koffi.load('.../CoreLocation.framework/CoreLocation');",
+              '加载 CoreLocation，CLLocationManager 类才存在',
+            ],
+            [
+              'const onAuthorizationChange = koffi.register(() => {',
+              '把一个 JS 函数注册成可被系统调用的 C 函数指针',
+              true,
+            ],
+            ['  const status = getStatus();', '读最新授权状态'],
+            [
+              '  if (status === NotDetermined) return;',
+              '还没选（设置代理时系统会先回调一次）→ 忽略',
+            ],
+            [
+              '  for (const resolve of waiters.splice(0)) resolve(status);',
+              '通知所有在等的人：用户选好了',
+            ],
+            ['}, ...);', ''],
+            [
+              "const delegateClass = allocateClassPair(getClass('NSObject'), 'PhotoLabLocationDelegate', 0);",
+              '运行时新建一个 Objective-C 类',
+            ],
+            [
+              "addMethod(delegateClass, selector('locationManagerDidChangeAuthorization:'), onAuthorizationChange, 'v@:@');",
+              '给它加上 CoreLocation 约定的回调方法，实现就是上面的 JS 函数',
+              true,
+            ],
+            [
+              "sendVoidWithObject(instance, selector('setDelegate:'), delegate);",
+              '等价于 manager.delegate = delegate',
+            ],
+            ['requestWhenInUse: () => new Promise((resolve) => {', ''],
+            ['  waiters.push(resolve);', '先登记：等结果'],
+            [
+              '  sendVoid(instance, requestWhenInUseAuthorization);',
+              '再唤起弹窗：[manager requestWhenInUseAuthorization]',
+              true,
+            ],
+            ['}),', ''],
+          ],
+        },
+        {
+          n: 6,
+          lane: 'mainp',
+          title: '定位时 Chromium 来问权限：同步检查',
+          what: '页面调用 getCurrentPosition 后，Chromium 调用主进程登记的权限处理函数。系统授权已经在前面完成，这里只做同步判断，立即回答。',
+          why: '应用规则 + 系统状态都满足才放行；任何一项不满足，页面收到错误码 1。',
+          file: 'apps/desktop/electron/ipc/location.ipc.ts:41',
+          code: [
+            ['const allowed = (sender, permission, details) =>', '全部满足才放行'],
+            ['  enabled &&', '第 3 步记下的开关是开的'],
+            ['  sender === webContents &&', '来自我们的主窗口'],
+            ["  permission === 'geolocation' &&", '申请的是定位权限'],
+            ['  details.isMainFrame === true &&', '是主页面，不是页面里嵌的 iframe'],
+            ["  trusted(details.requestingUrl ?? '') &&", '页面地址是我们自己的'],
+            ['  isSystemLocationAuthorized();', 'macOS 已授权（只读状态，不弹窗）', true],
+            ['', ''],
+            [
+              'setPermissionRequestHandler((sender, permission, callback, details) =>',
+              'Chromium 每次要权限都会进到这里',
+            ],
+            ['  callback(allowed(sender, permission, details)),', '同步回答：放行 / 拒绝', true],
+            [');', ''],
+          ],
+        },
+      ];
+
+      const WALKTHROUGH = STEPS;
+      const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+      function renderRows() {
+        const linked = new Set(WALKTHROUGH.map((step) => step.n));
+        const container = document.getElementById('lp-rows');
+        const guides = `<div class="lp-guides"><span></span>${LANES.map(() => '<i></i>').join('')}</div>`;
+        container.innerHTML =
+          guides +
+          ROWS.map((r) => {
+            const lane = `lp-${LANES[r.from]}`;
+            const badge = r.isNew ? '<span class="lp-new">新增</span>' : '';
+            const num = ROWS.find((row) => row.step === r.step) === r ? r.step : '';
+            const link = linked.has(r.step) ? `data-link="${r.step}"` : '';
+            if (r.from === r.to) {
+              return `<div class="lp-row" ${link}><div class="lp-num">${num}</div>
+              <div class="lp-self ${lane}" style="grid-column:${r.from + 2}">${esc(r.text)}${badge}</div></div>`;
+            }
+            const lo = Math.min(r.from, r.to);
+            const hi = Math.max(r.from, r.to);
+            const dir = r.to > r.from ? 'lp-right' : 'lp-left';
+            return `<div class="lp-row" ${link}><div class="lp-num">${num}</div>
+            <div class="lp-arrow ${dir} ${r.dashed ? 'lp-dashed' : ''} ${lane}" style="grid-column:${lo + 2} / ${hi + 3};margin:0 calc(50% / ${hi - lo + 1})">
+              <span class="lp-label">${esc(r.text)}${badge}</span></div></div>`;
+          }).join('');
+        container
+          .querySelectorAll('[data-link]')
+          .forEach((row) =>
+            row.addEventListener('click', () =>
+              document.getElementById(`lp-step-${row.dataset.link}`).scrollIntoView(),
+            ),
+          );
+      }
+
+      function renderCode(lines) {
+        return `<div class="lp-code">${lines
+          .map(([code, note, hl]) => {
+            const blank = code === '' && note === '';
+            return `<div class="lp-line ${hl ? 'lp-hl' : ''}"><pre>${blank ? ' ' : esc(code)}</pre><div>${esc(note)}</div></div>`;
+          })
+          .join('')}</div>`;
+      }
+
+      function renderSteps() {
+        document.getElementById('lp-steps').innerHTML = WALKTHROUGH.map(
+          (s) => `<div class="lp-step lp-${s.lane}" id="lp-step-${s.n}">
+            <div class="lp-step-head"><b>${s.n}</b><h4>${esc(s.title)}</h4>
+              <span class="lp-tag">${LANE_NAMES[s.lane]}</span>
+              ${s.isNew ? '<span class="lp-new">新增</span>' : ''}</div>
+            <p>${esc(s.what)}</p>
+            <p class="lp-why">为什么：${esc(s.why)}</p>
+            <div class="lp-path">${esc(s.file)}</div>
+            ${renderCode(s.code)}
+          </div>`,
+        ).join('');
+      }
+
+      renderRows();
+      renderSteps();
+    </script>
+  </body>
+</html>

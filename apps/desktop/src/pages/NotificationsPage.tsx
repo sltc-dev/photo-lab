@@ -329,6 +329,20 @@ function NotificationDetailPage({ notificationId }: { notificationId: string }) 
           <Text className={styles.articleBody} mt="lg">
             {detailQuery.data.content}
           </Text>
+          {detailQuery.data.type === 'FRIEND_REQUEST' ||
+          detailQuery.data.type === 'FRIEND_ACCEPTED' ? (
+            <Button
+              component={Link}
+              mt="lg"
+              to={
+                detailQuery.data.type === 'FRIEND_ACCEPTED'
+                  ? '/friends?tab=friends'
+                  : '/friends?tab=incoming'
+              }
+            >
+              查看好友申请
+            </Button>
+          ) : null}
         </article>
       )}
     </Stack>
@@ -337,6 +351,8 @@ function NotificationDetailPage({ notificationId }: { notificationId: string }) 
 
 function NotificationTypeBadge({ notification }: { notification: AppNotification }) {
   const isUpgrade = notification.type === 'VERSION_UPGRADE';
+  const isFriend =
+    notification.type === 'FRIEND_REQUEST' || notification.type === 'FRIEND_ACCEPTED';
   const isCritical = notification.level === 'CRITICAL';
   const color = isCritical
     ? 'red'
@@ -348,7 +364,7 @@ function NotificationTypeBadge({ notification }: { notification: AppNotification
 
   return (
     <Badge color={color} size="sm" variant="light">
-      {isUpgrade ? '版本更新' : '系统通知'}
+      {isFriend ? '好友通知' : isUpgrade ? '版本更新' : '系统通知'}
     </Badge>
   );
 }

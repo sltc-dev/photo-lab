@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { CreateData, CreateErrors, CreateMaterialPhotoCommentData, CreateMaterialPhotoCommentErrors, CreateMaterialPhotoCommentResponses, CreateProjectData, CreateProjectErrors, CreateProjectResponses, CreateResponses, DeleteMaterialPhotoCommentData, DeleteMaterialPhotoCommentErrors, DeleteStickerData, DeleteStickerResponses, FavoriteMaterialPhotoData, FavoriteMaterialPhotoErrors, FavoriteMaterialPhotoResponses, GetEditedPhotoStateData, GetEditedPhotoStateErrors, GetEditedPhotoStateResponses, GetNotificationData, GetNotificationErrors, GetNotificationResponses, GetOriginalPhotoData, GetOriginalPhotoErrors, GetOriginalPhotoResponses, GetProjectData, GetProjectErrors, GetProjectResponses, GetThumbnailPhotoData, GetThumbnailPhotoErrors, GetThumbnailPhotoResponses, HealthData, HealthResponses, LikeMaterialPhotoData, LikeMaterialPhotoErrors, LikeMaterialPhotoResponses, ListFavoritePhotosData, ListFavoritePhotosErrors, ListFavoritePhotosResponses, ListMaterialPhotoCommentsData, ListMaterialPhotoCommentsErrors, ListMaterialPhotoCommentsResponses, ListNotificationsData, ListNotificationsErrors, ListNotificationsResponses, ListPhotosData, ListPhotosErrors, ListPhotosResponses, ListProjectPhotosData, ListProjectPhotosErrors, ListProjectPhotosResponses, ListProjectsData, ListProjectsErrors, ListProjectsResponses, ListStickersData, ListStickersResponses, ListUserProjectsData, ListUserProjectsErrors, ListUserProjectsResponses, ListUsersData, ListUsersErrors, ListUsersResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, MarkNotificationReadData, MarkNotificationReadErrors, MarkNotificationReadResponses, MeData, MeErrors, MeResponses, RefreshData, RefreshErrors, RefreshResponses, RegisterData, RegisterErrors, RegisterResponses, SaveEditedPhotoData, SaveEditedPhotoErrors, SaveEditedPhotoResponses, UnfavoriteMaterialPhotoData, UnfavoriteMaterialPhotoErrors, UnfavoriteMaterialPhotoResponses, UnlikeMaterialPhotoData, UnlikeMaterialPhotoErrors, UnlikeMaterialPhotoResponses, UploadPhotoData, UploadPhotoErrors, UploadPhotoResponses, UploadStickerData, UploadStickerResponses } from './types.gen';
+import type { AcceptFriendRequestData, AcceptFriendRequestErrors, AcceptFriendRequestResponses, CancelFriendRequestData, CancelFriendRequestErrors, CancelFriendRequestResponses, CreateData, CreateErrors, CreateMaterialPhotoCommentData, CreateMaterialPhotoCommentErrors, CreateMaterialPhotoCommentResponses, CreateProjectData, CreateProjectErrors, CreateProjectResponses, CreateResponses, DeleteMaterialPhotoCommentData, DeleteMaterialPhotoCommentErrors, DeleteMyLocationData, DeleteMyLocationErrors, DeleteMyLocationResponses, DeleteStickerData, DeleteStickerResponses, FavoriteMaterialPhotoData, FavoriteMaterialPhotoErrors, FavoriteMaterialPhotoResponses, GetEditedPhotoStateData, GetEditedPhotoStateErrors, GetEditedPhotoStateResponses, GetLocationSettingsData, GetLocationSettingsErrors, GetLocationSettingsResponses, GetMyLocationData, GetMyLocationErrors, GetMyLocationResponses, GetNearbyFriendsConfigData, GetNearbyFriendsConfigErrors, GetNearbyFriendsConfigResponses, GetNearbyUsersData, GetNearbyUsersErrors, GetNearbyUsersResponses, GetNotificationData, GetNotificationErrors, GetNotificationResponses, GetOriginalPhotoData, GetOriginalPhotoErrors, GetOriginalPhotoResponses, GetProjectData, GetProjectErrors, GetProjectResponses, GetThumbnailPhotoData, GetThumbnailPhotoErrors, GetThumbnailPhotoResponses, HealthData, HealthResponses, LikeMaterialPhotoData, LikeMaterialPhotoErrors, LikeMaterialPhotoResponses, ListFavoritePhotosData, ListFavoritePhotosErrors, ListFavoritePhotosResponses, ListFriendRequestsData, ListFriendRequestsErrors, ListFriendRequestsResponses, ListFriendsData, ListFriendsErrors, ListFriendsResponses, ListMaterialPhotoCommentsData, ListMaterialPhotoCommentsErrors, ListMaterialPhotoCommentsResponses, ListNotificationsData, ListNotificationsErrors, ListNotificationsResponses, ListPhotosData, ListPhotosErrors, ListPhotosResponses, ListProjectPhotosData, ListProjectPhotosErrors, ListProjectPhotosResponses, ListProjectsData, ListProjectsErrors, ListProjectsResponses, ListStickersData, ListStickersResponses, ListUserProjectsData, ListUserProjectsErrors, ListUserProjectsResponses, ListUsersData, ListUsersErrors, ListUsersResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutErrors, LogoutResponses, MarkNotificationReadData, MarkNotificationReadErrors, MarkNotificationReadResponses, MeData, MeErrors, MeResponses, RefreshData, RefreshErrors, RefreshResponses, RegisterData, RegisterErrors, RegisterResponses, RejectFriendRequestData, RejectFriendRequestErrors, RejectFriendRequestResponses, RemoveFriendData, RemoveFriendErrors, RemoveFriendResponses, ReportLocationData, ReportLocationErrors, ReportLocationResponses, ResolveLocationAddressData, ResolveLocationAddressErrors, ResolveLocationAddressResponses, SaveEditedPhotoData, SaveEditedPhotoErrors, SaveEditedPhotoResponses, SendFriendRequestData, SendFriendRequestErrors, SendFriendRequestResponses, UnfavoriteMaterialPhotoData, UnfavoriteMaterialPhotoErrors, UnfavoriteMaterialPhotoResponses, UnlikeMaterialPhotoData, UnlikeMaterialPhotoErrors, UnlikeMaterialPhotoResponses, UpdateLocationSettingsData, UpdateLocationSettingsErrors, UpdateLocationSettingsResponses, UploadPhotoData, UploadPhotoErrors, UploadPhotoResponses, UploadStickerData, UploadStickerResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -249,4 +249,110 @@ export const create = <ThrowOnError extends boolean = false>(options: Options<Cr
         'Content-Type': 'application/json',
         ...options.headers
     }
+});
+
+export const resolveLocationAddress = <ThrowOnError extends boolean = false>(options: Options<ResolveLocationAddressData, ThrowOnError>): RequestResult<ResolveLocationAddressResponses, ResolveLocationAddressErrors, ThrowOnError> => (options.client ?? client).post<ResolveLocationAddressResponses, ResolveLocationAddressErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/locations/address',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const getNearbyFriendsConfig = <ThrowOnError extends boolean = false>(options?: Options<GetNearbyFriendsConfigData, ThrowOnError>): RequestResult<GetNearbyFriendsConfigResponses, GetNearbyFriendsConfigErrors, ThrowOnError> => (options?.client ?? client).get<GetNearbyFriendsConfigResponses, GetNearbyFriendsConfigErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/locations/config',
+    ...options
+});
+
+export const getLocationSettings = <ThrowOnError extends boolean = false>(options?: Options<GetLocationSettingsData, ThrowOnError>): RequestResult<GetLocationSettingsResponses, GetLocationSettingsErrors, ThrowOnError> => (options?.client ?? client).get<GetLocationSettingsResponses, GetLocationSettingsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/locations/settings',
+    ...options
+});
+
+export const updateLocationSettings = <ThrowOnError extends boolean = false>(options: Options<UpdateLocationSettingsData, ThrowOnError>): RequestResult<UpdateLocationSettingsResponses, UpdateLocationSettingsErrors, ThrowOnError> => (options.client ?? client).patch<UpdateLocationSettingsResponses, UpdateLocationSettingsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/locations/settings',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const deleteMyLocation = <ThrowOnError extends boolean = false>(options?: Options<DeleteMyLocationData, ThrowOnError>): RequestResult<DeleteMyLocationResponses, DeleteMyLocationErrors, ThrowOnError> => (options?.client ?? client).delete<DeleteMyLocationResponses, DeleteMyLocationErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/locations/me',
+    ...options
+});
+
+export const getMyLocation = <ThrowOnError extends boolean = false>(options?: Options<GetMyLocationData, ThrowOnError>): RequestResult<GetMyLocationResponses, GetMyLocationErrors, ThrowOnError> => (options?.client ?? client).get<GetMyLocationResponses, GetMyLocationErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/locations/me',
+    ...options
+});
+
+export const reportLocation = <ThrowOnError extends boolean = false>(options: Options<ReportLocationData, ThrowOnError>): RequestResult<ReportLocationResponses, ReportLocationErrors, ThrowOnError> => (options.client ?? client).put<ReportLocationResponses, ReportLocationErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/locations/me',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const getNearbyUsers = <ThrowOnError extends boolean = false>(options?: Options<GetNearbyUsersData, ThrowOnError>): RequestResult<GetNearbyUsersResponses, GetNearbyUsersErrors, ThrowOnError> => (options?.client ?? client).get<GetNearbyUsersResponses, GetNearbyUsersErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/locations/nearby',
+    ...options
+});
+
+export const listFriendRequests = <ThrowOnError extends boolean = false>(options: Options<ListFriendRequestsData, ThrowOnError>): RequestResult<ListFriendRequestsResponses, ListFriendRequestsErrors, ThrowOnError> => (options.client ?? client).get<ListFriendRequestsResponses, ListFriendRequestsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/friends/requests',
+    ...options
+});
+
+export const sendFriendRequest = <ThrowOnError extends boolean = false>(options: Options<SendFriendRequestData, ThrowOnError>): RequestResult<SendFriendRequestResponses, SendFriendRequestErrors, ThrowOnError> => (options.client ?? client).post<SendFriendRequestResponses, SendFriendRequestErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/friends/requests',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const acceptFriendRequest = <ThrowOnError extends boolean = false>(options: Options<AcceptFriendRequestData, ThrowOnError>): RequestResult<AcceptFriendRequestResponses, AcceptFriendRequestErrors, ThrowOnError> => (options.client ?? client).post<AcceptFriendRequestResponses, AcceptFriendRequestErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/friends/requests/{requestId}/accept',
+    ...options
+});
+
+export const rejectFriendRequest = <ThrowOnError extends boolean = false>(options: Options<RejectFriendRequestData, ThrowOnError>): RequestResult<RejectFriendRequestResponses, RejectFriendRequestErrors, ThrowOnError> => (options.client ?? client).post<RejectFriendRequestResponses, RejectFriendRequestErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/friends/requests/{requestId}/reject',
+    ...options
+});
+
+export const cancelFriendRequest = <ThrowOnError extends boolean = false>(options: Options<CancelFriendRequestData, ThrowOnError>): RequestResult<CancelFriendRequestResponses, CancelFriendRequestErrors, ThrowOnError> => (options.client ?? client).post<CancelFriendRequestResponses, CancelFriendRequestErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/friends/requests/{requestId}/cancel',
+    ...options
+});
+
+export const listFriends = <ThrowOnError extends boolean = false>(options?: Options<ListFriendsData, ThrowOnError>): RequestResult<ListFriendsResponses, ListFriendsErrors, ThrowOnError> => (options?.client ?? client).get<ListFriendsResponses, ListFriendsErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/friends',
+    ...options
+});
+
+export const removeFriend = <ThrowOnError extends boolean = false>(options: Options<RemoveFriendData, ThrowOnError>): RequestResult<RemoveFriendResponses, RemoveFriendErrors, ThrowOnError> => (options.client ?? client).delete<RemoveFriendResponses, RemoveFriendErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/friends/{relationshipId}',
+    ...options
 });

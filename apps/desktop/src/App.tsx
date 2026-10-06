@@ -13,6 +13,8 @@ import { MaterialUserProjectsPage } from './pages/MaterialUserProjectsPage';
 import { MaterialProjectPhotosPage } from './pages/MaterialProjectPhotosPage';
 import { FavoritesPage } from './pages/FavoritesPage';
 import { NotificationsPage } from './pages/NotificationsPage';
+import { FriendsPage } from './pages/FriendsPage';
+import { LocationProvider } from './components/friends/LocationProvider';
 
 const PhotoEditorPage = lazy(() =>
   import('./pages/PhotoEditorPage').then((module) => ({ default: module.PhotoEditorPage })),
@@ -49,7 +51,9 @@ export function App() {
           <Route
             element={
               <RequireAuth>
-                <AppLayout />
+                <LocationProvider>
+                  <AppLayout />
+                </LocationProvider>
               </RequireAuth>
             }
           >
@@ -66,6 +70,7 @@ export function App() {
             <Route element={<NotificationsPage />} path="/notifications" />
             <Route element={<NotificationsPage />} path="/notifications/:notificationId" />
             <Route element={<ProfilePage />} path="/profile" />
+            <Route element={<FriendsPage />} path="/friends" />
           </Route>
           <Route element={<Navigate replace to="/" />} path="*" />
         </Routes>

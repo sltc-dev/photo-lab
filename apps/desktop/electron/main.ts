@@ -3,6 +3,7 @@ import { pathToFileURL } from 'node:url';
 import { BrowserWindow, app } from 'electron';
 import { registerAuthIpc } from './ipc/auth.ipc';
 import { TokenStore } from './token-store';
+import { registerLocationPermissions } from './ipc/location.ipc';
 
 const DEFAULT_API_BASE_URL = 'http://localhost:3000';
 
@@ -34,6 +35,8 @@ function createWindow(): void {
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
   });
+
+  registerLocationPermissions(mainWindow.webContents, rendererUrl, rendererEntryUrl);
 
   mainWindow.webContents.on('will-navigate', (event, targetUrl) => {
     // 阻止页面被导航到非项目来源，避免外部页面获得 window.auth 能力。

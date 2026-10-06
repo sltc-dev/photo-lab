@@ -33,6 +33,7 @@ services:
       context: .
       dockerfile: apps/api/Dockerfile
     environment:
+      AMAP_WEB_SERVICE_KEY: ${AMAP_WEB_SERVICE_KEY:-}
       ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-15m}
       CORS_ORIGINS: ${CORS_ORIGINS:?CORS_ORIGINS is required}
       DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}

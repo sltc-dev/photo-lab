@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { authIpcChannels, type DesktopAuthApi } from './ipc/auth.channels';
+import { locationIpcChannels, type DesktopLocationControl } from './ipc/location.channels';
 
 const authApi: DesktopAuthApi = {
   // invoke 是“请求-响应”式 IPC：React await 后会收到主进程的结果或异常。
@@ -16,3 +17,10 @@ const authApi: DesktopAuthApi = {
 
 // 渲染进程只得到四个认证方法，不会拿到原始 ipcRenderer 或 Node.js 能力。
 contextBridge.exposeInMainWorld('auth', authApi);
+
+const locationControl: DesktopLocationControl = {
+  requestAccess: () => ipcRenderer.invoke(locationIpcChannels.requestAccess) as Promise<boolean>,
+  revokeAccess: () => ipcRenderer.invoke(locationIpcChannels.revokeAccess) as Promise<void>,
+};
+
+contextBridge.exposeInMainWorld('locationControl', locationControl);
