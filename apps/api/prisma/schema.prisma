@@ -9,24 +9,30 @@ datasource db {
 
 model User {
   // cuid 由 Prisma 在创建用户时生成，不依赖数据库自增序列。
-  id                   String                @id @default(cuid())
+  id                     String                @id @default(cuid())
   // email 是登录标识，唯一约束由数据库做最终并发裁决。
-  email                String                @unique
-  username             String
+  email                  String                @unique
+  username               String
   // 这里只保存 Argon2id Hash，绝不保存可以直接登录的明文密码。
-  passwordHash         String
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
+  passwordHash           String
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
   // 关系字段不是真实数组列，它表示“一位用户可以拥有多条 RefreshToken 记录”。
-  refreshTokens        RefreshToken[]
-  projects             Project[]
-  photoLikes           PhotoLike[]
-  photoFavorites       PhotoFavorite[]
-  photoComments        PhotoComment[]
-  stickers             UserSticker[]
-  notificationReceipts NotificationReceipt[]
-  feedbacks            Feedback[]
-  notifications        Notification[]
+  refreshTokens          RefreshToken[]
+  projects               Project[]
+  photoLikes             PhotoLike[]
+  photoFavorites         PhotoFavorite[]
+  photoComments          PhotoComment[]
+  stickers               UserSticker[]
+  notificationReceipts   NotificationReceipt[]
+  feedbacks              Feedback[]
+  notifications          Notification[]
+  locationSetting        UserLocationSetting?
+  location               UserLocation?
+  sentFriendRequests     FriendRequest[]       @relation("FriendRequester")
+  receivedFriendRequests FriendRequest[]       @relation("FriendRecipient")
+  friendshipsLow         Friendship[]          @relation("FriendshipLow")
+  friendshipsHigh        Friendship[]          @relation("FriendshipHigh")
 }
 
 enum FeedbackCategory {
@@ -175,6 +181,8 @@ model UserSticker {
 enum NotificationType {
   SYSTEM
   VERSION_UPGRADE
+  FRIEND_REQUEST
+  FRIEND_ACCEPTED
 }
 
 enum NotificationLevel {
@@ -204,6 +212,70 @@ model Notification {
   @@index([publishedAt, id])
   @@index([expiresAt])
   @@index([recipientUserId, publishedAt, id])
+}
+
+model UserLocationSetting {
+  userId          String   @id
+  locationEnabled Boolean  @default(false)
+  discoverable    Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserLocation {
+  userId         String                                @id
+  latitude       Float
+  longitude      Float
+  accuracyMeters Float
+  position       Unsupported("geography(Point,4326)")? @default(dbgenerated())
+  capturedAt     DateTime
+  receivedAt     DateTime                              @default(now())
+  expiresAt      DateTime
+  user           User                                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@index([capturedAt])
+}
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+  EXPIRED
+}
+
+model FriendRequest {
+  id              String              @id @default(cuid())
+  requesterId     String
+  recipientId     String
+  status          FriendRequestStatus @default(PENDING)
+  requestedAt     DateTime            @default(now())
+  expiresAt       DateTime
+  resolvedAt      DateTime?
+  updatedAt       DateTime            @updatedAt
+  requester       User                @relation("FriendRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  recipient       User                @relation("FriendRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  friendship      Friendship?
+
+  @@index([recipientId, status, requestedAt, id])
+  @@index([requesterId, status, requestedAt, id])
+  @@index([requesterId, requestedAt])
+}
+
+model Friendship {
+  id              String        @id @default(cuid())
+  userLowId       String
+  userHighId      String
+  sourceRequestId String        @unique
+  createdAt       DateTime      @default(now())
+  removedAt       DateTime?
+  userLow         User          @relation("FriendshipLow", fields: [userLowId], references: [id], onDelete: Cascade)
+  userHigh        User          @relation("FriendshipHigh", fields: [userHighId], references: [id], onDelete: Cascade)
+  sourceRequest   FriendRequest @relation(fields: [sourceRequestId], references: [id], onDelete: Cascade)
+
+  @@index([userLowId, userHighId, removedAt])
 }
 
 model NotificationReceipt {

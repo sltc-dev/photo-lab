@@ -21,6 +21,7 @@ import {
   MessageCircleQuestion,
   Star,
   User,
+  Users,
   type LucideIcon,
 } from 'lucide-react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
@@ -176,6 +177,12 @@ const navigationItems: NavigationItem[] = [
     isActive: (pathname) => pathname.startsWith('/favorites'),
     label: '我的收藏',
     to: '/favorites',
+  },
+  {
+    icon: Users,
+    isActive: (pathname) => pathname.startsWith('/friends'),
+    label: '附近好友',
+    to: '/friends',
   },
   {
     icon: User,

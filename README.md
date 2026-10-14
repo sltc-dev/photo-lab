@@ -19,6 +19,7 @@ Copy `.env.example` to `.env` for local development and replace the example secr
 
 | Variable                     | Purpose                                                              |
 | ---------------------------- | -------------------------------------------------------------------- |
+| `AMAP_WEB_SERVICE_KEY`       | Backend-only AMap Web Service key for resolving location addresses   |
 | `DATABASE_URL`               | Prisma PostgreSQL connection string                                  |
 | `JWT_ACCESS_SECRET`          | Secret for short-lived access tokens; minimum 16 characters          |
 | `JWT_REFRESH_SECRET`         | Secret mixed into stored refresh-token hashes; minimum 16 characters |
@@ -43,11 +44,37 @@ pnpm dev:desktop
 
 Every user registers through the same flow. There is no seed administrator or default account.
 
+## Location and Address Resolution
+
+The renderer obtains real coordinates with `navigator.geolocation.getCurrentPosition` using
+high accuracy, a 15-second timeout, and `maximumAge: 0`. Electron permits geolocation only for
+the trusted main frame while location is enabled. OS authorization controls whether a system
+prompt appears; clearing application data does not reset that authorization. On macOS, Chromium
+does not request Core Location authorization itself, so the main process calls Core Location
+through `koffi` (FFI) to show the system prompt and holds the geolocation request until the user
+answers. Packaged macOS builds must declare `NSLocationUsageDescription`
+and `NSLocationWhenInUseUsageDescription` in `Info.plist`. Other platforms rely on the operating
+system's own location settings. There is no separate location test UI or custom authorization
+dialog.
+
+Authenticated requests to `POST /locations/address` send `latitude` and `longitude` to the API.
+The API converts GPS coordinates through AMap, then resolves `formatted_address` through its
+reverse-geocoding endpoint. Set `AMAP_WEB_SERVICE_KEY` in the backend environment and restart
+the API. Use a Web Service key with digital signing disabled; signed requests are not implemented.
+The key must never be included in renderer variables or committed to Git.
+
+Address results stay in renderer memory and are not saved in the database. Address failures
+leave coordinates available for nearby searches. See the
+[nearby friends guide](docs/nearby-friends-guide.zh-CN.html) for the full flow and permission checks.
+
 ## Production Compose
 
 `docker-compose.yml` is for local development only. Production uses the standalone
 `compose.production.yml`, which has no development secret fallbacks, does not publish PostgreSQL,
 runs `prisma migrate deploy` before the API, and binds the API to host loopback.
+
+For AMap address resolution, set `AMAP_WEB_SERVICE_KEY` in the deployment environment.
+Production Compose forwards it to the API container.
 
 Provide at least these variables through the deployment environment or secret manager:
 

@@ -24,7 +24,7 @@ export type AuthSessionDto = {
     user: CurrentUserDto;
 };
 
-export type ErrorCode = 'AUTH_INVALID_CREDENTIALS' | 'AUTH_REFRESH_TOKEN_INVALID' | 'AUTH_TOKEN_EXPIRED' | 'BAD_REQUEST' | 'COMMENT_NOT_FOUND' | 'HTTP_ERROR' | 'INTERNAL_SERVER_ERROR' | 'NOT_FOUND' | 'NOTIFICATION_NOT_FOUND' | 'PHOTO_FILE_REQUIRED' | 'PHOTO_FILE_TOO_LARGE' | 'PHOTO_NOT_FOUND' | 'PHOTO_STORAGE_FAILED' | 'PHOTO_UNSUPPORTED_TYPE' | 'PROJECT_NOT_FOUND' | 'RATE_LIMIT_EXCEEDED' | 'USER_EMAIL_ALREADY_EXISTS' | 'USER_NOT_FOUND' | 'VALIDATION_FAILED';
+export type ErrorCode = 'LOCATION_DISABLED' | 'LOCATION_STALE' | 'LOCATION_INACCURATE' | 'NEARBY_USER_UNAVAILABLE' | 'FRIEND_REQUEST_CONFLICT' | 'FRIEND_REQUEST_EXPIRED' | 'FRIEND_REQUEST_COOLDOWN' | 'AUTH_INVALID_CREDENTIALS' | 'AUTH_REFRESH_TOKEN_INVALID' | 'AUTH_TOKEN_EXPIRED' | 'BAD_REQUEST' | 'COMMENT_NOT_FOUND' | 'HTTP_ERROR' | 'INTERNAL_SERVER_ERROR' | 'NOT_FOUND' | 'NOTIFICATION_NOT_FOUND' | 'PHOTO_FILE_REQUIRED' | 'PHOTO_FILE_TOO_LARGE' | 'PHOTO_NOT_FOUND' | 'PHOTO_STORAGE_FAILED' | 'PHOTO_UNSUPPORTED_TYPE' | 'PROJECT_NOT_FOUND' | 'RATE_LIMIT_EXCEEDED' | 'USER_EMAIL_ALREADY_EXISTS' | 'USER_NOT_FOUND' | 'VALIDATION_FAILED';
 
 export type ErrorBodyDto = {
     code: ErrorCode;
@@ -250,7 +250,7 @@ export type CreateMaterialCommentDto = {
     stickerKey?: string;
 };
 
-export type NotificationType = 'SYSTEM' | 'VERSION_UPGRADE';
+export type NotificationType = 'SYSTEM' | 'VERSION_UPGRADE' | 'FRIEND_REQUEST' | 'FRIEND_ACCEPTED';
 
 export type NotificationLevel = 'INFO' | 'WARNING' | 'CRITICAL';
 
@@ -307,6 +307,122 @@ export type FeedbackDto = {
     category: FeedbackCategory;
     createdAt: string;
     referenceId: string;
+};
+
+export type ResolveLocationAddressDto = {
+    latitude: number;
+    longitude: number;
+};
+
+export type LocationAddressDto = {
+    label: string;
+};
+
+export type LocationConfigDto = {
+    ttlMs: number;
+    refreshIntervalMs: number;
+    maxClockSkewMs: number;
+};
+
+export type NearbyConfigDto = {
+    radiusMeters: number;
+    maxAccuracyMeters: number;
+    distanceBucketMeters: number;
+};
+
+export type FriendRequestConfigDto = {
+    ttlMs: number;
+    cooldownMs: number;
+};
+
+export type MaintenanceConfigDto = {
+    intervalMs: number;
+};
+
+export type FriendListConfigDto = {
+    refetchIntervalMs: number;
+};
+
+export type NearbyFriendsConfigDto = {
+    location: LocationConfigDto;
+    nearby: NearbyConfigDto;
+    friendRequest: FriendRequestConfigDto;
+    maintenance: MaintenanceConfigDto;
+    list: FriendListConfigDto;
+};
+
+export type LocationSettingsDto = {
+    locationEnabled: boolean;
+    discoverable: boolean;
+};
+
+export type UpdateLocationSettingsDto = {
+    locationEnabled: boolean;
+    discoverable: boolean;
+};
+
+export type ReportLocationDto = {
+    latitude: number;
+    longitude: number;
+    accuracyMeters: number;
+    capturedAt: string;
+};
+
+export type LocationDto = {
+    latitude: number;
+    longitude: number;
+    accuracyMeters: number;
+    capturedAt: string;
+    expiresAt: string;
+};
+
+export type NearbyUserDto = {
+    userId: string;
+    username: string;
+    approximateDistanceMeters: number;
+    relationshipState: 'NONE' | 'OUTGOING_PENDING' | 'INCOMING_PENDING' | 'FRIEND' | 'COOLDOWN';
+    requestId: string | null;
+    relationshipId: string | null;
+    cooldownUntil: string | null;
+};
+
+export type NearbyUsersDto = {
+    items: Array<NearbyUserDto>;
+    radiusMeters: number;
+    searchedAt: string;
+};
+
+export type CreateFriendRequestDto = {
+    recipientUserId: string;
+};
+
+export type FriendRequestStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED' | 'EXPIRED';
+
+export type FriendRequestDto = {
+    requestId: string;
+    userId: string;
+    username: string;
+    status: FriendRequestStatus;
+    requestedAt: string;
+    expiresAt: string;
+    resolvedAt: string | null;
+    relationshipId: string | null;
+    removedAt: string | null;
+};
+
+export type FriendRequestPageDto = {
+    items: Array<FriendRequestDto>;
+};
+
+export type FriendDto = {
+    relationshipId: string;
+    userId: string;
+    username: string;
+    createdAt: string;
+};
+
+export type FriendPageDto = {
+    items: Array<FriendDto>;
 };
 
 export type RegisterData = {
@@ -1096,3 +1212,357 @@ export type CreateResponses = {
 };
 
 export type CreateResponse = CreateResponses[keyof CreateResponses];
+
+export type ResolveLocationAddressData = {
+    body: ResolveLocationAddressDto;
+    path?: never;
+    query?: never;
+    url: '/locations/address';
+};
+
+export type ResolveLocationAddressErrors = {
+    400: ErrorResponseDto;
+    401: ErrorResponseDto;
+    409: ErrorResponseDto;
+    429: ErrorResponseDto;
+};
+
+export type ResolveLocationAddressError = ResolveLocationAddressErrors[keyof ResolveLocationAddressErrors];
+
+export type ResolveLocationAddressResponses = {
+    200: LocationAddressDto;
+};
+
+export type ResolveLocationAddressResponse = ResolveLocationAddressResponses[keyof ResolveLocationAddressResponses];
+
+export type GetNearbyFriendsConfigData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/locations/config';
+};
+
+export type GetNearbyFriendsConfigErrors = {
+    400: ErrorResponseDto;
+    401: ErrorResponseDto;
+    409: ErrorResponseDto;
+    429: ErrorResponseDto;
+};
+
+export type GetNearbyFriendsConfigError = GetNearbyFriendsConfigErrors[keyof GetNearbyFriendsConfigErrors];
+
+export type GetNearbyFriendsConfigResponses = {
+    200: NearbyFriendsConfigDto;
+};
+
+export type GetNearbyFriendsConfigResponse = GetNearbyFriendsConfigResponses[keyof GetNearbyFriendsConfigResponses];
+
+export type GetLocationSettingsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/locations/settings';
+};
+
+export type GetLocationSettingsErrors = {
+    400: ErrorResponseDto;
+    401: ErrorResponseDto;
+    409: ErrorResponseDto;
+    429: ErrorResponseDto;
+};
+
+export type GetLocationSettingsError = GetLocationSettingsErrors[keyof GetLocationSettingsErrors];
+
+export type GetLocationSettingsResponses = {
+    200: LocationSettingsDto;
+};
+
+export type GetLocationSettingsResponse = GetLocationSettingsResponses[keyof GetLocationSettingsResponses];
+
+export type UpdateLocationSettingsData = {
+    body: UpdateLocationSettingsDto;
+    path?: never;
+    query?: never;
+    url: '/locations/settings';
+};
+
+export type UpdateLocationSettingsErrors = {
+    400: ErrorResponseDto;
+    401: ErrorResponseDto;
+    409: ErrorResponseDto;
+    429: ErrorResponseDto;
+};
+
+export type UpdateLocationSettingsError = UpdateLocationSettingsErrors[keyof UpdateLocationSettingsErrors];
+
+export type UpdateLocationSettingsResponses = {
+    200: LocationSettingsDto;
+};
+
+export type UpdateLocationSettingsResponse = UpdateLocationSettingsResponses[keyof UpdateLocationSettingsResponses];
+
+export type DeleteMyLocationData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/locations/me';
+};
+
+export type DeleteMyLocationErrors = {
+    400: ErrorResponseDto;
+    401: ErrorResponseDto;
+    409: ErrorResponseDto;
+    429: ErrorResponseDto;
+};
+
+export type DeleteMyLocationError = DeleteMyLocationErrors[keyof DeleteMyLocationErrors];
+
+export type DeleteMyLocationResponses = {
+    204: void;
+};
+
+export type DeleteMyLocationResponse = DeleteMyLocationResponses[keyof DeleteMyLocationResponses];
+
+export type GetMyLocationData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/locations/me';
+};
+
+export type GetMyLocationErrors = {
+    400: ErrorResponseDto;
+    401: ErrorResponseDto;
+    409: ErrorResponseDto;
+    429: ErrorResponseDto;
+};
+
+export type GetMyLocationError = GetMyLocationErrors[keyof GetMyLocationErrors];
+
+export type GetMyLocationResponses = {
+    200: LocationDto | null;
+};
+
+export type GetMyLocationResponse = GetMyLocationResponses[keyof GetMyLocationResponses];
+
+export type ReportLocationData = {
+    body: ReportLocationDto;
+    path?: never;
+    query?: never;
+    url: '/locations/me';
+};
+
+export type ReportLocationErrors = {
+    400: ErrorResponseDto;
+    401: ErrorResponseDto;
+    409: ErrorResponseDto;
+    429: ErrorResponseDto;
+};
+
+export type ReportLocationError = ReportLocationErrors[keyof ReportLocationErrors];
+
+export type ReportLocationResponses = {
+    200: LocationDto;
+};
+
+export type ReportLocationResponse = ReportLocationResponses[keyof ReportLocationResponses];
+
+export type GetNearbyUsersData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/locations/nearby';
+};
+
+export type GetNearbyUsersErrors = {
+    400: ErrorResponseDto;
+    401: ErrorResponseDto;
+    409: ErrorResponseDto;
+    429: ErrorResponseDto;
+};
+
+export type GetNearbyUsersError = GetNearbyUsersErrors[keyof GetNearbyUsersErrors];
+
+export type GetNearbyUsersResponses = {
+    200: NearbyUsersDto;
+};
+
+export type GetNearbyUsersResponse = GetNearbyUsersResponses[keyof GetNearbyUsersResponses];
+
+export type ListFriendRequestsData = {
+    body?: never;
+    path?: never;
+    query: {
+        direction: 'incoming' | 'outgoing';
+    };
+    url: '/friends/requests';
+};
+
+export type ListFriendRequestsErrors = {
+    400: ErrorResponseDto;
+    401: ErrorResponseDto;
+    403: ErrorResponseDto;
+    404: ErrorResponseDto;
+    409: ErrorResponseDto;
+    429: ErrorResponseDto;
+};
+
+export type ListFriendRequestsError = ListFriendRequestsErrors[keyof ListFriendRequestsErrors];
+
+export type ListFriendRequestsResponses = {
+    200: FriendRequestPageDto;
+};
+
+export type ListFriendRequestsResponse = ListFriendRequestsResponses[keyof ListFriendRequestsResponses];
+
+export type SendFriendRequestData = {
+    body: CreateFriendRequestDto;
+    path?: never;
+    query?: never;
+    url: '/friends/requests';
+};
+
+export type SendFriendRequestErrors = {
+    400: ErrorResponseDto;
+    401: ErrorResponseDto;
+    403: ErrorResponseDto;
+    404: ErrorResponseDto;
+    409: ErrorResponseDto;
+    429: ErrorResponseDto;
+};
+
+export type SendFriendRequestError = SendFriendRequestErrors[keyof SendFriendRequestErrors];
+
+export type SendFriendRequestResponses = {
+    200: FriendRequestDto;
+};
+
+export type SendFriendRequestResponse = SendFriendRequestResponses[keyof SendFriendRequestResponses];
+
+export type AcceptFriendRequestData = {
+    body?: never;
+    path: {
+        requestId: string;
+    };
+    query?: never;
+    url: '/friends/requests/{requestId}/accept';
+};
+
+export type AcceptFriendRequestErrors = {
+    400: ErrorResponseDto;
+    401: ErrorResponseDto;
+    403: ErrorResponseDto;
+    404: ErrorResponseDto;
+    409: ErrorResponseDto;
+    429: ErrorResponseDto;
+};
+
+export type AcceptFriendRequestError = AcceptFriendRequestErrors[keyof AcceptFriendRequestErrors];
+
+export type AcceptFriendRequestResponses = {
+    200: FriendRequestDto;
+};
+
+export type AcceptFriendRequestResponse = AcceptFriendRequestResponses[keyof AcceptFriendRequestResponses];
+
+export type RejectFriendRequestData = {
+    body?: never;
+    path: {
+        requestId: string;
+    };
+    query?: never;
+    url: '/friends/requests/{requestId}/reject';
+};
+
+export type RejectFriendRequestErrors = {
+    400: ErrorResponseDto;
+    401: ErrorResponseDto;
+    403: ErrorResponseDto;
+    404: ErrorResponseDto;
+    409: ErrorResponseDto;
+    429: ErrorResponseDto;
+};
+
+export type RejectFriendRequestError = RejectFriendRequestErrors[keyof RejectFriendRequestErrors];
+
+export type RejectFriendRequestResponses = {
+    200: FriendRequestDto;
+};
+
+export type RejectFriendRequestResponse = RejectFriendRequestResponses[keyof RejectFriendRequestResponses];
+
+export type CancelFriendRequestData = {
+    body?: never;
+    path: {
+        requestId: string;
+    };
+    query?: never;
+    url: '/friends/requests/{requestId}/cancel';
+};
+
+export type CancelFriendRequestErrors = {
+    400: ErrorResponseDto;
+    401: ErrorResponseDto;
+    403: ErrorResponseDto;
+    404: ErrorResponseDto;
+    409: ErrorResponseDto;
+    429: ErrorResponseDto;
+};
+
+export type CancelFriendRequestError = CancelFriendRequestErrors[keyof CancelFriendRequestErrors];
+
+export type CancelFriendRequestResponses = {
+    200: FriendRequestDto;
+};
+
+export type CancelFriendRequestResponse = CancelFriendRequestResponses[keyof CancelFriendRequestResponses];
+
+export type ListFriendsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/friends';
+};
+
+export type ListFriendsErrors = {
+    400: ErrorResponseDto;
+    401: ErrorResponseDto;
+    403: ErrorResponseDto;
+    404: ErrorResponseDto;
+    409: ErrorResponseDto;
+    429: ErrorResponseDto;
+};
+
+export type ListFriendsError = ListFriendsErrors[keyof ListFriendsErrors];
+
+export type ListFriendsResponses = {
+    200: FriendPageDto;
+};
+
+export type ListFriendsResponse = ListFriendsResponses[keyof ListFriendsResponses];
+
+export type RemoveFriendData = {
+    body?: never;
+    path: {
+        relationshipId: string;
+    };
+    query?: never;
+    url: '/friends/{relationshipId}';
+};
+
+export type RemoveFriendErrors = {
+    400: ErrorResponseDto;
+    401: ErrorResponseDto;
+    403: ErrorResponseDto;
+    404: ErrorResponseDto;
+    409: ErrorResponseDto;
+    429: ErrorResponseDto;
+};
+
+export type RemoveFriendError = RemoveFriendErrors[keyof RemoveFriendErrors];
+
+export type RemoveFriendResponses = {
+    204: void;
+};
+
+export type RemoveFriendResponse = RemoveFriendResponses[keyof RemoveFriendResponses];

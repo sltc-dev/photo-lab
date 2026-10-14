@@ -5,7 +5,7 @@ import { NotificationsService } from './notifications.service';
 
 /** 通知业务核心，由 HTTP API 与命令行程序共同复用。 */
 @Module({
-  exports: [NotificationsService],
+  exports: [NotificationsService, NotificationEventPublisher],
   imports: [PrismaModule],
   providers: [NotificationEventPublisher, NotificationsService],
 })

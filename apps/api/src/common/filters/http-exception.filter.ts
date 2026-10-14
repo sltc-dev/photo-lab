@@ -58,6 +58,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
         return response;
       }
 
+      if (exception.getStatus() === HttpStatus.TOO_MANY_REQUESTS) {
+        return {
+          code: 'RATE_LIMIT_EXCEEDED',
+          details: null,
+          message: '请求过于频繁，请稍后重试。',
+        };
+      }
+
       if (typeof response === 'object' && response !== null && 'message' in response) {
         // ValidationPipe 等 Nest 内置异常常返回对象，这里把它们适配成统一结构。
         const message = (response as { message?: unknown }).message;
